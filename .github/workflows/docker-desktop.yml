@@ -1,0 +1,45 @@
+name: Docker Desktop Setup
+
+on:
+  workflow_dispatch:   # รันด้วยมือ
+  schedule:
+    - cron: "0 3 * * 1" # รันทุกวันจันทร์ตี 3
+
+jobs:
+  setup-docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl jq
+
+      - name: Fetch latest Docker Desktop release notes
+        run: |
+          # สมมติว่ามี endpoint JSON ของ release notes
+          curl -s https://docs.docker.com/desktop/release-notes.json > release.json
+          VERSION=$(jq -r '.releases[0].version' release.json)
+          DATE=$(jq -r '.releases[0].date' release.json)
+          echo "Latest Docker Desktop: $VERSION ($DATE)"
+          echo "DOCKER_DESKTOP_VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Configure Docker Desktop
+        run: |
+          echo "⚙️ Setting up Docker Desktop $DOCKER_DESKTOP_VERSION"
+          # ตัวอย่างการตั้งค่า environment variables
+          export DOCKER_COMPOSE_VERSION=$(jq -r '.releases[0].updates["Docker Compose"]' release.json)
+          export DOCKER_AGENT_VERSION=$(jq -r '.releases[0].updates["Docker Agent"]' release.json)
+          export DOCKER_SCOUT_VERSION=$(jq -r '.releases[0].updates["Docker Scout CLI"]' release.json)
+
+          echo "Docker Compose v$DOCKER_COMPOSE_VERSION"
+          echo "Docker Agent v$DOCKER_AGENT_VERSION"
+          echo "Docker Scout CLI v$DOCKER_SCOUT_VERSION"
+
+      - name: Install Docker Desktop (Linux example)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-desktop
