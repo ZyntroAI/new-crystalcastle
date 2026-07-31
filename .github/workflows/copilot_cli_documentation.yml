@@ -1,0 +1,29 @@
+name: "Copilot CLI Documentation Workflow"
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  generate-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/node-versions@v4
+        with:
+          node-version: '22'
+
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Generate Markdown Documentation
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Use Git to grab target changes and pass context non-interactively to Copilot CLI
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          copilot run "Analyze these files and output markdown documentation: $CHANGED_FILES" --non-interactive
