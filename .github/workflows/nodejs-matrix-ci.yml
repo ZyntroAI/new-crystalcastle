@@ -1,0 +1,33 @@
+name: Node.js Matrix CI
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # กำหนดเวอร์ชัน Node.js ตามที่ต้องการ
+        node-version: [1-3]
+    
+    steps:
+      - uses: actions/checkout@v4 [4]
+      
+      # ติดตั้ง pnpm เพื่อความเร็วและประหยัดพื้นที่ตามมาตรฐานโครงการ
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9 [5, 6]
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm' # ใช้ระบบ Caching เพื่อลดเวลา Build [4, 5]
+
+      - name: Install dependencies
+        # ใช้ --frozen-lockfile เพื่อทำ Dependency Pinning ป้องกันช่องโหว่ความปลอดภัย
+        run: pnpm install --frozen-lockfile [5, 7]
+
+      - name: Run Tests
+        # รันการทดสอบ (แนะนำ Playwright แบบ Headless Mode เพื่อประหยัดทรัพยากร)
+        run: pnpm test [5, 8]
