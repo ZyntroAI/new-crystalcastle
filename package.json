@@ -121,12 +121,3 @@
     "vite": "^6.1.0"
   }
 }
-
-| Area | Suggested Package | Why it’s valuable |
-| --- | --- | --- |
-| **AI Integration** | ``@google/generative-ai`` (already included) | Great for experimenting with Gemini models. If you want Azure parity, add ``@azure-rest/ai-inference``, ``@azure/core-auth``, ``@azure/core-sse``. |
-| **State + Data Layer** | Already using ``react-query`` | That’s a strong combo. Consider consolidating to **React Query + Zustand** for simplicity, unless you need Redux middleware. |
-| **Testing** | Add ``vitest`` + ``@testing-library/react`` | You’ll get fast unit + integration tests aligned with Vite. |
-| **Performance Monitoring** | ``@vercel/analytics`` or ``web-vitals`` (already included) | Keep these wired in to measure UX impact of your 3D/AI features. |
-| **Security** | ``helmet`` (for server‑side headers) | Useful if you deploy with an Express/Vite SSR layer. |
-| **Docs/Export** | You already have ``jspdf`` + ``xlsx`` | That covers PDF + Excel export. Pair with Supabase storage for persistence. |
