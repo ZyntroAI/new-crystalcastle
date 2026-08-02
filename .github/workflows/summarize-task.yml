@@ -1,0 +1,30 @@
+name: Summarize Task Output
+
+on:
+  workflow_dispatch:
+  issues:
+    types: [assigned]
+
+jobs:
+  summarize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate summary
+        run: |
+          echo "Task ID: ${{ github.event.issue.number }}" >> summary.txt
+          echo "Assigned To: ${{ github.event.issue.assignee.login }}" >> summary.txt
+          echo "Execution Time: $(date)" >> summary.txt
+
+      - name: Summarize files
+        run: |
+          ls -1 >> summary.txt
+
+      - name: Upload to Google Drive
+        uses: satackey/action-google-drive@v1
+        with:
+          upload_file: summary.txt
+          credentials: ${{ secrets.GOOGLE_DRIVE_CREDENTIALS }}
+          folder_id: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
