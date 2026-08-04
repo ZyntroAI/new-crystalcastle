@@ -1,0 +1,31 @@
+
+npm-debug.log*, 
+yarn-debug.log*, 
+yarn-error.log*, 
+dist/, 
+build/, 
+.vite/, 
+coverage/, 
+.env, 
+.env.local, 
+.env.development, 
+.env.Production, 
+.env.test, 
+.vscode/, 
+.idea/,
+.DS_Store,
+Thumbs.db,
+*.log,
+*.tmp,
+*.swp,
+.vercel/
+
+
+💡 You can also add project‑specific ignores for generated reports or AI‑related outputs, like:
+`gitignore
+
+AI Studio artifacts
+Ai-studio/output/
+Azure-AI/temp/
+Final-Report/*.pdf
+`
