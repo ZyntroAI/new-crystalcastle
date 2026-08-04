@@ -1,0 +1,23 @@
+name: Setup React Environment
+
+description: Setup Node React project
+
+runs:
+  using: composite
+
+  steps:
+
+    - name: Checkout
+      uses: actions/checkout@v4
+
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: npm
+
+
+    - name: Install dependencies
+      shell: bash
+      run: npm ci
