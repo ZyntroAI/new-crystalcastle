@@ -17,6 +17,7 @@ coverage/,
 Thumbs.db,
 *.log,
 *.tmp,
+*pnpm,
 *.swp,
 .vercel/
 
