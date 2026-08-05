@@ -1,0 +1,14 @@
+json
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "build": "mkdir -p dist && cp -r src/* dist/",
+    "start": "node dist/index.js",
+    "lint": "eslint .",
+    "test": "jest",
+    "test:integration": "jest --selectProjects integration --runInBand"
+  }
+}
