@@ -91,7 +91,7 @@
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",
     "three": "^0.181.2",
-    "uuid": "^13.0.0",
+    "uuid": "^14.0.1",
     "vaul": "^1.1.2",
     "web-vitals": "^5.1.0",
     "xlsx": "^0.18.0",
