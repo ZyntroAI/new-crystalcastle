@@ -1,4 +1,4 @@
-package,sink,source,summary,sink:command-injection,sink:credentials-key,sink:jwt,sink:log-injection,sink:nosql-injection,sink:path-injection,sink:regex-use[0],sink:regex-use[1],sink:regex-use[c],sink:request-forgery,sink:request-forgery[TCP Addr + Port],sink:sql-injection,sink:url-redirection,sink:url-redirection[0],sink:url-redirection[receiver],sink:xpath-injection,source:commandargs,source:database,source:environment,source:file,source:remote,source:stdin,summary:taint,summary:value
+จมpackage,sink,source,summary,sink:command-injection,sink:credentials-key,sink:jwt,sink:log-injection,sink:nosql-injection,sink:path-injection,sink:regex-use[0],sink:regex-use[1],sink:regex-use[c],sink:request-forgery,sink:request-forgery[TCP Addr + Port],sink:sql-injection,sink:url-redirection,sink:url-redirection[0],sink:url-redirection[receiver],sink:xpath-injection,source:commandargs,source:database,source:environment,source:file,source:remote,source:stdin,summary:taint,summary:value
 ,,,9,,,,,,,,,,,,,,,,,,,,,,,3,6
 archive/tar,,,5,,,,,,,,,,,,,,,,,,,,,,,5,
 archive/zip,,,6,,,,,,,,,,,,,,,,,,,,,,,6,
