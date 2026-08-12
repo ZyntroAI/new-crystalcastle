@@ -1,0 +1,274 @@
+Here is a complete, modular CLI tool using standard library argparse and sqlite3. It supports loading from a local file or stdin, filtering by any combination of fields, and outputting as a table, URLs-only, or JSON.
+#!/usr/bin/env python3
+"""CLI tool to load and query Python version manifests using an in-memory SQLite database."""
+
+import argparse
+import json
+import sqlite3
+import sys
+from typing import Any, Dict, List, Optional, Tuple
+
+
+def init_db(conn: sqlite3.Connection) -> None:
+    """Create schema and indexes."""
+    cursor = conn.cursor()
+    cursor.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS python_assets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            version TEXT NOT NULL,
+            platform TEXT NOT NULL,
+            platform_version TEXT,
+            arch TEXT NOT NULL,
+            is_freethreaded INTEGER NOT NULL,
+            filename TEXT NOT NULL,
+            download_url TEXT NOT NULL
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_query ON python_assets(version, platform, arch, is_freethreaded);
+        """
+    )
+    conn.commit()
+
+
+def load_manifest(
+    conn: sqlite3.Connection, manifest_data: List[Dict[str, Any]]
+) -> int:
+    """Flatten and load JSON manifest items into SQLite."""
+    cursor = conn.cursor()
+    rows = []
+
+    for entry in manifest_data:
+        version = entry.get("version", "")
+        for file in entry.get("files", []):
+            filename = file.get("filename", "")
+            rows.append(
+                (
+                    version,
+                    file.get("platform", ""),
+                    file.get("platform_version"),
+                    file.get("arch", ""),
+                    1 if "freethreaded" in filename else 0,
+                    filename,
+                    file.get("download_url", ""),
+                )
+            )
+
+    cursor.executemany(
+        """
+        INSERT INTO python_assets (
+            version, platform, platform_version, arch, 
+            is_freethreaded, filename, download_url
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        rows,
+    )
+    conn.commit()
+    return len(rows)
+
+
+def build_query(args: argparse.Namespace) -> Tuple[str, List[Any]]:
+    """Construct SQL query and parameters dynamically based on CLI flags."""
+    conditions = []
+    params: List[Any] = []
+
+    if args.version:
+        conditions.append("version LIKE ?")
+        params.append(f"%{args.version}%")
+
+    if args.platform:
+        conditions.append("platform = ?")
+        params.append(args.platform)
+
+    if args.platform_version:
+        conditions.append("platform_version = ?")
+        params.append(args.platform_version)
+
+    if args.arch:
+        conditions.append("arch = ?")
+        params.append(args.arch)
+
+    if args.freethreaded is not None:
+        conditions.append("is_freethreaded = ?")
+        params.append(1 if args.freethreaded else 0)
+
+    query = "SELECT version, platform, platform_version, arch, is_freethreaded, filename, download_url FROM python_assets"
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+
+    query += " ORDER BY version DESC, platform, arch"
+    return query, params
+
+
+def render_table(columns: List[str], rows: List[Tuple]) -> None:
+    """Format and print tabular output."""
+    if not rows:
+        print("No matching assets found.", file=sys.stderr)
+        return
+
+    # Convert freethreaded int to boolean string for display
+    display_rows = []
+    for r in rows:
+        row_list = list(r)
+        row_list[4] = "Yes" if row_list[4] == 1 else "No"
+        row_list[2] = row_list[2] if row_list[2] else "-"
+        display_rows.append([str(item) for item in row_list])
+
+    col_widths = [len(col) for col in columns]
+    for row in display_rows:
+        for i, val in enumerate(row):
+            col_widths[i] = max(col_widths[i], len(val))
+
+    header = " | ".join(
+        col.ljust(col_widths[i]) for i, col in enumerate(columns)
+    )
+    sep = "-+-".join("-" * col_widths[i] for i in range(len(columns)))
+    print(header)
+    print(sep)
+    for row in display_rows:
+        print(
+            " | ".join(
+                val.ljust(col_widths[i]) for i, val in enumerate(row)
+            )
+        )
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Query and filter Python version release manifests via an in-memory SQLite engine."
+    )
+    parser.add_argument(
+        "file",
+        nargs="?",
+        default="-",
+        help="Path to manifest JSON file (reads from stdin if omitted or '-')",
+    )
+    parser.add_argument(
+        "-v", "--version", help="Filter by version (e.g., '3.15.0', 'rc.1')"
+    )
+    parser.add_argument(
+        "-p",
+        "--platform",
+        choices=["darwin", "linux", "win32", "rhel"],
+        help="Filter by OS platform",
+    )
+    parser.add_argument(
+        "--pv",
+        "--platform-version",
+        dest="platform_version",
+        help="Filter by OS platform version (e.g., '24.04', '9')",
+    )
+    parser.add_argument(
+        "-a",
+        "--arch",
+        choices=["x64", "arm64", "x86"],
+        help="Filter by architecture",
+    )
+
+    # Free-threaded flags
+    ft_group = parser.add_mutually_exclusive_group()
+    ft_group.add_argument(
+        "--freethreaded",
+        dest="freethreaded",
+        action="store_true",
+        default=None,
+        help="Include only free-threaded (GIL-disabled) builds",
+    )
+    ft_group.add_argument(
+        "--no-freethreaded",
+        dest="freethreaded",
+        action="store_false",
+        help="Exclude free-threaded builds",
+    )
+
+    # Output formatting flags
+    out_group = parser.add_mutually_exclusive_group()
+    out_group.add_argument(
+        "--urls-only",
+        action="store_true",
+        help="Output raw download URLs line-by-line (useful for xargs/curl)",
+    )
+    out_group.add_argument(
+        "--json",
+        dest="output_json",
+        action="store_true",
+        help="Output results in JSON format",
+    )
+
+    args = parser.parse_args()
+
+    # Load JSON input
+    try:
+        if args.file == "-":
+            if sys.stdin.isatty():
+                parser.print_help()
+                sys.exit(1)
+            raw_data = sys.stdin.read()
+        else:
+            with open(args.file, "r", encoding="utf-8") as f:
+                raw_data = f.read()
+
+        manifest_data = json.loads(raw_data)
+    except Exception as e:
+        print(f"Error loading JSON input: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    # Initialize SQLite database
+    conn = sqlite3.connect(":memory:")
+    init_db(conn)
+    load_manifest(conn, manifest_data)
+
+    query, params = build_query(args)
+    cursor = conn.cursor()
+    cursor.execute(query, params)
+    rows = cursor.fetchall()
+    columns = [
+        "Version",
+        "Platform",
+        "OS Ver",
+        "Arch",
+        "Freethreaded",
+        "Filename",
+        "Download URL",
+    ]
+
+    # Format outputs
+    if args.urls_only:
+        for r in rows:
+            print(r[6])  # download_url
+    elif args.output_json:
+        output_list = [
+            {
+                "version": r[0],
+                "platform": r[1],
+                "platform_version": r[2],
+                "arch": r[3],
+                "is_freethreaded": bool(r[4]),
+                "filename": r[5],
+                "download_url": r[6],
+            }
+            for r in rows
+        ]
+        print(json.dumps(output_list, indent=2))
+    else:
+        render_table(columns, rows)
+
+    conn.close()
+
+
+if __name__ == "__main__":
+    main()
+
+Usage Examples
+1. Pipe JSON directly from curl and filter for macOS ARM64:
+cat versions.json | ./query_manifest.py -p darwin -a arm64
+
+2. Get only free-threaded builds for Python 3.15.0:
+./query_manifest.py versions.json -v "3.15.0" --freethreaded
+
+3. Extract download URLs directly into wget or xargs:
+./query_manifest.py versions.json -p linux --pv "24.04" -a x64 --no-freethreaded --urls-only | xargs -n 1 wget
+
+4. Export filtered data as JSON:
+./query_manifest.py versions.json -p darwin --json > macos_assets.json
+
