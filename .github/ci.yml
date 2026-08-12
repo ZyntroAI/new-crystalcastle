@@ -5,6 +5,11 @@ on:
     branches:
       - main
       - develop
+      - master
+      - dev
+      - agent-hub
+      - pure-agent-dev
+      - crystal-dev
   pull_request:
 
 permissions:
