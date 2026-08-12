@@ -1,0 +1,227 @@
+Here is a comprehensive documentation guide for your Figma plugin, structured following official Figma developer and design guidelines.
+Design Tokens & Utility Builder — Figma Plugin Documentation
+The Design Tokens & Utility Builder is a developer tool that automates system-level token creation (variables) and layout generation within the Figma canvas document context.
+1. Architecture Overview
+Figma plugins operate across a two-thread execution model:
+ * Main Thread (code.ts / code.js): Executes within the Figma sandbox with direct access to document nodes, variables, styles, and the canvas state. It cannot interact directly with the DOM or external network interfaces without passing messages.
+ * UI Thread (ui.html): Runs inside an isolated <iframe>. It handles user interface rendering, DOM events, and user inputs, communicating with the main thread via parent.postMessage.
+┌────────────────────────────────┐         parent.postMessage          ┌──────────────────────────────────┐
+│           UI Thread            │ ──────────────────────────────────> │           Main Thread            │
+│           (ui.html)            │ <────────────────────────────────── │         (code.ts / code.js)      │
+│  User inputs & visual controls │         figma.ui.postMessage        │ Direct Figma Canvas Document API │
+└────────────────────────────────┘                                     └──────────────────────────────────┘
+
+2. File Structure & Configuration
+File Tree
+├── manifest.json   # Plugin manifest and capabilities setup
+├── code.ts         # Main thread controller logic
+└── ui.html         # HTML, CSS, and UI script
+
+manifest.json
+The manifest registers your plugin configuration with Figma.
+{
+  "name": "Design Tokens & Utility Builder",
+  "id": "1234567890123456789",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "capabilities": [],
+  "enableProposedApi": false
+}
+
+3. Implementation Code
+Main Thread (code.ts)
+// Initialize Figma Plugin UI Window
+figma.showUI(__html__, {
+  width: 380,
+  height: 500,
+  title: "Design Tool Script Engine"
+});
+
+// Message Listener Interface
+interface PluginMessage {
+  type: 'create-tokens' | 'generate-card';
+  data?: {
+    primaryHex: string;
+    borderRadius: string;
+  };
+}
+
+// Listen for UI events
+figma.ui.onmessage = async (msg: PluginMessage) => {
+  // Action 1: Create Native Variable Collection & Tokens
+  if (msg.type === 'create-tokens' && msg.data) {
+    const { primaryHex, borderRadius } = msg.data;
+
+    // Retrieve or create collection
+    const collection = figma.variables.createVariableCollection("System Tokens");
+    const modeId = collection.modes[0].modeId;
+
+    // Color Variable (COLOR)
+    const colorVar = figma.variables.createVariable("color/primary", collection, "COLOR");
+    const rgb = hexToRgb(primaryHex);
+    colorVar.setValueForMode(modeId, {
+      r: rgb.r / 255,
+      g: rgb.g / 255,
+      b: rgb.b / 255,
+      a: 1
+    });
+
+    // Border Radius Variable (FLOAT)
+    const radiusVar = figma.variables.createVariable("radius/base", collection, "FLOAT");
+    radiusVar.setValueForMode(modeId, parseFloat(borderRadius));
+
+    figma.notify("✅ Design Variables successfully generated!");
+  }
+
+  // Action 2: Generate Auto-Layout Component
+  if (msg.type === 'generate-card') {
+    // Create Auto-Layout Frame Container
+    const frame = figma.createFrame();
+    frame.name = "Auto-Layout Card";
+    frame.layoutMode = "VERTICAL";
+    frame.paddingLeft = 24;
+    frame.paddingRight = 24;
+    frame.paddingTop = 24;
+    frame.paddingBottom = 24;
+    frame.itemSpacing = 16;
+    frame.cornerRadius = 12;
+    frame.resize(320, 200);
+
+    // Apply Solid Fill
+    frame.fills = [{ type: 'SOLID', color: { r: 0.98, g: 0.98, b: 0.98 } }];
+
+    // Ensure font is loaded before setting text properties
+    await figma.loadFontAsync({ family: "Inter", style: "Bold" });
+
+    // Append Title Node
+    const titleText = figma.createText();
+    titleText.fontName = { family: "Inter", style: "Bold" };
+    titleText.characters = "Automated Component";
+    titleText.fontSize = 18;
+    frame.appendChild(titleText);
+
+    // Append to Canvas and Adjust Viewport Focus
+    figma.currentPage.appendChild(frame);
+    figma.viewport.scrollAndZoomIntoView([frame]);
+  }
+};
+
+/**
+ * Utility: Converts a 6-character Hex string to normalized RGB values
+ */
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const cleanHex = hex.replace('#', '');
+  const bigint = parseInt(cleanHex, 16);
+  return {
+    r: (bigint >> 16) & 255,
+    g: (bigint >> 8) & 255,
+    b: bigint & 255
+  };
+}
+
+UI Thread (ui.html)
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: Inter, sans-serif;
+      padding: 16px;
+      margin: 0;
+      background: #fafafa;
+      font-size: 13px;
+      color: #333;
+    }
+    .group {
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    input[type="text"],
+    input[type="color"] {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+    input[type="color"] {
+      height: 38px;
+      padding: 2px;
+      cursor: pointer;
+    }
+    button {
+      width: 100%;
+      background: #18A0FB;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    button:hover {
+      background: #0d8de3;
+    }
+    button.secondary {
+      background: #333;
+    }
+    button.secondary:hover {
+      background: #222;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="group">
+    <label for="primaryColor">Primary Brand Color</label>
+    <input type="color" id="primaryColor" value="#18A0FB">
+  </div>
+
+  <div class="group">
+    <label for="baseRadius">Base Radius (px)</label>
+    <input type="text" id="baseRadius" value="8">
+  </div>
+
+  <button id="btnTokens">Generate Figma Variables</button>
+  <button id="btnCard" class="secondary">Build Auto-Layout Component</button>
+
+  <script>
+    document.getElementById('btnTokens').onclick = () => {
+      const primaryHex = document.getElementById('primaryColor').value;
+      const borderRadius = document.getElementById('baseRadius').value;
+      
+      parent.postMessage({
+        pluginMessage: {
+          type: 'create-tokens',
+          data: { primaryHex, borderRadius }
+        }
+      }, '*');
+    };
+
+    document.getElementById('btnCard').onclick = () => {
+      parent.postMessage({
+        pluginMessage: {
+          type: 'generate-card'
+        }
+      }, '*');
+    };
+  </script>
+</body>
+</html>
+
+4. Key Figma API & Development Best Practices
+| Domain | Guideline / Best Practice |
+|---|---|
+| Variables API | Native Figma Variables support COLOR, FLOAT, STRING, and BOOLEAN types. Always access the target mode ID via collection.modes[0].modeId before setting variable values. |
+| Color Space | Figma canvas colors use normalized RGB ratios bounded between 0.0 and 1.0. Divide standard 8-bit RGB integers (0–255) by 255. |
+| Font Management | Modifying or creating text properties requires pre-loading the targeted font style asynchronously via figma.loadFontAsync({ family, style }) to prevent runtime crashes. |
+| Canvas Focus | Use figma.viewport.scrollAndZoomIntoView([nodes]) after programmatically instantiating elements to keep the canvas focused on generated assets. |
+| Notification API | Give immediate user feedback via figma.notify() upon completing background operations. |
