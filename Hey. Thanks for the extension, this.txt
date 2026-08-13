@@ -1,0 +1,31 @@
+Hey. Thanks for the extension, this was exactly what I needed.
+
+However, I encountered an issue. Sometimes the first line of shell code is not highlighted correctly. I tested a few other languages, and they seem to work fine.
+
+```yaml
+- bash: | # shell
+    # Foo
+    # Bar
+    # Baz
+
+- bash: | # shell
+    echo Foo
+    echo Bar
+    echo Baz
+```
+
+![image](https://github.com/harrydowning/yaml-embedded-languages/assets/17464404/58a5e71a-2753-4b14-a4ec-de66d994010f)
+
+However, the following case works fine.
+
+```yaml
+- bash: | # shell
+    if [ -e foo/bar ]; then
+      echo Foo
+      echo Bar
+    fi
+```
+
+![image](https://github.com/harrydowning/yaml-embedded-languages/assets/17464404/e2f92fc6-9549-409d-aa90-c43940f1857d)
+
+

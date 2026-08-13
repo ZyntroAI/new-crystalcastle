@@ -1,0 +1,21 @@
+{
+    "go.testExplorer.enable": false,
+    "editor.defaultFormatter": "vscode.json-language-features",
+    "editor.wordWrap": "wordWrapColumn",
+    "auto-close-tag.fullMode": true,
+    "auto-close-tag.insertSpaceBeforeSelfClosingTag": true,
+    "auto-close-tag.SublimeText3Mode": true,
+    "cloakd.agent.dynamicToolWrapping.enabled": true,
+    "dotnet.server.waitForDebugger": true,
+    "cmake.additionalBuildProblemMatchers": [],
+    "editor.fontSize": 8,
+    "editor.formatOnSave": true,
+    "files.autoSave": "onFocusChange",
+    "editor.mouseWheelZoom": true,
+    "editor.formatOnPaste": true,
+    "editor.accessibilitySupport": "on",
+    "editor.autoClosingBrackets": "always",
+    "editor.autoIndentOnPaste": true,
+    "editor.bracketPairColorization.independentColorPoolPerBracketType": true,
+    "editor.codeActions.triggerOnFocusChange": true
+}
