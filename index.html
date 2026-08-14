@@ -1,0 +1,311 @@
+
+
+Clawverse refactor plan · HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Clawverse refactor plan</title>
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --card: #ffffff;
+    --ink: #1f2a24;
+    --ink-soft: #5b6a61;
+    --line: #dcd6c8;
+    --teal: #0f6e56;
+    --teal-light: #e1f5ee;
+    --coral: #993c1d;
+    --coral-light: #faece7;
+    --amber: #854f0b;
+    --amber-light: #faeeda;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    padding: 32px 20px 60px;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  header { margin-bottom: 28px; }
+  .eyebrow { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--coral); font-weight: 600; }
+  h1 { font-size: 26px; margin: 6px 0 6px; font-weight: 700; }
+  .sub { color: var(--ink-soft); font-size: 14px; max-width: 640px; line-height: 1.5; }
+ 
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin: 22px 0 30px;
+  }
+  .stat {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+  }
+  .stat .num { font-size: 20px; font-weight: 700; }
+  .stat .label { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+ 
+  .progress-track {
+    height: 6px;
+    background: var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--teal);
+    width: 0%;
+    transition: width 0.25s ease;
+  }
+  .progress-label { font-size: 12px; color: var(--ink-soft); margin-bottom: 28px; }
+ 
+  .phase {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .phase-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 18px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .phase-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--teal-light);
+    color: var(--teal);
+    font-weight: 700;
+    font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .phase-title-wrap { flex: 1; min-width: 0; }
+  .phase-title { font-weight: 700; font-size: 15px; }
+  .phase-desc { font-size: 12.5px; color: var(--ink-soft); margin-top: 2px; }
+  .phase-count { font-size: 12px; color: var(--ink-soft); white-space: nowrap; }
+  .chevron { transition: transform 0.2s ease; color: var(--ink-soft); font-size: 12px; }
+  .phase.open .chevron { transform: rotate(90deg); }
+ 
+  .phase-body { display: none; padding: 0 18px 16px; }
+  .phase.open .phase-body { display: block; }
+ 
+  .item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 9px 0;
+    border-top: 1px solid var(--line);
+  }
+  .item input[type=checkbox] {
+    margin-top: 3px;
+    width: 16px; height: 16px;
+    accent-color: var(--teal);
+    flex-shrink: 0;
+  }
+  .item-text { font-size: 13.5px; line-height: 1.45; flex: 1; }
+  .item.done .item-text { color: var(--ink-soft); text-decoration: line-through; }
+  .tag {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 5px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .tag.risk-high { background: var(--coral-light); color: var(--coral); }
+  .tag.risk-med { background: var(--amber-light); color: var(--amber); }
+  .tag.risk-low { background: var(--teal-light); color: var(--teal); }
+ 
+  .why {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    background: var(--bg);
+    border-left: 3px solid var(--teal);
+    padding: 8px 12px;
+    border-radius: 0 6px 6px 0;
+    margin: 10px 0 12px;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+ 
+  <header>
+    <div class="eyebrow">Refactor plan · Clawverse</div>
+    <h1>Structuring Clawverse for the next feature</h1>
+    <div class="sub">Built from the actual repo (1napz/clawverse), not assumptions. Ordered so each phase reduces risk for the one after it — skip around if your feature only touches one layer.</div>
+  </header>
+ 
+  <div class="stats">
+    <div class="stat"><div class="num">8,243</div><div class="label">lines in app.py</div></div>
+    <div class="stat"><div class="num">260</div><div class="label">routes, one file</div></div>
+    <div class="stat"><div class="num">22,931</div><div class="label">lines in index.html</div></div>
+    <div class="stat"><div class="num">0</div><div class="label">unit tests</div></div>
+  </div>
+ 
+  <div class="progress-track"><div class="progress-fill" id="fill"></div></div>
+  <div class="progress-label" id="proglabel">0 of 0 steps checked</div>
+ 
+  <div id="phases"></div>
+ 
+</div>
+ 
+<script>
+const phases = [
+  {
+    title: "Phase 0 — Build a safety net first",
+    desc: "There are zero automated tests today. Refactoring blind is how a monolith gets worse, not better.",
+    why: "You have a Playwright screenshot script but no assertions. Any split of app.py or index.html risks silently breaking one of 260 routes. This phase is cheap insurance before touching anything else.",
+    items: [
+      ["Pick your 8-10 highest-traffic flows (login, save world, place tile, visit island, AI generate) and write smoke tests that hit the real API and assert on response shape", "risk-low"],
+      ["Snapshot the SQLite schema (`sqlite3 .schema`) and commit it — you have no migrations, so this is your only record of the 59 tables' structure", "risk-low"],
+      ["Add a `git tag pre-refactor` and back up clawverse.db before any structural changes", "risk-low"],
+      ["Turn your existing Playwright script into a repeatable regression check (screenshot diff or basic assertions) you can run after each phase", "risk-med"]
+    ]
+  },
+  {
+    title: "Phase 1 — Split app.py into Blueprints",
+    desc: "8,243 lines, 260 routes, one file. This is the single biggest source of merge pain and cognitive load.",
+    why: "Routes already cluster cleanly by domain: /api/island (57), /api/world (14), /api/farm (11), /api/ai (7), /api/ranch (6), /api/auth (6), /api/servants (5), /api/market (5) and more. This is close to ideal Blueprint boundaries already — you're organizing, not redesigning.",
+    items: [
+      ["Create a `backend/routes/` package with one Blueprint per domain (island, world, farm, ai, auth, market, servants, ranch, etc.)", "risk-med"],
+      ["Move routes over 2-3 domains at a time, running Phase 0 smoke tests after each move, not at the end", "risk-med"],
+      ["Extract shared logic (auth decorators, DB connection handling, response helpers) into `backend/core/` so Blueprints don't duplicate it", "risk-low"],
+      ["Keep app.py as just Blueprint registration + app factory once the split is done", "risk-low"],
+      ["Update ARCHITECTURE.md — it currently describes a 4,500-line app.py, and it's nearly 2x that now", "risk-low"]
+    ]
+  },
+  {
+    title: "Phase 2 — Give db.py structure",
+    desc: "5,180 lines, 59 tables, 359 raw SQL calls, no migration system.",
+    why: "Every schema change today is manual and unversioned across 59 tables. This is the riskiest part of adding a feature that needs new tables or columns — you have no way to roll back or replay changes.",
+    items: [
+      ["Split db.py into per-domain modules mirroring the Phase 1 Blueprints (island_db.py, world_db.py, farm_db.py, etc.)", "risk-med"],
+      ["Introduce a lightweight migration tool (even a simple numbered SQL-files-plus-runner is fine — doesn't need to be Alembic) so schema changes are tracked", "risk-high"],
+      ["Audit the 59 tables for ones that are dead/unused from earlier evolution sprints before migrating — no reason to carry cruft forward", "risk-low"],
+      ["Standardize on one connection/cursor pattern — 359 scattered execute calls suggests some inconsistency worth checking"]
+    ]
+  },
+  {
+    title: "Phase 3 — Modularize the frontend",
+    desc: "index.html is 22,931 lines: the canvas renderer, UI, and game state all in one file.",
+    why: "This is your highest-risk, highest-reward area. A single 23k-line file means every frontend change is a scroll-and-search exercise, and it's the file most likely to touch when adding new UI. It's also the riskiest to split since there's no build step currently — check if you want to introduce one (esbuild/vite) or split via plain <script> tags.",
+    items: [
+      ["Decide: introduce a lightweight bundler (esbuild is fast and simple) or split into plain script-tag modules — this decision shapes everything else", "risk-high"],
+      ["Extract the isometric canvas renderer into its own module — it's the most self-contained, least-coupled piece", "risk-med"],
+      ["Extract game state management (world data, player state) into its own module, separate from rendering", "risk-med"],
+      ["Extract UI components (palette, HUD, dialogs) — these are the pieces most likely to change for a new feature", "risk-med"],
+      ["i18n.js is already separate — good precedent to follow for the rest of the split"]
+    ]
+  },
+  {
+    title: "Phase 4 — Land the new feature",
+    desc: "Once the structure supports it, the actual feature work should be the easy part.",
+    why: "This is deliberately last. Building the feature into a cleaner structure means one PR, not one PR plus a parallel refactor fight.",
+    items: [
+      ["Confirm which Blueprint(s) and frontend module(s) the feature touches — if it's brand new domain, this is where it gets its own Blueprint from day one", "risk-low"],
+      ["Add its schema changes through the Phase 2 migration tool rather than a manual ALTER TABLE", "risk-low"],
+      ["Write its smoke tests alongside the code, extending the Phase 0 safety net rather than leaving it as the only untested surface again"]
+    ]
+  }
+];
+ 
+const container = document.getElementById('phases');
+let totalItems = 0;
+ 
+phases.forEach((phase, pi) => {
+  const el = document.createElement('div');
+  el.className = 'phase';
+  if (pi === 0) el.classList.add('open');
+ 
+  const itemsHtml = phase.items.map((it, ii) => {
+    const [text, risk] = it;
+    totalItems++;
+    const tag = risk ? `<span class="tag ${risk}">${risk === 'risk-high' ? 'High risk' : risk === 'risk-med' ? 'Medium risk' : 'Low risk'}</span>` : '';
+    return `<label class="item" data-phase="${pi}" data-item="${ii}">
+      <input type="checkbox" onchange="toggleItem(this)">
+      <span class="item-text">${text}</span>
+      ${tag}
+    </label>`;
+  }).join('');
+ 
+  el.innerHTML = `
+    <div class="phase-head" onclick="togglePhase(this.parentElement)">
+      <div class="phase-num">${pi}</div>
+      <div class="phase-title-wrap">
+        <div class="phase-title">${phase.title}</div>
+        <div class="phase-desc">${phase.desc}</div>
+      </div>
+      <div class="phase-count" id="count-${pi}">0/${phase.items.length}</div>
+      <div class="chevron">&#9656;</div>
+    </div>
+    <div class="phase-body">
+      <div class="why">${phase.why}</div>
+      ${itemsHtml}
+    </div>
+  `;
+  container.appendChild(el);
+});
+ 
+function togglePhase(phaseEl) {
+  phaseEl.classList.toggle('open');
+}
+ 
+function toggleItem(checkbox) {
+  const item = checkbox.closest('.item');
+  item.classList.toggle('done', checkbox.checked);
+  const phaseIdx = item.dataset.phase;
+  const phaseEl = document.querySelectorAll('.phase')[phaseIdx];
+  const checked = phaseEl.querySelectorAll('input[type=checkbox]:checked').length;
+  const total = phaseEl.querySelectorAll('input[type=checkbox]').length;
+  document.getElementById('count-' + phaseIdx).textContent = checked + '/' + total;
+  updateOverall();
+}
+ 
+function updateOverall() {
+  const all = document.querySelectorAll('input[type=checkbox]');
+  const checked = document.querySelectorAll('input[type=checkbox]:checked').length;
+  const pct = all.length ? Math.round((checked / all.length) * 100) : 0;
+  document.getElementById('fill').style.width = pct + '%';
+  document.getElementById('proglabel').textContent = checked + ' of ' + all.length + ' steps checked';
+}
+ 
+updateOverall();
+</script>
+</body>
+</html>
+ 
+
+Explain
+Voice Typing
+
+Ready for your note — just start speaking...
+Copy
+Play 
+Alt
+A
+
+Save to Library
+Alt
+L
+
+Dictate
+Alt
+S
+
+Settings
+
