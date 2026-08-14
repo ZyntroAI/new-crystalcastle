@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VS Code Web Prototype v3</title>
+  <style>
+    :root {
+      --bg: #1e1e1e;
+      --bg-elev: #252526;
+      --bg-elev-2: #2d2d30;
+      --bg-elev-3: #333333;
+      --bg-title: #181818;
+      --line: #3c3c3c;
+      --text: #cccccc;
+      --muted: #8c8c8c;
+      --accent: #007acc;
+      --accent-2: #0e639c;
+      --ok: #73c991;
+      --warn: #dcdcaa;
+      --err: #f48771;
+      --shadow: 0 12px 28px rgba(0,0,0,.38);
+      --activity-width: 48px;
+      --sidebar-width: 300px;
+      --panel-height: 230px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; background: var(--bg); color: var(--text); font-family: Inter, Segoe UI, system-ui, sans-serif; }
+    button, input, select, textarea { font: inherit; }
+    body { overflow: hidden; }
+
+    .app {
+      height: 100vh;
+      display: grid;
+      grid-template-rows: 32px 1fr 24px;
+      background: var(--bg);
+    }
+
+    .titlebar {
+      background: var(--bg-title);
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      padding: 0 10px;
+      gap: 10px;
+      position: relative;
+      z-index: 20;
+    }
+    .menus { display: flex; align-items: center; gap: 2px; }
+    .menu-wrap { position: relative; }
+    .menu-btn {
+      background: transparent; color: var(--text); border: 0; border-radius: 4px; padding: 5px 10px; cursor: pointer;
+    }
+    .menu-btn:hover, .menu-btn.active { background: var(--bg-elev-3); color: #fff; }
+    .menu-dropdown {
+      position: absolute; top: 30px; left: 0; min-width: 220px; background: var(--bg-elev);
+      border: 1px solid var(--line); border-radius: 6px; box-shadow: var(--shadow); display: none; overflow: hidden; z-index: 50;
+    }
+    .menu-dropdown.open { display: block; }
+    .menu-item {
+      display: flex; justify-content: space-between; align-items: center; gap: 16px;
+      padding: 9px 12px; cursor: pointer; white-space: nowrap; border-bottom: 1px solid rgba(255,255,255,.04);
+    }
+    .menu-item:hover { background: var(--bg-elev-3); }
+    .menu-shortcut { color: var(--muted); font-size: 12px; }
+    .window-title { text-align: center; font-size: 12px; color: var(--muted); user-select: none; }
+    .title-actions { display: flex; gap: 8px; align-items: center; }
+    .title-chip {
+      font-size: 11px; color: #fff; background: var(--accent-2); padding: 3px 8px; border-radius: 999px;
+    }
+
+    .workbench {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: var(--activity-width) var(--sidebar-width) 4px 1fr;
+      transition: grid-template-columns .15s ease;
+    }
+    .activitybar {
+      background: var(--bg-title);
+      border-right: 1px solid var(--line);
+      display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 8px;
+    }
+    .activity-btn {
+      width: 36px; height: 36px; border: 0; background: transparent; color: var(--muted);
+      border-radius: 8px; cursor: pointer; position: relative; font-size: 18px;
+    }
+    .activity-btn:hover, .activity-btn.active { background: var(--bg-elev-2); color: #fff; }
+    .activity-btn.active::before {
+      content: ''; position: absolute; left: -8px; top: 5px; bottom: 5px; width: 3px; background: var(--accent); border-radius: 99px;
+    }
+    .activity-spacer { flex: 1; }
+
+    .sidebar {
+      background: var(--bg-elev);
+      border-right: 1px solid var(--line);
+      min-width: 180px; overflow: hidden; display: flex; flex-direction: column;
+    }
+    .sidebar.hidden { display: none; }
+    .sidebar-header {
+      height: 36px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between;
+      padding: 0 12px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: #fff;
+    }
+    .sidebar-body { min-height: 0; overflow: auto; padding: 10px; }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .resizer {
+      cursor: col-resize; background: transparent; position: relative;
+    }
+    .resizer:hover::after, .resizer.dragging::after {
+      content: ''; position: absolute; inset: 0 1px; background: var(--accent);
+    }
+
+    .editor-area {
+      min-width: 0; min-height: 0; display: grid; grid-template-rows: 35px 1fr 4px var(--panel-height);
+      background: var(--bg);
+    }
+    .tabs {
+      background: var(--bg-title); border-bottom: 1px solid var(--line); display: flex; align-items: stretch; overflow-x: auto; overflow-y: hidden;
+    }
+    .tab {
+      min-width: 140px; max-width: 240px; display: flex; align-items: center; justify-content: space-between;
+      gap: 8px; padding: 8px 12px; background: var(--bg-elev); border-right: 1px solid var(--line); cursor: pointer;
+      border-top: 2px solid transparent;
+    }
+    .tab.active { background: #1f1f1f; color: #fff; border-top-color: var(--accent); }
+    .tab-left { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tab-close { background: transparent; border: 0; color: var(--muted); cursor: pointer; }
+    .tab-close:hover { color: #fff; }
+
+    .editor-stack {
+      min-height: 0; position: relative; background: var(--bg);
+    }
+    .editor-view { position: absolute; inset: 0; display: none; }
+    .editor-view.active { display: block; }
+    .editor-empty {
+      position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 14px;
+    }
+
+    .panel-resizer { cursor: row-resize; position: relative; }
+    .panel-resizer:hover::after, .panel-resizer.dragging::after {
+      content: ''; position: absolute; inset: 1px 0; background: var(--accent);
+    }
+
+    .bottom-panel {
+      background: var(--bg-title); border-top: 1px solid var(--line); min-height: 120px; display: grid; grid-template-rows: 34px 1fr 40px;
+    }
+    .bottom-panel.hidden { display: none; }
+    .panel-header {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-bottom: 1px solid var(--line); background: #202020;
+    }
+    .panel-tabs { display: flex; gap: 8px; align-items: center; }
+    .panel-tab { font-size: 12px; padding: 4px 8px; border-radius: 4px; cursor: pointer; color: var(--muted); }
+    .panel-tab.active { color: #fff; background: var(--bg-elev-2); }
+    .panel-tools { display: flex; gap: 8px; }
+
+    .terminal-output {
+      overflow: auto; padding: 10px 12px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px; line-height: 1.55; background: #181818;
+    }
+    .line { white-space: pre-wrap; word-break: break-word; margin-bottom: 4px; }
+    .line.system { color: #9cdcfe; }
+    .line.ok { color: var(--ok); }
+    .line.warn { color: var(--warn); }
+    .line.err { color: var(--err); }
+
+    .terminal-input-row {
+      display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: center; border-top: 1px solid var(--line); padding: 8px 12px;
+      background: #151515;
+    }
+    .prompt {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--ok);
+    }
+    .terminal-input {
+      width: 100%; background: #101010; color: #fff; border: 1px solid #333; border-radius: 6px; padding: 8px 10px; outline: none;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .statusbar {
+      background: var(--accent); color: #fff; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 0 10px; font-size: 12px;
+    }
+    .status-left, .status-right { display: flex; gap: 12px; align-items: center; overflow: hidden; }
+    .status-item { white-space: nowrap; cursor: pointer; }
+
+    .toolbar { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+    .btn, .input, .select {
+      border: 1px solid var(--line); background: var(--bg-elev-2); color: var(--text); border-radius: 6px; padding: 8px 10px;
+    }
+    .btn { cursor: pointer; }
+    .btn:hover { background: #3a3a3d; }
+    .btn.danger:hover { background: #7c2a2a; }
+    .input, .select { width: 100%; }
+    .muted { color: var(--muted); font-size: 12px; }
+    .row-card {
+      display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 6px; cursor: pointer; margin-bottom: 4px;
+    }
+    .row-card:hover { background: var(--bg-elev-3); }
+    .row-main { min-width: 0; }
+    .row-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .row-sub { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tag { font-size: 11px; padding: 2px 7px; border-radius: 999px; background: #163b52; color: #9cdcfe; white-space: nowrap; }
+    .tree-children { margin-left: 14px; border-left: 1px dashed #454545; padding-left: 10px; }
+
+    .palette {
+      position: fixed; inset: 0; background: rgba(0,0,0,.4); display: none; place-items: start center; padding-top: 10vh; z-index: 100;
+    }
+    .palette.open { display: grid; }
+    .palette-card {
+      width: min(720px, 92vw); background: var(--bg-elev); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden;
+    }
+    .palette-input {
+      width: 100%; border: 0; outline: none; background: #1f1f1f; color: #fff; padding: 14px 16px; font-size: 15px;
+    }
+    .palette-list { max-height: 420px; overflow: auto; }
+    .palette-item { padding: 12px 16px; cursor: pointer; border-top: 1px solid rgba(255,255,255,.04); }
+    .palette-item:hover, .palette-item.active { background: var(--bg-elev-3); }
+    .palette-item small { color: var(--muted); }
+
+    .toast-wrap {
+      position: fixed; right: 16px; bottom: 40px; display: flex; flex-direction: column; gap: 8px; z-index: 120;
+    }
+    .toast {
+      background: #252526; border: 1px solid var(--line); color: #fff; padding: 10px 12px; border-radius: 8px; box-shadow: var(--shadow); min-width: 240px;
+    }
+
+    .context-menu {
+      position: fixed; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 6px; box-shadow: var(--shadow); z-index: 130; min-width: 160px; display: none;
+    }
+    .context-menu.open { display: block; }
+    .ctx-item { padding: 8px 12px; cursor: pointer; font-size: 13px; }
+    .ctx-item:hover { background: var(--bg-elev-3); }
+    .ctx-sep { border-top: 1px solid var(--line); margin: 4px 0; }
+
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.5); display: none; place-items: center; z-index: 140;
+    }
+    .modal-overlay.open { display: grid; }
+    .modal-card {
+      background: var(--bg-elev); border: 1px solid var(--line); border-radius: 10px; padding: 20px; width: min(400px, 90vw); box-shadow: var(--shadow);
+    }
+    .modal-title { margin: 0 0 12px; font-size: 16px; }
+    .modal-input { width: 100%; margin-bottom: 12px; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+    .settings-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .settings-row label { font-size: 13px; }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 920px) {
+      .workbench { grid-template-columns: var(--activity-width) minmax(220px, 38vw) 4px 1fr; }
+      .window-title { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="titlebar">
+      <div class="menus" id="menus"></div>
+      <div class="window-title">VS Code Web Prototype v3 · Monaco + Terminal + IndexedDB</div>
+      <div class="title-actions">
+        <span class="title-chip" id="monacoState">Monaco: loading...</span>
+        <span class="title-chip">Offline-ready</span>
+      </div>
+    </div>
+
+    <div class="workbench" id="workbench">
+      <aside class="activitybar" id="activitybar"></aside>
+
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <span id="sidebarTitle">Explorer</span>
+          <button class="btn" id="toggleSidebarBtn" title="Hide sidebar">×</button>
+        </div>
+        <div class="sidebar-body">
+          <section class="section active" data-section="explorer">
+            <div class="toolbar">
+              <button class="btn" id="newFileBtn">+ New File</button>
+              <button class="btn" id="newFolderBtn">+ Folder</button>
+              <button class="btn" id="openDirBtn" title="Open real folder">📂 Open Dir</button>
+            </div>
+            <div id="fileTree"></div>
+          </section>
+
+          <section class="section" data-section="search">
+            <input class="input" id="searchInput" placeholder="Search in files" />
+            <div class="muted" style="margin:8px 0 10px;">Live search across workspace</div>
+            <div id="searchResults"></div>
+          </section>
+
+          <section class="section" data-section="scm">
+            <div class="toolbar">
+              <button class="btn" id="stageAllBtn">Stage All</button>
+              <button class="btn" id="commitBtn">Commit</button>
+            </div>
+            <div id="scmList"></div>
+          </section>
+
+          <section class="section" data-section="debug">
+            <div class="toolbar">
+              <button class="btn" id="runBtn">Run</button>
+              <button class="btn" id="toggleBpBtn">Breakpoint</button>
+            </div>
+            <div id="debugList"></div>
+          </section>
+
+          <section class="section" data-section="extensions">
+            <input class="input" id="extSearchInput" placeholder="Search extensions" />
+            <div class="muted" style="margin:8px 0 10px;">Install, enable, disable extensions</div>
+            <div id="extensionsList"></div>
+          </section>
+
+          <section class="section" data-section="settings">
+            <div class="muted" style="margin-bottom:10px;">Editor Settings</div>
+            <div id="settingsList"></div>
+          </section>
+        </div>
+      </aside>
+
+      <div class="resizer" id="sidebarResizer" aria-hidden="true"></div>
+
+      <main class="editor-area">
+        <div class="tabs" id="tabs"></div>
+        <div class="editor-stack" id="editorStack">
+          <div class="editor-empty" id="editorEmpty">No file open</div>
+        </div>
+        <div class="panel-resizer" id="panelResizer" aria-hidden="true"></div>
+        <section class="bottom-panel" id="bottomPanel">
+          <div class="panel-header">
+            <div class="panel-tabs">
+              <div class="panel-tab active">TERMINAL</div>
+              <div class="panel-tab">PROBLEMS</div>
+              <div class="panel-tab">OUTPUT</div>
+            </div>
+            <div class="panel-tools">
+              <button class="btn" id="clearTerminalBtn">Clear</button>
+              <button class="btn" id="hideTerminalBtn">Hide</button>
+            </div>
+          </div>
+          <div class="terminal-output" id="terminalOutput"></div>
+          <div class="terminal-input-row">
+            <div class="prompt" id="terminalPrompt">user@webide:~$</div>
+            <input class="terminal-input" id="terminalInput" placeholder="Type a command" />
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="statusbar">
+      <div class="status-left">
+        <span class="status-item" id="statusBranch">⎇ main</span>
+        <span class="status-item" id="statusFiles">Files: 0</span>
+        <span class="status-item" id="statusMode">Mode: Editor</span>
+        <span class="status-item" id="statusCursor">Ln 1, Col 1</span>
+      </div>
+      <div class="status-right">
+        <span class="status-item" id="statusLanguage">Plain Text</span>
+        <span class="status-item">UTF-8</span>
+        <span class="status-item">LF</span>
+        <span class="status-item" id="statusClock"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="palette" id="palette">
+    <div class="palette-card">
+      <input class="palette-input" id="paletteInput" placeholder="Type a command or file name" />
+      <div class="palette-list" id="paletteList"></div>
+    </div>
+  </div>
+
+  <div class="context-menu" id="contextMenu">
+    <div class="ctx-item" data-action="rename">Rename</div>
+    <div class="ctx-item" data-action="duplicate">Duplicate</div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-item" data-action="delete" style="color:var(--err)">Delete</div>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-card">
+      <h3 class="modal-title" id="modalTitle">Input</h3>
+      <input class="input modal-input" id="modalInput" />
+      <div class="modal-actions">
+        <button class="btn" id="modalCancel">Cancel</button>
+        <button class="btn" id="modalOk" style="background:var(--accent);color:#fff;border-color:var(--accent)">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <script>
+    // ===================== Service Worker (inline) =====================
+    const swCode = `
+      self.addEventListener('install', e => self.skipWaiting());
+      self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
+      self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => new Response('Offline', {status: 503}))));
+    `;
+    if ('serviceWorker' in navigator) {
+      const blob = new Blob([swCode], { type: 'application/javascript' });
+      navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+    }
+
+    // ===================== Utilities =====================
+    const DB_NAME = 'vscode-web-prototype-v3';
+    const STORE = 'state';
+    let db;
+    let monacoReady = false;
+    let monacoLoadStarted = false;
+    const editors = new Map();
+    const models = new Map();
+    let paletteIndex = 0;
+    let paletteItemsCache = [];
+    let searchDebounce = null;
+    let ctxTarget = null;
+
+    function $(sel) { return document.querySelector(sel); }
+    function $all(sel) { return Array.from(document.querySelectorAll(sel)); }
+    function uid(prefix='id') { return prefix + '-' + Math.random().toString(36).slice(2, 9); }
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+    }
+    function activeFile() { return state.files.find(f => f.id === state.activeFileId) || null; }
+    function humanLang(id) {
+      const map = { javascript: 'JavaScript', typescript: 'TypeScript', html: 'HTML', css: 'CSS', json: 'JSON', markdown: 'Markdown', python: 'Python', plaintext: 'Plain Text' };
+      return map[id] || id;
+    }
+    function deepMerge(target, source) {
+      const out = structuredClone(target);
+      for (const key in source) {
+        if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+          out[key] = deepMerge(out[key] || {}, source[key]);
+        } else {
+          out[key] = source[key];
+        }
+      }
+      return out;
+    }
+    function limitArr(arr, max) { return arr.slice(-max); }
+
+    // ===================== Default State =====================
+    const defaultState = {
+      activeSection: 'explorer',
+      activeFileId: 'f-app',
+      sidebarVisible: true,
+      terminalVisible: true,
+      claudeMode: false,
+      cwd: '/',
+      commandHistory: [],
+      historyIndex: -1,
+      sidebarWidth: 300,
+      panelHeight: 230,
+      breakpoints: [],
+      scmLog: ['Initial scaffold imported'],
+      settings: { fontSize: 14, wordWrap: 'on', minimap: true, theme: 'vs-dark' },
+      folders: [
+        { id: 'd-root', name: 'workspace', expanded: true },
+        { id: 'd-src', name: 'src', expanded: true }
+      ],
+      extensions: [
+        { id: 'prettier', name: 'Prettier', installed: true, enabled: true },
+        { id: 'eslint', name: 'ESLint', installed: true, enabled: true },
+        { id: 'gitlens', name: 'GitLens', installed: false, enabled: false },
+        { id: 'material-theme', name: 'Material Theme', installed: false, enabled: false },
+        { id: 'markdown-all-in-one', name: 'Markdown All in One', installed: false, enabled: false }
+      ],
+      files: [
+        {
+          id: 'f-app', parentId: 'd-src', name: 'app.js', language: 'javascript', changed: false,
+          content: `const state = {
+  project: 'VS Code Web Prototype v3',
+  goals: ['monaco', 'tabs', 'search', 'terminal', 'indexeddb', 'filesystem']
+};
+
+function start() {
+  console.log('Booting prototype', state);
+}
+
+start();`
+        },
+        {
+          id: 'f-index', parentId: 'd-root', name: 'index.html', language: 'html', changed: false,
+          content: `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Prototype v3</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script src="app.js"><\/script>
+  </body>
+</html>`
+        },
+        {
+          id: 'f-style', parentId: 'd-src', name: 'styles.css', language: 'css', changed: false,
+          content: `:root { --accent: #007acc; }
+body {
+  margin: 0;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  font-family: Inter, system-ui, sans-serif;
+}`
+        },
+        {
+          id: 'f-readme', parentId: 'd-root', name: 'README.md', language: 'markdown', changed: false,
+          content: `# VS Code Web Prototype v3
+
+- Monaco editor via CDN
+- Multi-tab editing with real folder tree
+- Search panel (debounced)
+- Source control simulation
+- Terminal with Claude mode
+- IndexedDB persistence
+- File System Access API support
+- Settings panel`
+        }
+      ],
+      claudeTranscript: []
+    };
+
+    let state = structuredClone(defaultState);
+
+    const activityItems = [
+      { key: 'explorer', icon: '📁', label: 'Explorer' },
+      { key: 'search', icon: '🔎', label: 'Search' },
+      { key: 'scm', icon: '⑂', label: 'Source Control' },
+      { key: 'debug', icon: '▶', label: 'Run & Debug' },
+      { key: 'extensions', icon: '🧩', label: 'Extensions' },
+      { key: 'settings', icon: '⚙', label: 'Settings' }
+    ];
+
+    const menuConfig = {
+      File: [
+        ['New File', 'Ctrl+N'],
+        ['Open Folder', ''],
+        ['Save', 'Ctrl+S'],
+        ['Save All', ''],
+        ['Preferences', '']
+      ],
+      Edit: [
+        ['Undo', 'Ctrl+Z'],
+        ['Redo', 'Ctrl+Y'],
+        ['Cut', 'Ctrl+X'],
+        ['Copy', 'Ctrl+C'],
+        ['Paste', 'Ctrl+V'],
+        ['Find in Files', 'Ctrl+P']
+      ],
+      Selection: [
+        ['Select All', 'Ctrl+A'],
+        ['Expand Selection', 'Alt+Shift+→'],
+        ['Shrink Selection', 'Alt+Shift+←']
+      ],
+      View: [
+        ['Toggle Sidebar', 'Ctrl+B'],
+        ['Toggle Terminal', 'Ctrl+`'],
+        ['Command Palette', 'Ctrl+Shift+P'],
+        ['Zoom In', ''],
+        ['Zoom Out', '']
+      ],
+      Go: [
+        ['Go to File', 'Ctrl+P'],
+        ['Go to Symbol', ''],
+        ['Go to Line', 'Ctrl+G'],
+        ['Go to Definition', 'F12']
+      ],
+      Run: [
+        ['Run Active File', 'F5'],
+        ['Start Debugging', ''],
+        ['Toggle Breakpoint', 'F9']
+      ],
+      Terminal: [
+        ['New Terminal', ''],
+        ['Clear Terminal', ''],
+        ['Run Task', '']
+      ],
+      Help: [
+        ['Welcome', ''],
+        ['Keyboard Shortcuts', ''],
+        ['About Prototype', '']
+      ]
+    };
+
+    const commandPaletteActions = [
+      { label: 'File: New File', run: () => createFile() },
+      { label: 'File: Save', run: () => saveActiveFile() },
+      { label: 'View: Toggle Sidebar', run: () => toggleSidebar() },
+      { label: 'View: Toggle Terminal', run: () => toggleTerminal() },
+      { label: 'Search: Focus Search', run: () => { switchSection('search'); $('#searchInput').focus(); } },
+      { label: 'Run: Run Active File', run: () => runActiveFile() },
+      { label: 'Run: Toggle Breakpoint', run: () => toggleBreakpoint() },
+      { label: 'Terminal: Enter Claude Mode', run: () => { $('#terminalInput').value = 'claude'; handleTerminalCommand('claude'); } },
+      { label: 'Settings: Open Settings', run: () => switchSection('settings') }
+    ];
+
+    // ===================== IndexedDB =====================
+    async function openDb() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = () => {
+          const d = req.result;
+          if (!d.objectStoreNames.contains(STORE)) d.createObjectStore(STORE);
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+    async function getSavedState() {
+      return new Promise(resolve => {
+        const tx = db.transaction(STORE, 'readonly');
+        const req = tx.objectStore(STORE).get('app-state');
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => resolve(null);
+      });
+    }
+    function persistState() {
+      if (!db) return;
+      try {
+        state.commandHistory = limitArr(state.commandHistory, 500);
+        state.claudeTranscript = limitArr(state.claudeTranscript, 200);
+        const clean = JSON.parse(JSON.stringify(state));
+        const tx = db.transaction(STORE, 'readwrite');
+        tx.objectStore(STORE).put(clean, 'app-state');
+        tx.onerror = () => console.error('IndexedDB write failed');
+      } catch (e) {
+        console.error('Persist failed', e);
+      }
+    }
+
+    // ===================== UI Helpers =====================
+    function toast(msg) {
+      const el = document.createElement('div');
+      el.className = 'toast';
+      el.textContent = msg;
+      $('#toastWrap').appendChild(el);
+      setTimeout(() => el.remove(), 2200);
+    }
+    function setMonacoState(text, ok=false) {
+      const chip = $('#monacoState');
+      chip.textContent = text;
+      chip.style.background = ok ? '#107c41' : '#0e639c';
+    }
+
+    // Modal dialog (replaces prompt())
+    let modalResolve = null;
+    function showModal(title, defaultValue='') {
+      return new Promise(resolve => {
+        modalResolve = resolve;
+        $('#modalTitle').textContent = title;
+        $('#modalInput').value = defaultValue;
+        $('#modalOverlay').classList.add('open');
+        $('#modalInput').focus();
+        $('#modalInput').select();
+      });
+    }
+    function closeModal(val) {
+      $('#modalOverlay').classList.remove('open');
+      if (modalResolve) { modalResolve(val); modalResolve = null; }
+    }
+    $('#modalCancel').onclick = () => closeModal(null);
+    $('#modalOk').onclick = () => closeModal($('#modalInput').value);
+    $('#modalInput').onkeydown = e => { if (e.key === 'Enter') closeModal($('#modalInput').value); if (e.key === 'Escape') closeModal(null); };
+
+    // Context menu
+    function openContextMenu(x, y, targetId, type) {
+      ctxTarget = { id: targetId, type };
+      const menu = $('#contextMenu');
+      menu.style.left = x + 'px';
+      menu.style.top = y + 'px';
+      menu.classList.add('open');
+    }
+    function closeContextMenu() { $('#contextMenu').classList.remove('open'); ctxTarget = null; }
+    window.addEventListener('click', e => { if (!e.target.closest('#contextMenu')) closeContextMenu(); });
+    $all('#contextMenu .ctx-item').forEach(el => {
+      el.onclick = () => {
+        if (!ctxTarget) return;
+        const action = el.dataset.action;
+        if (action === 'rename') renameTarget(ctxTarget);
+        if (action === 'delete') deleteTarget(ctxTarget);
+        if (action === 'duplicate') duplicateTarget(ctxTarget);
+        closeContextMenu();
+      };
+    });
+
+    async function renameTarget({id, type}) {
+      if (type === 'file') {
+        const file = state.files.find(f => f.id === id);
+        if (!file) return;
+        const name = await showModal('Rename file', file.name);
+        if (!name || !name.trim()) return;
+        file.name = name.trim();
+        file.language = guessLanguage(file.name);
+        renderAll(); persistState();
+      } else {
+        const folder = state.folders.find(f => f.id === id);
+        if (!folder) return;
+        const name = await showModal('Rename folder', folder.name);
+        if (!name || !name.trim()) return;
+        folder.name = name.trim();
+        renderAll(); persistState();
+      }
+    }
+    async function deleteTarget({id, type}) {
+      if (type === 'file') {
+        const file = state.files.find(f => f.id === id);
+        if (!file) return;
+        const ok = await showModal(`Delete "${file.name}"? Type "yes" to confirm`);
+        if (ok !== 'yes') return;
+        closeFile(id);
+      } else {
+        const folder = state.folders.find(f => f.id === id);
+        if (!folder) return;
+        const ok = await showModal(`Delete folder "${folder.name}"? Type "yes" to confirm`);
+        if (ok !== 'yes') return;
+        state.folders = state.folders.filter(f => f.id !== id);
+        state.files = state.files.filter(f => f.parentId !== id);
+        if (!state.files.find(f => f.id === state.activeFileId)) {
+          state.activeFileId = state.files[0]?.id || null;
+        }
+        renderAll(); persistState();
+      }
+    }
+    function duplicateTarget({id, type}) {
+      if (type !== 'file') return toast('Can only duplicate files');
+      const file = state.files.find(f => f.id === id);
+      if (!file) return;
+      const newFile = { ...structuredClone(file), id: uid('f'), name: 'copy-of-' + file.name, changed: true };
+      state.files.push(newFile);
+      state.activeFileId = newFile.id;
+      renderAll(); persistState();
+    }
+
+    // ===================== Rendering =====================
+    function renderMenus() {
+      const root = $('#menus');
+      root.innerHTML = '';
+      Object.entries(menuConfig).forEach(([menu, items]) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'menu-wrap';
+        const btn = document.createElement('button');
+        btn.className = 'menu-btn';
+        btn.textContent = menu;
+        const dd = document.createElement('div');
+        dd.className = 'menu-dropdown';
+        items.forEach(([label, sc]) => {
+          const item = document.createElement('div');
+          item.className = 'menu-item';
+          item.innerHTML = `<span>${escapeHtml(label)}</span><span class="menu-shortcut">${escapeHtml(sc)}</span>`;
+          item.onclick = () => handleMenu(menu, label);
+          dd.appendChild(item);
+        });
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          closeMenus();
+          dd.classList.add('open');
+          btn.classList.add('active');
+        };
+        wrap.append(btn, dd);
+        root.appendChild(wrap);
+      });
+    }
+    function closeMenus() {
+      $all('.menu-dropdown').forEach(el => el.classList.remove('open'));
+      $all('.menu-btn').forEach(el => el.classList.remove('active'));
+    }
+
+    function renderActivityBar() {
+      const bar = $('#activitybar');
+      bar.innerHTML = '';
+      activityItems.forEach(item => {
+        const btn = document.createElement('button');
+        btn.className = 'activity-btn ' + (item.key === state.activeSection ? 'active' : '');
+        btn.textContent = item.icon;
+        btn.title = item.label;
+        btn.onclick = () => switchSection(item.key);
+        bar.appendChild(btn);
+      });
+      const spacer = document.createElement('div');
+      spacer.className = 'activity-spacer';
+      bar.append(spacer);
+    }
+
+    function renderSidebar() {
+      $('#sidebarTitle').textContent = activityItems.find(x => x.key === state.activeSection)?.label || 'Explorer';
+      $all('.section').forEach(sec => sec.classList.toggle('active', sec.dataset.section === state.activeSection));
+      $('#sidebar').classList.toggle('hidden', !state.sidebarVisible);
+      document.documentElement.style.setProperty('--sidebar-width', state.sidebarVisible ? `${state.sidebarWidth}px` : '0px');
+    }
+
+    function renderFileTree() {
+      const root = $('#fileTree');
+      root.innerHTML = '';
+      state.folders.forEach(folder => {
+        const head = document.createElement('div');
+        head.className = 'row-card';
+        head.innerHTML = `<div class="row-main"><div class="row-title">${folder.expanded ? '📂' : '📁'} ${escapeHtml(folder.name)}</div></div><span class="tag">folder</span>`;
+        head.oncontextmenu = e => { e.preventDefault(); openContextMenu(e.clientX, e.clientY, folder.id, 'folder'); };
+        head.onclick = () => { folder.expanded = !folder.expanded; renderFileTree(); persistState(); };
+        root.appendChild(head);
+        if (folder.expanded) {
+          const children = document.createElement('div');
+          children.className = 'tree-children';
+          const folderFiles = state.files.filter(f => f.parentId === folder.id);
+          folderFiles.forEach(file => {
+            const item = document.createElement('div');
+            item.className = 'row-card';
+            item.innerHTML = `<div class="row-main"><div class="row-title">📄 ${escapeHtml(file.name)}${file.changed ? ' ●' : ''}</div><div class="row-sub">${humanLang(file.language)}</div></div><span class="tag">${file.changed ? 'Modified' : 'Saved'}</span>`;
+            item.onclick = () => openFile(file.id);
+            item.oncontextmenu = e => { e.preventDefault(); openContextMenu(e.clientX, e.clientY, file.id, 'file'); };
+            children.appendChild(item);
+          });
+          if (!folderFiles.length) {
+            const empty = document.createElement('div');
+            empty.className = 'muted';
+            empty.style.padding = '4px 0 4px 8px';
+            empty.textContent = 'Empty folder';
+            children.appendChild(empty);
+          }
+          root.appendChild(children);
+        }
+      });
+      $('#statusFiles').textContent = `Files: ${state.files.length}`;
+    }
+
+    function renderTabs() {
+      const tabs = $('#tabs');
+      tabs.innerHTML = '';
+      state.files.forEach(file => {
+        const tab = document.createElement('div');
+        tab.className = 'tab ' + (file.id === state.activeFileId ? 'active' : '');
+        const left = document.createElement('div');
+        left.className = 'tab-left';
+        left.textContent = file.name + (file.changed ? ' ●' : '');
+        const close = document.createElement('button');
+        close.className = 'tab-close';
+        close.textContent = '×';
+        close.onclick = (e) => { e.stopPropagation(); closeFile(file.id); };
+        tab.append(left, close);
+        tab.onclick = () => openFile(file.id);
+        tabs.appendChild(tab);
+      });
+    }
+
+    function guessLanguage(name) {
+      const n = name.toLowerCase();
+      if (n.endsWith('.js')) return 'javascript';
+      if (n.endsWith('.ts')) return 'typescript';
+      if (n.endsWith('.html')) return 'html';
+      if (n.endsWith('.css')) return 'css';
+      if (n.endsWith('.json')) return 'json';
+      if (n.endsWith('.md')) return 'markdown';
+      if (n.endsWith('.py')) return 'python';
+      return 'plaintext';
+    }
+
+    function ensureEditorView(file) {
+      let wrap = document.getElementById('editor-' + file.id);
+      if (!wrap) {
+        wrap = document.createElement('div');
+        wrap.className = 'editor-view';
+        wrap.id = 'editor-' + file.id;
+        $('#editorStack').appendChild(wrap);
+      }
+      return wrap;
+    }
+
+    function createModelForFile(file) {
+      if (!window.monaco) return null;
+      if (models.has(file.id)) return models.get(file.id);
+      const model = monaco.editor.createModel(file.content, file.language);
+      model.onDidChangeContent(() => {
+        file.content = model.getValue();
+        file.changed = true;
+        renderTabs();
+        renderFileTree();
+        renderScm();
+        persistState();
+      });
+      models.set(file.id, model);
+      return model;
+    }
+
+    function createMonacoEditor(file) {
+      if (!monacoReady || !window.monaco) return;
+      const wrap = ensureEditorView(file);
+      if (editors.has(file.id)) {
+        const ed = editors.get(file.id);
+        if (!ed._isDisposed) return ed;
+        editors.delete(file.id);
+      }
+      const model = createModelForFile(file);
+      const editor = monaco.editor.create(wrap, {
+        model,
+        theme: state.settings.theme,
+        automaticLayout: true,
+        minimap: { enabled: state.settings.minimap },
+        fontSize: state.settings.fontSize,
+        lineNumbers: 'on',
+        roundedSelection: false,
+        scrollBeyondLastLine: false,
+        wordWrap: state.settings.wordWrap,
+        tabSize: 2,
+        smoothScrolling: true,
+      });
+      editor.onDidChangeCursorPosition(e => {
+        $('#statusCursor').textContent = `Ln ${e.position.lineNumber}, Col ${e.position.column}`;
+      });
+      editors.set(file.id, editor);
+      return editor;
+    }
+
+    function upgradeAllToMonaco() {
+      if (!monacoReady) return;
+      state.files.forEach(file => {
+        const wrap = ensureEditorView(file);
+        const existing = wrap.querySelector('textarea');
+        if (existing) existing.remove();
+        createMonacoEditor(file);
+      });
+      renderEditors();
+    }
+
+    function renderEditors() {
+      const empty = $('#editorEmpty');
+      if (!state.files.length || !state.activeFileId) {
+        empty.classList.remove('hidden');
+        $all('.editor-view').forEach(v => v.classList.remove('active'));
+        return;
+      }
+      empty.classList.add('hidden');
+      const file = activeFile();
+      if (!file) return;
+      state.files.forEach(f => ensureEditorView(f));
+      $all('.editor-view').forEach(v => v.classList.toggle('active', v.id === 'editor-' + file.id));
+      if (monacoReady) {
+        createMonacoEditor(file);
+        const editor = editors.get(file.id);
+        if (editor && !editor._isDisposed) {
+          editor.focus();
+          editor.layout();
+          editor.setModel(createModelForFile(file));
+          editor.updateOptions({
+            theme: state.settings.theme,
+            fontSize: state.settings.fontSize,
+            minimap: { enabled: state.settings.minimap },
+            wordWrap: state.settings.wordWrap
+          });
+        }
+      } else {
+        const wrap = ensureEditorView(file);
+        let ta = wrap.querySelector('textarea');
+        if (!ta) {
+          ta = document.createElement('textarea');
+          ta.style.cssText = 'width:100%;height:100%;background:#1e1e1e;color:#d4d4d4;border:0;outline:none;padding:12px 16px;font:14px Consolas,monospace;line-height:1.6;resize:none;';
+          ta.oninput = () => {
+            file.content = ta.value;
+            file.changed = true;
+            renderTabs(); renderFileTree(); renderScm(); persistState();
+          };
+          ta.onkeyup = ta.onclick = () => updateCursorFromTextarea(ta);
+          wrap.appendChild(ta);
+        }
+        ta.value = file.content;
+      }
+      $('#statusLanguage').textContent = humanLang(file.language);
+    }
+
+    function updateCursorFromTextarea(ta) {
+      const upTo = ta.value.slice(0, ta.selectionStart);
+      const lines = upTo.split('\n');
+      $('#statusCursor').textContent = `Ln ${lines.length}, Col ${lines[lines.length - 1].length + 1}`;
+    }
+
+    function openFile(id) {
+      state.activeFileId = id;
+      renderTabs();
+      renderEditors();
+      persistState();
+    }
+
+    function closeFile(id) {
+      if (state.files.length === 1) return toast('Must keep at least 1 file');
+      const idx = state.files.findIndex(f => f.id === id);
+      if (idx === -1) return;
+      const removed = state.files.splice(idx, 1)[0];
+      if (models.has(removed.id)) { models.get(removed.id).dispose(); models.delete(removed.id); }
+      if (editors.has(removed.id)) { editors.get(removed.id).dispose(); editors.delete(removed.id); }
+      document.getElementById('editor-' + removed.id)?.remove();
+      if (state.activeFileId === removed.id) {
+        state.activeFileId = state.files[Math.max(0, idx - 1)]?.id || state.files[0]?.id || null;
+      }
+      renderAll();
+      persistState();
+    }
+
+    async function createFile() {
+      const name = await showModal('New file name', `file-${state.files.length + 1}.txt`);
+      if (!name || !name.trim()) return;
+      const trimmed = name.trim();
+      if (state.files.some(f => f.name === trimmed)) return toast('File already exists');
+      const parent = state.folders[0]?.id || 'd-root';
+      const file = { id: uid('f'), parentId: parent, name: trimmed, language: guessLanguage(trimmed), changed: true, content: '' };
+      state.files.push(file);
+      state.activeFileId = file.id;
+      renderAll();
+      persistState();
+      toast('Created ' + trimmed);
+    }
+
+    async function createFolder() {
+      const name = await showModal('New folder name', `folder-${state.folders.length + 1}`);
+      if (!name || !name.trim()) return;
+      const trimmed = name.trim();
+      if (state.folders.some(f => f.name === trimmed)) return toast('Folder already exists');
+      state.folders.push({ id: uid('d'), name: trimmed, expanded: true });
+      renderFileTree();
+      persistState();
+      toast('Created folder ' + trimmed);
+    }
+
+    function saveActiveFile() {
+      const file = activeFile();
+      if (!file) return;
+      file.changed = false;
+      renderTabs();
+      renderFileTree();
+      renderScm();
+      persistState();
+      appendTerminal(`Saved ${file.name}`, 'ok');
+      toast(`Saved ${file.name}`);
+    }
+
+    function saveAllFiles() {
+      state.files.forEach(f => f.changed = false);
+      renderTabs(); renderFileTree(); renderScm(); persistState();
+      appendTerminal('Saved all files', 'ok');
+      toast('All files saved');
+    }
+
+    function switchSection(key) {
+      state.activeSection = key;
+      renderActivityBar();
+      renderSidebar();
+      persistState();
+    }
+
+    function renderSearchResults(query='') {
+      const box = $('#searchResults');
+      box.innerHTML = '';
+      const q = query.trim().toLowerCase();
+      if (!q) {
+        box.innerHTML = '<div class="muted">Type to search</div>';
+        return;
+      }
+      let count = 0;
+      state.files.forEach(file => {
+        file.content.split('\n').forEach((line, idx) => {
+          if (line.toLowerCase().includes(q)) {
+            count++;
+            const row = document.createElement('div');
+            row.className = 'row-card';
+            row.innerHTML = `<div class="row-main"><div class="row-title">${escapeHtml(file.name)}</div><div class="row-sub">Ln ${idx + 1}: ${escapeHtml(line.slice(0, 120))}</div></div><span class="tag">Hit</span>`;
+            row.onclick = () => {
+              openFile(file.id);
+              if (monacoReady && editors.get(file.id)) {
+                const ed = editors.get(file.id);
+                ed.revealLineInCenter(idx + 1);
+                ed.setPosition({ lineNumber: idx + 1, column: Math.max(1, line.toLowerCase().indexOf(q) + 1) });
+                ed.focus();
+              }
+            };
+            box.appendChild(row);
+          }
+        });
+      });
+      if (!count) box.innerHTML = '<div class="muted">No results</div>';
+    }
+
+    function renderScm() {
+      const list = $('#scmList');
+      list.innerHTML = '';
+      const changed = state.files.filter(f => f.changed);
+      if (!changed.length) {
+        list.innerHTML = '<div class="muted">Working tree clean</div>';
+        return;
+      }
+      changed.forEach(file => {
+        const row = document.createElement('div');
+        row.className = 'row-card';
+        row.innerHTML = `<div class="row-main"><div class="row-title">${escapeHtml(file.name)}</div><div class="row-sub">Modified</div></div><span class="tag">M</span>`;
+        row.onclick = () => openFile(file.id);
+        list.appendChild(row);
+      });
+    }
+
+    function renderDebug() {
+      const list = $('#debugList');
+      list.innerHTML = '';
+      const info = [
+        ['Active file', activeFile()?.name || '-'],
+        ['Breakpoints', String(state.breakpoints.length)],
+        ['Last run', 'Simulated runtime'],
+      ];
+      info.forEach(([title, value]) => {
+        const row = document.createElement('div');
+        row.className = 'row-card';
+        row.innerHTML = `<div class="row-main"><div class="row-title">${escapeHtml(title)}</div></div><span class="tag">${escapeHtml(value)}</span>`;
+        list.appendChild(row);
+      });
+    }
+
+    function renderExtensions(filter='') {
+      const list = $('#extensionsList');
+      list.innerHTML = '';
+      const q = filter.trim().toLowerCase();
+      state.extensions.filter(ext => !q || ext.name.toLowerCase().includes(q)).forEach(ext => {
+        const row = document.createElement('div');
+        row.className = 'row-card';
+        const right = document.createElement('button');
+        right.className = 'btn';
+        right.textContent = ext.installed ? (ext.enabled ? 'Disable' : 'Enable') : 'Install';
+        right.onclick = (e) => {
+          e.stopPropagation();
+          if (!ext.installed) { ext.installed = true; ext.enabled = true; }
+          else { ext.enabled = !ext.enabled; }
+          renderExtensions($('#extSearchInput').value || '');
+          persistState();
+        };
+        row.innerHTML = `<div class="row-main"><div class="row-title">${escapeHtml(ext.name)}</div><div class="row-sub">${ext.installed ? 'Installed' : 'Marketplace'}</div></div>`;
+        row.appendChild(right);
+        list.appendChild(row);
+      });
+    }
+
+    function renderSettings() {
+      const box = $('#settingsList');
+      box.innerHTML = '';
+      const s = state.settings;
+      const rows = [
+        { label: 'Font Size', key: 'fontSize', type: 'number', min: 8, max: 32 },
+        { label: 'Word Wrap', key: 'wordWrap', type: 'select', opts: ['on', 'off', 'wordWrapColumn', 'bounded'] },
+        { label: 'Minimap', key: 'minimap', type: 'toggle' },
+        { label: 'Theme', key: 'theme', type: 'select', opts: ['vs-dark', 'vs', 'hc-black'] }
+      ];
+      rows.forEach(row => {
+        const wrap = document.createElement('div');
+        wrap.className = 'settings-row';
+        const label = document.createElement('label');
+        label.textContent = row.label;
+        let control;
+        if (row.type === 'number') {
+          control = document.createElement('input');
+          control.type = 'number';
+          control.className = 'input';
+          control.style.width = '80px';
+          control.value = s[row.key];
+          control.min = row.min; control.max = row.max;
+          control.onchange = () => { s[row.key] = +control.value; applySettings(); };
+        } else if (row.type === 'select') {
+          control = document.createElement('select');
+          control.className = 'select';
+          control.style.width = '140px';
+          row.opts.forEach(o => { const opt = document.createElement('option'); opt.value = o; opt.textContent = o; if (s[row.key] === o) opt.selected = true; control.appendChild(opt); });
+          control.onchange = () => { s[row.key] = control.value; applySettings(); };
+        } else {
+          control = document.createElement('button');
+          control.className = 'btn';
+          control.textContent = s[row.key] ? 'Enabled' : 'Disabled';
+          control.onclick = () => { s[row.key] = !s[row.key]; control.textContent = s[row.key] ? 'Enabled' : 'Disabled'; applySettings(); };
+        }
+        wrap.append(label, control);
+        box.appendChild(wrap);
+      });
+    }
+
+    function applySettings() {
+      persistState();
+      if (monacoReady) {
+        editors.forEach(ed => {
+          if (!ed._isDisposed) ed.updateOptions({
+            theme: state.settings.theme,
+            fontSize: state.settings.fontSize,
+            minimap: { enabled: state.settings.minimap },
+            wordWrap: state.settings.wordWrap
+          });
+        });
+      }
+      toast('Settings applied');
+    }
+
+    function renderStatusbar() {
+      $('#statusMode').textContent = `Mode: ${state.claudeMode ? 'Claude REPL' : 'Editor'}`;
+      $('#statusFiles').textContent = `Files: ${state.files.length}`;
+      $('#statusLanguage').textContent = humanLang(activeFile()?.language || 'plaintext');
+      $('#statusClock').textContent = new Date().toLocaleTimeString('th-TH');
+      $('#terminalPrompt').textContent = state.claudeMode ? 'claude>' : 'user@webide:~$';
+      document.documentElement.style.setProperty('--panel-height', `${state.panelHeight}px`);
+      document.documentElement.style.setProperty('--sidebar-width', `${state.sidebarVisible ? state.sidebarWidth : 0}px`);
+    }
+
+    // ===================== Terminal =====================
+    function appendTerminal(text, type='') {
+      const div = document.createElement('div');
+      div.className = 'line ' + type;
+      div.textContent = text;
+      $('#terminalOutput').appendChild(div);
+      $('#terminalOutput').scrollTop = $('#terminalOutput').scrollHeight;
+    }
+    async function streamTerminal(text, type='system', delay=8) {
+      const div = document.createElement('div');
+      div.className = 'line ' + type;
+      $('#terminalOutput').appendChild(div);
+      for (const ch of text) {
+        div.textContent += ch;
+        $('#terminalOutput').scrollTop = $('#terminalOutput').scrollHeight;
+        await new Promise(r => setTimeout(r, delay));
+      }
+    }
+    function clearTerminal() {
+      $('#terminalOutput').innerHTML = '';
+      appendTerminal('Terminal cleared', 'system');
+    }
+
+    function runActiveFile() {
+      const file = activeFile();
+      if (!file) return;
+      appendTerminal(`Running ${file.name}...`, 'system');
+      setTimeout(() => appendTerminal(`Execution finished for ${file.name}`, 'ok'), 320);
+    }
+    function toggleBreakpoint() {
+      const file = activeFile();
+      if (!file) return;
+      const key = `${file.id}:1`;
+      if (state.breakpoints.includes(key)) state.breakpoints = state.breakpoints.filter(x => x !== key);
+      else state.breakpoints.push(key);
+      renderDebug();
+      persistState();
+      appendTerminal(`Breakpoint ${state.breakpoints.includes(key) ? 'added' : 'removed'} on ${file.name}:1`, 'warn');
+    }
+
+    async function handleTerminalCommand(raw) {
+      const input = raw.trim();
+      if (!input) return;
+      appendTerminal(`${state.claudeMode ? 'claude>' : 'user@webide:~$'} ${input}`);
+      state.commandHistory.push(input);
+      state.historyIndex = state.commandHistory.length;
+      persistState();
+
+      if (state.claudeMode) {
+        await handleClaudeCommand(input);
+        return;
+      }
+
+      const [cmd, ...rest] = input.split(/\s+/);
+      const arg = rest.join(' ');
+      switch (cmd) {
+        case 'help':
+          appendTerminal('Commands: help, ls, cat, echo, pwd, cd, touch, mkdir, rm, clear, date, whoami, history, env, git, npm, node, python, open, save, theme, find, grep, calc, claude, settings, exit', 'system');
+          break;
+        case 'ls': appendTerminal(state.files.map(f => f.name).join('  ') || '(empty)', 'system'); break;
+        case 'cat': {
+          const file = state.files.find(f => f.name === arg);
+          appendTerminal(file ? file.content : `cat: ${arg}: No such file`, file ? 'system' : 'err');
+          break;
+        }
+        case 'echo': appendTerminal(arg, 'system'); break;
+        case 'pwd': appendTerminal(state.cwd, 'system'); break;
+        case 'cd': state.cwd = arg || '/'; appendTerminal(state.cwd, 'system'); persistState(); break;
+        case 'touch':
+          if (!arg) appendTerminal('touch: missing filename', 'err');
+          else {
+            const parent = state.folders[0]?.id || 'd-root';
+            const file = { id: uid('f'), parentId: parent, name: arg, language: guessLanguage(arg), changed: true, content: '' };
+            state.files.push(file);
+            state.activeFileId = file.id;
+            renderAll(); persistState(); appendTerminal(`created ${arg}`, 'ok');
+          }
+          break;
+        case 'mkdir':
+          if (!arg) appendTerminal('mkdir: missing folder name', 'err');
+          else { state.folders.push({ id: uid('d'), name: arg, expanded: true }); renderFileTree(); persistState(); appendTerminal(`folder ${arg} created`, 'ok'); }
+          break;
+        case 'rm': {
+          const idx = state.files.findIndex(f => f.name === arg);
+          if (idx === -1) appendTerminal(`rm: ${arg}: No such file`, 'err');
+          else {
+            closeFile(state.files[idx].id);
+            appendTerminal(`removed ${arg}`, 'ok');
+          }
+          break;
+        }
+        case 'clear': clearTerminal(); break;
+        case 'date': appendTerminal(new Date().toString(), 'system'); break;
+        case 'whoami': appendTerminal('web-ide-user', 'system'); break;
+        case 'history': appendTerminal(state.commandHistory.join('\n'), 'system'); break;
+        case 'env': appendTerminal('SHELL=prototype\nTERM=xterm-256color\nEDITOR=monaco\nPERSISTENCE=indexeddb\nVERSION=v3', 'system'); break;
+        case 'git': handleGit(rest); break;
+        case 'npm': handleNpm(rest); break;
+        case 'node': appendTerminal('Node.js runtime simulated: console output placeholder', 'warn'); break;
+        case 'python': appendTerminal('Python runtime simulated: print("hello from prototype")', 'warn'); break;
+        case 'open': {
+          const f = state.files.find(x => x.name === arg);
+          if (!f) appendTerminal(`open: ${arg}: No such file`, 'err');
+          else { openFile(f.id); appendTerminal(`opened ${f.name}`, 'ok'); }
+          break;
+        }
+        case 'save': saveActiveFile(); break;
+        case 'theme': appendTerminal(`Theme: ${state.settings.theme}`, 'system'); break;
+        case 'find': {
+          if (!arg) { appendTerminal('find: missing pattern', 'err'); break; }
+          const hits = [];
+          state.files.forEach(f => {
+            f.content.split('\n').forEach((line, i) => { if (line.includes(arg)) hits.push(`${f.name}:${i+1}`); });
+          });
+          appendTerminal(hits.join('\n') || 'No matches', 'system');
+          break;
+        }
+        case 'grep': {
+          if (!arg) { appendTerminal('grep: missing pattern', 'err'); break; }
+          const hits = [];
+          state.files.forEach(f => {
+            f.content.split('\n').forEach((line, i) => { if (line.toLowerCase().includes(arg.toLowerCase())) hits.push(`${f.name}:${i+1}: ${line.slice(0,80)}`); });
+          });
+          appendTerminal(hits.join('\n') || 'No matches', 'system');
+          break;
+        }
+        case 'calc': {
+          try { appendTerminal(String(Function('"use strict"; return (' + arg + ')')()), 'ok'); }
+          catch { appendTerminal('calc: invalid expression', 'err'); }
+          break;
+        }
+        case 'settings':
+          switchSection('settings');
+          appendTerminal('Opened settings panel', 'ok');
+          break;
+        case 'claude':
+          state.claudeMode = true;
+          renderStatusbar(); persistState();
+          appendTerminal('Entered Claude Code REPL. Try /help, /tools, /model, /compact, /exit', 'ok');
+          break;
+        case 'exit': appendTerminal('Nothing to exit. Use claude to enter REPL first.', 'warn'); break;
+        default: appendTerminal(`command not found: ${cmd}`, 'err');
+      }
+    }
+
+    function handleGit(args) {
+      const sub = args[0] || 'status';
+      if (sub === 'status') {
+        const changed = state.files.filter(f => f.changed).map(f => `modified: ${f.name}`).join('\n') || 'working tree clean';
+        appendTerminal(changed, 'system');
+      } else if (sub === 'add') {
+        appendTerminal('Changes staged (simulated)', 'ok');
+      } else if (sub === 'commit') {
+        const msg = args.join(' ').replace(/^commit\s+-m\s+/, '') || 'prototype commit';
+        state.files.forEach(f => f.changed = false);
+        state.scmLog.push(msg);
+        renderTabs(); renderFileTree(); renderScm(); persistState();
+        appendTerminal(`[main] ${msg}`, 'ok');
+      } else if (sub === 'log') {
+        appendTerminal(state.scmLog.map((m, i) => `${state.scmLog.length - i}. ${m}`).join('\n'), 'system');
+      } else if (sub === 'push') {
+        appendTerminal('Pushed to origin/main (simulated)', 'ok');
+      } else {
+        appendTerminal(`git ${sub}: not implemented`, 'warn');
+      }
+    }
+
+    function handleNpm(args) {
+      const sub = args[0] || 'run';
+      if (sub === 'install') appendTerminal('installed dependencies (simulated)', 'ok');
+      else if (sub === 'start') appendTerminal('dev server started at http://localhost:3000 (simulated)', 'ok');
+      else if (sub === 'test') appendTerminal('3 tests passed (simulated)', 'ok');
+      else if (sub === 'build') appendTerminal('build complete in 0.9s (simulated)', 'ok');
+      else appendTerminal(`npm ${sub}: script executed (simulated)`, 'system');
+    }
+
+    async function handleClaudeCommand(input) {
+      if (input === '/exit') {
+        state.claudeMode = false;
+        renderStatusbar(); persistState();
+        appendTerminal('Exited Claude Code REPL', 'ok');
+        return;
+      }
+      if (input === '/help') { appendTerminal('/help  /tools  /model  /compact  /clear  /exit', 'system'); return; }
+      if (input === '/tools') { appendTerminal('Tools: Read, Edit, Search, Refactor (simulated)', 'system'); return; }
+      if (input === '/model') { appendTerminal('Model: simulated-claude-code', 'system'); return; }
+      if (input === '/compact') { appendTerminal('Conversation compacted (simulated)', 'system'); return; }
+      if (input === '/clear') { clearTerminal(); return; }
+
+      const toolLine = /read|open|show/i.test(input)
+        ? 'Tool call: Read(active file)'
+        : /refactor|rename|edit|rewrite/i.test(input)
+          ? 'Tool call: Edit(active file)'
+          : 'Tool call: Search(project context)';
+      await streamTerminal(toolLine, 'warn', 10);
+      const file = activeFile();
+      const reply = `Simulated Claude reply: I reviewed ${file ? file.name : 'the workspace'} and would preserve behavior while improving structure, naming, and maintainability. Your request was: "${input}".`;
+      await streamTerminal(reply, 'system', 7);
+      state.claudeTranscript.push({ role: 'user', content: input }, { role: 'assistant', content: reply });
+      persistState();
+    }
+
+    // ===================== Menu & Palette =====================
+    function handleMenu(menu, item) {
+      const key = `${menu}:${item}`;
+      closeMenus();
+      switch (key) {
+        case 'File:New File': createFile(); break;
+        case 'File:Open Folder': openRealFolder(); break;
+        case 'File:Save': saveActiveFile(); break;
+        case 'File:Save All': saveAllFiles(); break;
+        case 'Edit:Find in Files': switchSection('search'); $('#searchInput').focus(); break;
+        case 'View:Toggle Sidebar': toggleSidebar(); break;
+        case 'View:Toggle Terminal': toggleTerminal(); break;
+        case 'View:Command Palette': openPalette(); break;
+        case 'Run:Run Active File': runActiveFile(); break;
+        case 'Run:Toggle Breakpoint': toggleBreakpoint(); break;
+        case 'Terminal:Clear Terminal': clearTerminal(); break;
+        case 'Help:Keyboard Shortcuts': appendTerminal('Ctrl+S Save · Ctrl+B Sidebar · Ctrl+` Terminal · Ctrl+P Search · Ctrl+Shift+P Palette · F5 Run · F9 Breakpoint', 'system'); break;
+        case 'Help:About Prototype': appendTerminal('VS Code Web Prototype v3. Single-file shell with Monaco, real folder tree, terminal, Claude mode, IndexedDB, and File System Access API.', 'system'); break;
+        default: appendTerminal(`Action executed: ${menu} › ${item}`, 'system');
+      }
+    }
+
+    function toggleSidebar() {
+      state.sidebarVisible = !state.sidebarVisible;
+      renderSidebar();
+      persistState();
+    }
+    function toggleTerminal() {
+      state.terminalVisible = !state.terminalVisible;
+      $('#bottomPanel').classList.toggle('hidden', !state.terminalVisible);
+      persistState();
+    }
+
+    function openPalette() {
+      $('#palette').classList.add('open');
+      $('#paletteInput').value = '';
+      paletteIndex = 0;
+      renderPalette('');
+      $('#paletteInput').focus();
+    }
+    function closePalette() {
+      $('#palette').classList.remove('open');
+    }
+    function renderPalette(query='') {
+      const list = $('#paletteList');
+      const q = query.trim().toLowerCase();
+      const fileItems = state.files.map(f => ({ label: `Open File: ${f.name}`, sub: humanLang(f.language), run: () => openFile(f.id) }));
+      const items = [...commandPaletteActions.map(x => ({ label: x.label, sub: 'Command', run: x.run })), ...fileItems]
+        .filter(item => !q || item.label.toLowerCase().includes(q) || item.sub.toLowerCase().includes(q));
+      paletteItemsCache = items;
+      if (!items.length) {
+        list.innerHTML = '<div class="palette-item">No matches</div>';
+        return;
+      }
+      paletteIndex = Math.min(paletteIndex, items.length - 1);
+      list.innerHTML = '';
+      items.forEach((item, idx) => {
+        const row = document.createElement('div');
+        row.className = 'palette-item ' + (idx === paletteIndex ? 'active' : '');
+        row.innerHTML = `${escapeHtml
