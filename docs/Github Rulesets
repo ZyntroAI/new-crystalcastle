@@ -1,0 +1,348 @@
+🇹🇭 GitHub Rulesets สำหรับ new-crystalcastle
+
+ลิงก์ที่ส่งมาคือเอกสารทางการของ GitHub เรื่อง Rulesets ซึ่งเหมาะกับ architecture ที่เรากำลังทำมากกว่า branch protection แบบกระจัดกระจาย เพราะ Rulesets สามารถกำหนดหลายกฎกับ branch เดียวกัน และกฎที่ซ้อนกันจะถูกรวมกัน โดยเวอร์ชันที่เข้มงวดกว่าจะมีผล 
+
+สำหรับ ZyntroAI/new-crystalcastle ผมแนะนำให้ใช้ Ruleset เป็น governance layer และให้ GitHub Actions เป็น execution layer
+
+GitHub
+                       │
+              ┌────────┴────────┐
+              │                 │
+          Rulesets          Actions
+              │                 │
+       ┌──────┼──────┐          │
+       │      │      │          │
+      PR    Branch  Commit      CI
+       │      │      │          │
+       └──────┼──────┘          │
+              │                 │
+              └────────┬────────┘
+                       ▼
+               Required CI Gates
+                       │
+                       ▼
+                    Merge
+
+1. main production ruleset
+
+ชื่อ:
+
+CrystalCastle Production
+
+Target:
+
+main
+
+ตั้งเป็น Active
+
+แนะนำ rules:
+
+☑ Require a pull request before merging
+☑ Require approvals
+☑ Dismiss stale approvals
+☑ Require conversation resolution
+☑ Require status checks
+☑ Require branches to be up to date
+☑ Block force pushes
+☑ Restrict deletions
+
+Rulesets รองรับการ target branch ด้วย pattern และสามารถกำหนด PR, status checks, signed commits, force-push restrictions และอื่น ๆ ได้โดยตรง 
+
+
+---
+
+2. Required CI Gate
+
+ตรงนี้สำคัญที่สุดกับ workflow ที่เราทำก่อนหน้านี้
+
+กำหนด required check เป็น:
+
+Required CI Gates
+
+แล้วให้ workflow สุดท้ายมี job ชื่อนี้จริง:
+
+jobs:
+  required-ci-gates:
+    name: Required CI Gates
+    runs-on: ubuntu-latest
+
+    needs:
+      - node
+      - python
+      - deno
+      - security
+      - dependency-review
+      - coderabbit
+
+    if: ${{ always() }}
+
+    steps:
+      - name: Evaluate required gates
+        run: |
+          if [[ \
+            "${{ needs.node.result }}" == "success" &&
+            "${{ needs.python.result }}" == "success" &&
+            "${{ needs.deno.result }}" == "success" &&
+            "${{ needs.security.result }}" == "success" &&
+            "${{ needs.dependency-review.result }}" == "success" &&
+            "${{ needs.coderabbit.result }}" == "success"
+          ]]; then
+            echo "All required CI gates passed."
+          else
+            echo "Required CI gate failed."
+            exit 1
+          fi
+
+จากนั้น Ruleset require:
+
+Required CI Gates
+
+GitHub ระบุว่า required status checks จะอ้างอิงชื่อของ job/check ดังนั้นชื่อ job ต้องคงที่ ไม่ควรเปลี่ยนไปมาเพราะมนุษย์เบื่อง่ายแล้ว CI ก็พังตาม 
+
+
+---
+
+3. Branch strategy
+
+สำหรับ branch ที่คุณบอกว่าต้องรวมทั้งหมด ผมแนะนำ:
+
+main
+├── develop
+├── feature/**
+├── fix/**
+├── chore/**
+├── refactor/**
+├── security/**
+└── dependabot/**
+
+แต่ไม่จำเป็นต้องใช้ ruleset เดียวกับทุก branch
+
+CrystalCastle Production
+└── main
+
+CrystalCastle Development
+└── develop
+
+CrystalCastle Release
+└── release/**
+
+CrystalCastle Tags
+└── v*
+
+Rulesets สามารถ target หลาย branch patterns และ exclude branches ที่ไม่ต้องการได้ด้วย fnmatch 
+
+
+---
+
+4. develop
+
+แนะนำ:
+
+CrystalCastle Development
+
+Target:
+
+develop
+
+Rules:
+
+☑ Pull request required
+☑ Required CI
+☑ Conversation resolution
+☑ Block force push
+
+Approval อาจเบากว่า main:
+
+main     → 1-2 approvals
+develop  → 0-1 approval
+
+
+---
+
+5. release/**
+
+CrystalCastle Release
+
+Target:
+
+release/**
+
+Rules:
+
+☑ Pull request
+☑ Required CI Gates
+☑ Dependency Review
+☑ Security
+☑ Conversation resolution
+☑ Block force push
+
+
+---
+
+6. Commit message governance
+
+Rulesets ยังรองรับ commit metadata restrictions ซึ่งเหมาะกับสิ่งที่คุณกำลังทำ pull_request_template.md และ commit-message governance อยู่แล้ว 
+
+ตัวอย่าง convention:
+
+feat: add OAuth callback
+fix: repair JWT validation
+refactor: split token service
+test: add OAuth tests
+ci: update required gates
+security: harden JWT configuration
+docs: update deployment guide
+chore: update dependencies
+
+ถ้าต้องการบังคับ issue number:
+
+feat(#59): upgrade react-leaflet
+fix(#59): repair OAuth callback
+
+แต่ควรใช้ regex ให้เหมาะกับรูปแบบ commit จริงของ repository เพราะ GitHub ระบุว่าการ squash merge จะทำให้ commits ที่รวมเข้ามาต้องผ่าน metadata requirements ของ target branch ด้วย 
+
+
+---
+
+7. Bypass
+
+อย่าให้ bypass เป็น:
+
+Everyone
+
+แนะนำ:
+
+Repository Admin
+Organization Owner
+Release/Deploy GitHub App
+Dependabot
+
+GitHub รองรับการกำหนด bypass ให้กับ roles, teams และ GitHub Apps รวมถึง Dependabot 
+
+Architecture:
+
+Normal Developer
+      │
+      ▼
+    PR
+      │
+      ▼
+Ruleset
+      │
+      ├── CI ❌ → Block
+      ├── Review ❌ → Block
+      └── All OK
+            │
+            ▼
+          Merge
+
+
+Emergency / Automation
+      │
+      ▼
+Authorized Bypass
+      │
+      ▼
+Ruleset bypass
+
+
+---
+
+8. PR #59
+
+สำหรับ PR #59:
+
+PR #59
+   │
+   ├── React / Node
+   ├── Python matrix
+   ├── Deno lint
+   ├── Deno test
+   ├── Dependency Review
+   ├── Security
+   ├── CodeRabbit
+   │
+   ▼
+Required CI Gates
+   │
+   ▼
+Ruleset: CrystalCastle Production
+   │
+   ├── Review
+   ├── Conversation resolved
+   └── Branch up-to-date
+          │
+          ▼
+        MERGE
+
+ตรงนี้สำคัญมาก: อย่าเอา CodeRabbit เป็น sole required gate ให้ CodeRabbit เป็นหนึ่งใน inputs แล้วใช้ Required CI Gates เป็น single merge gate เพราะจะทำให้เปลี่ยน provider หรือเพิ่ม checker ภายหลังได้โดยไม่ต้องแก้ Ruleset ทุกครั้ง
+
+
+---
+
+🇬🇧 Recommended final governance
+
+.github/
+├── workflows/
+│   ├── ci.yml
+│   ├── deno.yml
+│   ├── dependency-review.yml
+│   ├── security.yml
+│   ├── coderabbit.yml
+│   ├── required-ci-gates.yml
+│   └── pr-auto-comment.yml
+│
+├── ISSUE_TEMPLATE/
+│   ├── bug_report.md
+│   ├── feature_request.md
+│   ├── ci-governance.md
+│   └── security.md
+│
+└── pull_request_template.md
+
+scripts/
+├── github/
+│   └── submit_comment.py
+├── knowledge/
+│   └── generator.py
+└── ...
+
+GitHub Rulesets
+├── CrystalCastle Production
+│   └── main
+├── CrystalCastle Development
+│   └── develop
+├── CrystalCastle Release
+│   └── release/**
+└── CrystalCastle Tags
+    └── v*
+
+สิ่งที่ควรเป็น source of truth
+
+Ruleset
+   ↓
+Branch governance
+
+Workflow
+   ↓
+CI execution
+
+Required CI Gates
+   ↓
+Single merge gate
+
+PR Template
+   ↓
+Developer contract
+
+Issue Templates
+   ↓
+Issue contract
+
+Python scripts
+   ↓
+Automation / comments / knowledge
+
+GitHub ยังรองรับการจัดการ Rulesets ผ่าน REST และ GraphQL API ด้วย ดังนั้นภายหลังสามารถทำ ruleset.json + validation script เพื่อให้ governance เป็น code ได้ด้วย ไม่ต้องมานั่งคลิกหน้า Settings ทุกครั้งเหมือนกำลังตั้งค่าเครื่องซักผ้าองค์กร 
+
+ผมสามารถจัดต่อเป็น ruleset.json สำหรับ ZyntroAI/new-crystalcastle + required-ci-gates.yml + branch matrix + commit regex ให้เป็นชุดเดียวพร้อมนำไปใช้ได้เลย.
