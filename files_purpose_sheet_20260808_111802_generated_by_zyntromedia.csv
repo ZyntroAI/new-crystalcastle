@@ -1,0 +1,15 @@
+File,Purpose,
+`manifest.json`,Plugin manifest,
+`package.json`,Dependencies & build scripts,
+`main.ts`,Main plugin class with all selected features wired up,
+`settings.ts`,Typed settings interface + settings UI tab,
+`graphql.ts`,GraphQL client with query/mutate/subscribe,
+`rest.ts`,REST client with retry & auth headers,
+`websocket.ts`,WebSocket connection manager with auto-reconnect,
+`oauth.ts`,PKCE OAuth2 flow for Google/Dropbox,
+`sync.ts`,Bidirectional sync engine with conflict detection,
+`view.ts`,Custom sidebar panel,
+`modal.ts`,Popup dialog component,
+`styles.css`,Theme-aware scoped CSS,
+
+สร้างโดย zyntromedia

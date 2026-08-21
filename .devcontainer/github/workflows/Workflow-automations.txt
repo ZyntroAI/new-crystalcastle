@@ -1,0 +1,101 @@
+Based on the "AI DevOps Workflow Skillsbook" content you provided, here are suggested **workflow automations** categorized by their function in the development lifecycle. These leverage the tools and structures mentioned in your text (GitHub Actions, Docker, Kubernetes, Vertex AI, and Cron).
+
+### 1. Continuous Integration & Security (CI)
+*Trigger: `push` to feature branches or `pull_request` to `main`.*
+
+*   **Automated Linting & Testing:**
+    *   Run `make lint` and `make test` on every commit.
+    *   **Action:** Fail the build immediately if code quality or unit tests fail.
+    *   **Code Reference:**
+        ```yaml
+        # .github/workflows/ci.yml
+        steps:
+          - run: npm ci
+          - run: npm run lint
+          - run: npm test
+          - run: npm run build
+        ```
+*   **Secret Scanning:**
+    *   Automatically scan for hardcoded credentials, API keys, or tokens before code merges.
+    *   **Action:** Block merge and alert the security team if secrets are detected.
+*   **Dependency Review:**
+    *   Check for known vulnerabilities (CVEs) in `package.json` or `requirements.txt`.
+    *   **Action:** Create a PR comment with a fix suggestion or block the PR if critical vulnerabilities exist.
+
+### 2. Continuous Deployment (CD)
+*Trigger: Merge to `main` (Dev), Tag creation (Prod), or Manual Approval (UAT).*
+
+*   **Automated Dev Deployment:**
+    *   **Trigger:** Merge to `main`.
+    *   **Workflow:**
+        1.  Build Docker image: `docker build -t my-app:latest .`
+        2.  Push to registry.
+        3.  Deploy to `dev` namespace: `kubectl apply -k k8s/overlays/dev`.
+        4.  **Health Check:** Run `kubectl rollout status deployment/app -n dev`. If it fails, trigger an automatic rollback.
+*   **UAT Promotion Pipeline:**
+    *   **Trigger:** Manual trigger or specific tag (e.g., `v1.0-rc1`).
+    *   **Workflow:**
+        1.  Deploy to `uat` namespace: `kubectl apply -k k8s/overlays/uat`.
+        2.  Run automated **Smoke Tests** and **API Tests**.
+        3.  **Gate:** Pause for manual business approval before allowing promotion to Production.
+*   **Production Release:**
+    *   **Trigger:** Approved UAT + Manual Trigger.
+    *   **Workflow:**
+        1.  Deploy to `prod` namespace.
+        2.  Update Helm values: `helm upgrade --install app ./helm/app --namespace prod`.
+        3.  Verify monitoring alerts are active.
+
+### 3. AI & Vertex MCP Integration
+*Trigger: Scheduled or Event-based (e.g., new documentation added).*
+
+*   **Automated Documentation Generation:**
+    *   **Trigger:** New code merged to `main`.
+    *   **Action:** Use the `/vertex-mcp` workflow to analyze code changes and auto-update `docs/api.md` or `docs/architecture.md` via the Gemini model.
+*   **Intelligent Code Review Agent:**
+    *   **Trigger:** New Pull Request.
+    *   **Action:** An AI agent (via MCP) reviews the diff, suggests optimizations, checks for best practices, and comments on the PR.
+*   **Summarization Bot:**
+    *   **Trigger:** End of day or release completion.
+    *   **Action:** Generate a `/summaries` report automatically, listing:
+        *   Features merged.
+        *   Tests passed/failed.
+        *   Current environment status (Dev/UAT/Prod).
+
+### 4. Operations & Maintenance (Cron Jobs)
+*Trigger: Time-based (Cron).*
+
+*   **Automated Backups:**
+    *   **Schedule:** `0 2 * * *` (Daily at 2 AM).
+    *   **Action:** Run `/opt/app/scripts/backup.sh` to snapshot the database and store in Cloud Storage.
+*   **Health Monitoring & Self-Healing:**
+    *   **Schedule:** `*/5 * * * *` (Every 5 minutes).
+    *   **Action:** Run health checks. If a pod is unhealthy, automatically restart it or scale up replicas.
+*   **Cleanup & Resource Management:**
+    *   **Schedule:** `0 3 * * *` (Daily at 3 AM).
+    *   **Action:** Run `/opt/app/scripts/cleanup.sh` to remove old Docker images, delete temporary files, and archive old logs.
+*   **Weekly Reporting:**
+    *   **Schedule:** `0 8 * * 1` (Monday at 8 AM).
+    *   **Action:** Generate a weekly status report (using `/summaries`) and email it to stakeholders.
+
+### 5. Scaling Automation
+*Trigger: CPU/Memory usage thresholds.*
+
+*   **Horizontal Pod Autoscaling (HPA):**
+    *   **Config:** `kubectl autoscale deployment app --min=2 --max=10 --cpu-percent=70`.
+    *   **Action:** Automatically increase replicas to 10 if CPU > 70%, and scale back down to 2 when traffic drops.
+*   **Docker Compose Scaling (Local/Dev):**
+    *   **Action:** Script to scale API containers dynamically based on local load testing: `docker compose up --scale api=3`.
+
+### Recommended Implementation Structure
+To implement these, you should organize your `.github/workflows` folder as suggested in the text:
+
+| File | Purpose | Trigger |
+| :--- | :--- | :--- |
+| `ci.yml` | Lint, Test, Build | PR, Push |
+| `secret-scan.yml` | Security Scan | PR |
+| `deploy-dev.yml` | Deploy to Dev | Merge to Main |
+| `deploy-uat.yml` | Deploy to UAT | Manual / Tag |
+| `release.yml` | Deploy to Prod | Manual Approval |
+| `dependency-review.yml` | Check Vulnerabilities | PR |
+
+Would you like a specific code snippet for any of these workflows (e.g., the full `ci.yml` or a Kubernetes CronJob definition)?
