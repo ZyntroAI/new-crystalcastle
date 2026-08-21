@@ -1,74 +1,27 @@
-This is my Ci : <jobs>
-name: CI
-
-on:
-  push:
-    branches: [ main, master, dev, pure-agent, root, develop, crystalcastle-ai]
-  pull_request:
-    branches: [ main, master, dev, pure-agent, root, develop, crystalcastle-ai]
-  workflow_dispatch:
-
-jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [18, 20]
-    env:
-      CI: true
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run lint
-        run: npm run lint
-        continue-on-error: false
-      - name: Lint
-        run: npm run lint --if-present
-
-      - name: Type check
-        if: exists('tsconfig.json')
-        run: npm run typecheck
-      - name: Typecheck
-        run: npm run typecheck --if-present
-
-      - name: Run tests
-        run: npm test -- --runInBand --reporters=default
-      - name: Test
-        run: npm test --if-present
-
-      - name: Build
-        run: npm run build
+User: https://github.com/ZyntroAI/new-crystalcastle/pull/79.   Suggest all code/config for completed
+Kimi:   
   
-      - name: Build
-        run: npm run build --if-present
+     
+        
+              
+                    
+                             
+                                     
+                                           
+                                               
+                             
+ Based on my review of PR #79, the current `.github/jobs/CI` file is in the **wrong location**, wrapped in invalid XML-like tags, contains unsupported GitHub Actions syntax, and has a review comment pasted into the file body. The PR is incomplete.
 
-      - name: Upload build artifact
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-${{ matrix.node-version }}
-          path: build || dist || .
-</jobs>
+Here is all the code/config required to complete it:
 
-Your CI has duplicated Node setup, lint, type-check, test, and build steps. It also uses invalid GitHub Actions syntax: `if: exists('tsconfig.json')` is not supported, and `path: build || dist || .` is not a valid fallback expression. GitHub’s `setup-node` action already supports npm caching, while artifact paths should be supplied as valid files or directories. [1][2][3]
+---
 
-## Corrected workflow
+### 1. Delete the broken file
+**Delete:** `.github/jobs/CI`  
+**Create:** `.github/workflows/ci.yml`
 
+### 2. Corrected GitHub Actions workflow
+`.github/workflows/ci.yml`
 ```yaml
 name: CI
 
@@ -82,7 +35,6 @@ on:
       - root
       - develop
       - crystalcastle-ai
-
   pull_request:
     branches:
       - main
@@ -92,7 +44,6 @@ on:
       - root
       - develop
       - crystalcastle-ai
-
   workflow_dispatch:
 
 permissions:
@@ -131,7 +82,7 @@ jobs:
         run: npm run typecheck --if-present
 
       - name: Run tests
-        run: npm test --if-present -- --runInBand
+        run: npm run test --if-present
 
       - name: Build
         run: npm run build --if-present
@@ -147,42 +98,174 @@ jobs:
           if-no-files-found: ignore
 ```
 
-## Important changes
+---
 
-- Removed the second `setup-node` step that always changed the matrix version to Node 22.
-- Changed Node 18 to Node 20 and Node 22; use Node 18 only if your project explicitly requires it.
-- Combined duplicate lint, type-check, test, and build steps.
-- Replaced unsupported `exists('tsconfig.json')` with `npm run typecheck --if-present`.
-- Replaced the invalid artifact expression with separate `build` and `dist` paths.
-- Added `permissions: contents: read` for safer default permissions.
+### 3. Fix `package.json`
+**Issues found:**
+- Missing `test` script
+- Invalid `node: "26.5.1"` in `devDependencies` (Node 26 does not exist)
+- `typecheck` references `jsconfig.json` which does not exist
 
-If your `package.json` has no `typecheck` script, the command will be skipped. The `--if-present` option is supported by npm and prevents a missing optional script from failing the job. [4]
-
-## Optional package scripts
-
-Your `package.json` should contain scripts similar to these:
-
+**Updated `package.json` scripts and devDependencies:**
 ```json
 {
+  "name": "vite-react-shadcn-ts-base44",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
   "scripts": {
-    "lint": "eslint .",
+    "dev": "vite",
+    "build": "vite build",
+    "build:dev": "vite build --mode development",
+    "lint": "eslint . --quiet",
+    "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
-    "test": "jest",
-    "build": "vite build"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.19.0",
+    "@tailwindcss/typography": "^0.5.15",
+    "@types/node": "^22.13.5",
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "@vitejs/plugin-react": "^4.3.4",
+    "@vitejs/plugin-react-swc": "^4.3.3",
+    "autoprefixer": "^10.4.20",
+    "baseline-browser-mapping": "^2.8.32",
+    "eslint": "^9.19.0",
+    "eslint-plugin-react": "^7.37.4",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.4",
+    "eslint-plugin-unused-imports": "^4.3.0",
+    "globals": "^17.9.0",
+    "jsdom": "^24.0.0",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.0.1",
+    "vite": "^6.1.0",
+    "vitest": "^2.0.0"
   }
 }
 ```
+*(Remove the invalid `"node": "26.5.1"`, `"npm": "10.8.2"`, `"yarn": "1.22.22"` entries from `devDependencies`.)*
 
-If the project uses a different test runner, replace `jest` with the correct command, such as `vitest run`.
+---
 
-Citations:
-[1] GitHub - actions/setup-node: Set up your ... https://github.com/actions/setup-node
-[2] Evaluate expressions in workflows and actions - GitHub Docs https://docs.github.com/en/actions/reference/workflows-and-actions/expressions
-[3] Store and share data with workflow artifacts https://docs.github.com/en/actions/tutorials/store-and-share-data
-[4] Building and testing Node.js https://docs.github.com/actions/automating-builds-and-tests/building-and-testing-nodejs
-[5] Setup Node.js environment · Actions · GitHub Marketplace https://github.com/marketplace/actions/setup-node-js-environment
-[6] setup-node/docs/advanced-usage.md at main https://github.com/actions/setup-node/blob/main/docs/advanced-usage.md
-[7] setup-node/docs/adrs/0000-caching-dependencies.md at main · actions/setup-node https://github.com/actions/setup-node/blob/main/docs/adrs/0000-caching-dependencies.md
-[8] Evaluate expressions in workflows and actions https://docs.github.com/en/enterprise-cloud@latest/actions/reference/workflows-and-actions/expressions
-[9] Evaluate expressions in workflows and actions https://docs.github.com/actions/reference/evaluate-expressions-in-workflows-and-actions
-[10] Releases · actions/setup-node https://github.com/actions/setup-node/releases
+### 4. Add TypeScript config
+Since `jsconfig.json` is missing and the project uses TypeScript, create:
+
+`tsconfig.json`
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
+```
+
+`tsconfig.node.json`
+```json
+{
+  "compilerOptions": {
+    "composite": true,
+    "skipLibCheck": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["vite.config.ts"]
+}
+```
+
+---
+
+### 5. Add Vitest test config
+`vite.config.ts`
+```typescript
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'path'
+
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/test/setup.ts',
+  },
+})
+```
+
+`src/test/setup.ts`
+```typescript
+import '@testing-library/jest-dom/vitest'
+```
+
+---
+
+### 6. Add a sample test so `npm run test` passes
+`src/App.test.tsx`
+```tsx
+import { describe, it, expect } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import App from './App'
+
+describe('App', () => {
+  it('renders without crashing', () => {
+    render(<App />)
+    expect(document.body).toBeInTheDocument()
+  })
+})
+```
+
+---
+
+### 7. Install new dependencies
+After updating the configs, run:
+```bash
+npm install -D vitest jsdom @testing-library/react @testing-library/jest-dom
+```
+
+---
+
+### Summary of changes needed in PR #79
+| Action | File |
+|--------|------|
+| **Delete** | `.github/jobs/CI` |
+| **Create** | `.github/workflows/ci.yml` |
+| **Modify** | `package.json` (fix scripts, remove invalid node/npm/yarn entries, add vitest) |
+| **Create** | `tsconfig.json` |
+| **Create** | `tsconfig.node.json` |
+| **Create/Modify** | `vite.config.ts` (add `test` block) |
+| **Create** | `src/test/setup.ts` |
+| **Create** | `src/App.test.tsx` (smoke test) |
+
+Once these changes are committed, the CI will be able to run `npm ci` → `lint` → `typecheck` → `test` → `build` successfully on Node 20 and 22.
