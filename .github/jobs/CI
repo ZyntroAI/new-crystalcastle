@@ -1,4 +1,4 @@
-<jobs>
+This is my Ci : <jobs>
 name: CI
 
 on:
@@ -64,3 +64,125 @@ jobs:
           name: build-${{ matrix.node-version }}
           path: build || dist || .
 </jobs>
+
+Your CI has duplicated Node setup, lint, type-check, test, and build steps. It also uses invalid GitHub Actions syntax: `if: exists('tsconfig.json')` is not supported, and `path: build || dist || .` is not a valid fallback expression. GitHub’s `setup-node` action already supports npm caching, while artifact paths should be supplied as valid files or directories. [1][2][3]
+
+## Corrected workflow
+
+```yaml
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - dev
+      - pure-agent
+      - root
+      - develop
+      - crystalcastle-ai
+
+  pull_request:
+    branches:
+      - main
+      - master
+      - dev
+      - pure-agent
+      - root
+      - develop
+      - crystalcastle-ai
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Node.js ${{ matrix.node-version }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: true
+      matrix:
+        node-version: ["20", "22"]
+
+    env:
+      CI: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Validate package lock
+        run: npm ci
+
+      - name: Run lint
+        run: npm run lint --if-present
+
+      - name: Run type check
+        run: npm run typecheck --if-present
+
+      - name: Run tests
+        run: npm test --if-present -- --runInBand
+
+      - name: Build
+        run: npm run build --if-present
+
+      - name: Upload build artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-node-${{ matrix.node-version }}
+          path: |
+            build
+            dist
+          if-no-files-found: ignore
+```
+
+## Important changes
+
+- Removed the second `setup-node` step that always changed the matrix version to Node 22.
+- Changed Node 18 to Node 20 and Node 22; use Node 18 only if your project explicitly requires it.
+- Combined duplicate lint, type-check, test, and build steps.
+- Replaced unsupported `exists('tsconfig.json')` with `npm run typecheck --if-present`.
+- Replaced the invalid artifact expression with separate `build` and `dist` paths.
+- Added `permissions: contents: read` for safer default permissions.
+
+If your `package.json` has no `typecheck` script, the command will be skipped. The `--if-present` option is supported by npm and prevents a missing optional script from failing the job. [4]
+
+## Optional package scripts
+
+Your `package.json` should contain scripts similar to these:
+
+```json
+{
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "build": "vite build"
+  }
+}
+```
+
+If the project uses a different test runner, replace `jest` with the correct command, such as `vitest run`.
+
+Citations:
+[1] GitHub - actions/setup-node: Set up your ... https://github.com/actions/setup-node
+[2] Evaluate expressions in workflows and actions - GitHub Docs https://docs.github.com/en/actions/reference/workflows-and-actions/expressions
+[3] Store and share data with workflow artifacts https://docs.github.com/en/actions/tutorials/store-and-share-data
+[4] Building and testing Node.js https://docs.github.com/actions/automating-builds-and-tests/building-and-testing-nodejs
+[5] Setup Node.js environment · Actions · GitHub Marketplace https://github.com/marketplace/actions/setup-node-js-environment
+[6] setup-node/docs/advanced-usage.md at main https://github.com/actions/setup-node/blob/main/docs/advanced-usage.md
+[7] setup-node/docs/adrs/0000-caching-dependencies.md at main · actions/setup-node https://github.com/actions/setup-node/blob/main/docs/adrs/0000-caching-dependencies.md
+[8] Evaluate expressions in workflows and actions https://docs.github.com/en/enterprise-cloud@latest/actions/reference/workflows-and-actions/expressions
+[9] Evaluate expressions in workflows and actions https://docs.github.com/actions/reference/evaluate-expressions-in-workflows-and-actions
+[10] Releases · actions/setup-node https://github.com/actions/setup-node/releases
