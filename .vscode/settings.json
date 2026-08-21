@@ -1,0 +1,17 @@
+{
+  "copilot.agent.exclusionPatterns": [
+    "**/node_modules/**",
+    "**/.git/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/coverage/**",
+    "**/*.log",
+    "**/tmp/**",
+    "**/*.tmp",
+    "**/*.out",
+    "**/.next/**",
+    "**/vendor/**",
+    "**/*.min.js",
+    "**/coverage/**"
+  ]
+}
