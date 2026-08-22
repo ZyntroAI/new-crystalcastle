@@ -1,0 +1,112 @@
+สคริปต์นี้ auto-fix PR แบบที่เพิ่งรีวิวไป — ดึง Go version จริงจาก `go.mod`, ตรวจ branch ที่ repo ใช้งานจริงจาก git, แล้ว patch workflow file ให้ตรง
+
+## `scripts/fix-workflow-pr.sh`
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+WORKFLOW_FILE="${1:-.github/workflows/go.yml}"
+
+if [ ! -f "$WORKFLOW_FILE" ]; then
+  echo "❌ ไม่พบไฟล์: $WORKFLOW_FILE"
+  exit 1
+fi
+
+# 1. ดึง Go version จริงจาก go.mod
+if [ ! -f "go.mod" ]; then
+  echo "❌ ไม่พบ go.mod ที่ root — รันสคริปต์นี้จาก root ของ repo"
+  exit 1
+fi
+
+GO_VERSION=$(grep -E '^go [0-9]+\.[0-9]+' go.mod | awk '{print $2}')
+if [ -z "$GO_VERSION" ]; then
+  echo "❌ อ่าน go version จาก go.mod ไม่ได้"
+  exit 1
+fi
+echo "✅ Go version จาก go.mod: $GO_VERSION"
+
+# 2. หา branch ที่ใช้งานจริง (มี commit ล่าสุดภายใน 90 วัน)
+ACTIVE_BRANCHES=$(git for-each-ref --format='%(refname:short) %(committerdate:unix)' refs/remotes/origin \
+  | awk -v cutoff="$(date -d '90 days ago' +%s 2>/dev/null || date -v-90d +%s)" \
+    '$2 > cutoff {print $1}' \
+  | sed 's|origin/||' \
+  | grep -vE '^(HEAD|dependabot/|renovate/)' \
+  | sort -u)
+
+if [ -z "$ACTIVE_BRANCHES" ]; then
+  echo "⚠️  ตรวจ active branch ไม่ได้ ใช้ default: main"
+  ACTIVE_BRANCHES="main"
+fi
+echo "✅ Active branches: $(echo $ACTIVE_BRANCHES | tr '\n' ' ')"
+
+# แปลงเป็น YAML array format: [ "main", "dev" ]
+BRANCH_YAML=$(echo "$ACTIVE_BRANCHES" | sed 's/^/"/;s/$/"/' | paste -sd, - | sed 's/,/, /g')
+
+# 3. Patch workflow file
+python3 - "$WORKFLOW_FILE" "$GO_VERSION" "$BRANCH_YAML" <<'EOF'
+import re, sys
+
+path, go_version, branch_yaml = sys.argv[1], sys.argv[2], sys.argv[3]
+with open(path) as f:
+    content = f.read()
+
+# แก้ branch list ทั้ง push และ pull_request
+content = re.sub(
+    r'branches: \[[^\]]*\]',
+    f'branches: [ {branch_yaml} ]',
+    content
+)
+
+# แก้ go-version
+content = re.sub(
+    r"go-version: '[^']*'",
+    f"go-version: '{go_version}'",
+    content
+)
+
+# เพิ่ม cache: true ถ้ายังไม่มี ต่อจาก go-version line
+if 'cache: true' not in content:
+    content = re.sub(
+        r"(go-version: '[^']*')",
+        r"\1\n        cache: true",
+        content
+    )
+
+with open(path, 'w') as f:
+    f.write(content)
+
+print(f"✅ Patched {path}")
+EOF
+
+# 4. แสดง diff ให้รีวิวก่อน commit
+echo ""
+echo "--- Diff ---"
+git diff "$WORKFLOW_FILE"
+
+echo ""
+read -p "Commit การเปลี่ยนแปลงนี้? (y/N) " confirm
+if [[ "$confirm" == "y" || "$confirm" == "Y" ]]; then
+  git add "$WORKFLOW_FILE"
+  git commit -m "fix(ci): sync go-version with go.mod, limit branches to active ones, add module cache"
+  echo "✅ Committed"
+else
+  echo "ℹ️  ยกเลิก commit — ไฟล์ยังถูก patch ไว้แล้ว แก้เพิ่มเองได้"
+fi
+```
+
+## วิธีใช้
+
+```bash
+chmod +x scripts/fix-workflow-pr.sh
+./scripts/fix-workflow-pr.sh .github/workflows/go.yml
+```
+
+## หมายเหตุสำคัญ
+
+- ต้องรันจาก root ของ repo ที่มี `go.mod`
+- ใช้ `git for-each-ref` เช็ค active branch จริงจาก remote — ไม่ hardcode `master`/`development`/`pure-agent-dev` เหมือนใน PR เดิม
+- ไม่ auto-push — commit ไว้ local ให้รีวิว diff ก่อนเสมอ (โดยเฉพาะกับ workflow file ซึ่งมีสิทธิ์รันโค้ดใน CI)
+- ถ้าอยากให้รันอัตโนมัติทุกครั้งที่มี PR เปิด workflow file ใหม่ ต้องมี human approval step ก่อน apply เสมอ — ไม่ควร auto-merge workflow file changes แม้จะเป็น "patch" เพราะกระทบ permission ของ CI โดยตรง
+
+ต้องการให้ผมสร้างเป็น GitHub Action ที่รันสคริปต์นี้อัตโนมัติเมื่อมี PR แก้ `.github/workflows/*.yml` แล้ว comment ผลลัพธ์กลับใน PR ไหมครับ?
