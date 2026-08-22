@@ -1,0 +1,63 @@
+<table border="1" cellspacing="0" cellpadding="6">
+  <thead>
+    <tr>
+      <th>Distribution</th>
+      <th>Method</th>
+      <th>Commands</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>Debian / Ubuntu / Mint</b></td>
+      <td>apt → add key & repo, then install</td>
+      <td>
+        sudo apt install curl<br><br>
+        sudo curl -fsSLo /usr/share/keyrings/brave-browser-nightly-archive-keyring.gpg https://brave-browser-apt-nightly.s3.brave.com/brave-browser-nightly-archive-keyring.gpg<br><br>
+        sudo curl -fsSLo /etc/apt/sources.list.d/brave-browser-nightly.sources https://brave-browser-apt-nightly.s3.brave.com/brave-browser.sources<br><br>
+        sudo apt update<br><br>
+        sudo apt install brave-browser-nightly
+      </td>
+    </tr>
+    <tr>
+      <td><b>Fedora 41+</b></td>
+      <td>dnf → enable repo, then install</td>
+      <td>
+        sudo dnf install dnf-plugins-core<br><br>
+        sudo dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-nightly.s3.brave.com/brave-browser-nightly.repo<br><br>
+        sudo dnf install brave-browser-nightly
+      </td>
+    </tr>
+    <tr>
+      <td><b>Fedora &lt;41 / Rocky / RHEL</b></td>
+      <td>dnf → add repo manually, then install</td>
+      <td>
+        sudo dnf install dnf-plugins-core<br><br>
+        sudo dnf config-manager --add-repo https://brave-browser-rpm-nightly.s3.brave.com/brave-browser-nightly.repo<br><br>
+        sudo dnf install brave-browser-nightly
+      </td>
+    </tr>
+    <tr>
+      <td><b>Fedora Atomic</b></td>
+      <td>rpm-ostree → install from repo</td>
+      <td>
+        curl -fsSLo /etc/yum.repos.d/brave-browser-nightly.repo https://brave-browser-rpm-nightly.s3.brave.com/brave-browser-nightly.repo<br><br>
+        rpm-ostree install brave-browser-nightly
+      </td>
+    </tr>
+    <tr>
+      <td><b>OpenSUSE</b></td>
+      <td>zypper → add repo, then install</td>
+      <td>
+        sudo zypper addrepo https://brave-browser-rpm-nightly.s3.brave.com/brave-browser-nightly.repo<br><br>
+        sudo zypper install brave-browser-nightly
+      </td>
+    </tr>
+    <tr>
+      <td><b>Arch Linux</b></td>
+      <td>AUR helper (yay, paru, etc.)</td>
+      <td>
+        yay -Sy brave-nightly-bin
+      </td>
+    </tr>
+  </tbody>
+</table>
