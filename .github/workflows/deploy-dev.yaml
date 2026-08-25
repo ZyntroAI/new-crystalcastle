@@ -1,11 +1,14 @@
-# .github/workflows/deploy-dev.yml
 name: Deploy to Dev
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch:   # อนุญาตให้กดรันมือได้ด้วย
+      - pure-agent-dev
+      - agent-hub
+      - crystalcastle
+      - 1napz
+  workflow_dispatch:
 
 env:
   IMAGE_NAME: my-app
@@ -17,8 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write          # สำหรับ push ไป GitHub Container Registry
-      id-token: write         # ถ้าใช้ OIDC กับ cloud
+      packages: write
+      id-token: write
 
     steps:
       - name: Checkout code
@@ -40,9 +43,9 @@ jobs:
         with:
           images: \( {{ env.REGISTRY }}/ \){{ env.IMAGE_NAME }}
           tags: |
-            type=sha,prefix=
             type=raw,value=latest
             type=raw,value=dev
+            type=sha
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
@@ -61,39 +64,24 @@ jobs:
 
       - name: Configure kubeconfig
         run: |
-          # ตัวอย่างสำหรับ GKE / EKS / AKS หรือ self-managed
-          # ปรับตาม cloud ที่คุณใช้
           echo "${{ secrets.KUBE_CONFIG_DEV }}" | base64 -d > $HOME/.kube/config
           chmod 600 $HOME/.kube/config
 
       - name: Deploy to Dev namespace
         run: |
-          # ใช้ Kustomize overlay
           kubectl apply -k k8s/overlays/dev
-
-          # หรือถ้าใช้ Helm
-          # helm upgrade --install my-app ./helm/app \
-          #   --namespace ${{ env.NAMESPACE }} \
-          #   --create-namespace \
-          #   --set image.repository=\( {{ env.REGISTRY }}/ \){{ env.IMAGE_NAME }} \
-          #   --set image.tag=${{ github.sha }} \
-          #   --wait
 
       - name: Wait for rollout & health check
         run: |
           kubectl rollout status deployment/app -n ${{ env.NAMESPACE }} --timeout=180s
-
-          # ถ้า rollout ล้มเหลว → rollback อัตโนมัติ
           if [ $? -ne 0 ]; then
             echo "❌ Rollout failed → rolling back..."
             kubectl rollout undo deployment/app -n ${{ env.NAMESPACE }}
             exit 1
           fi
-
           echo "✅ Deployment to Dev succeeded"
 
-      - name: Notify success (optional)
+      - name: Notify success
         if: success()
         run: |
           echo "Deployed commit ${{ github.sha }} to Dev successfully"
-          # สามารถใส่ Slack / Discord / Teams notification ได้ที่นี่
