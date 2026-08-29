@@ -1,0 +1,53 @@
+#.github/workflows/compress-build.yml
+name: 📦 Auto Compress + Release
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write # needed to create releases + upload assets
+
+jobs:
+  compress-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3 # if v3 blocked, ask admin for v3/v4
+
+      - name: Install zstd
+        run: sudo apt-get update && sudo apt-get install -y zstd
+
+      - name: Compress Build Output
+        id: pack
+        run: |
+          mkdir -p./artifacts
+          zstd -3 -o./artifacts/build-release.tzst./dist
+
+          ORIG=$(du -b./dist | awk '{sum+=$1} END {print sum}')
+          COMP=$(stat -c%s./artifacts/build-release.tzst)
+          RATIO=$(awk "BEGIN {printf \"%.2f\", 100*$COMP/$ORIG}")
+
+          echo "file_path=./artifacts/build-release.tzst" >> $GITHUB_OUTPUT
+          echo "original_size=$ORIG" >> $GITHUB_OUTPUT
+          echo "compressed_size=$COMP" >> $GITHUB_OUTPUT
+          echo "file_count=$(find./dist -type f | wc -l)" >> $GITHUB_OUTPUT
+          echo "checksum=$(sha256sum./artifacts/build-release.tzst | awk '{print $1}')" >> $GITHUB_OUTPUT
+          echo "ratio=$RATIO" >> $GITHUB_OUTPUT
+          echo "tag=build-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1 # if blocked, we can use gh cli instead
+        with:
+          tag_name: ${{ steps.pack.outputs.tag }}
+          name: "Build ${{ steps.pack.outputs.tag }}"
+          body: |
+            📦 **Compressed Build**
+            - Files: ${{ steps.pack.outputs.file_count }}
+            - Original: ${{ steps.pack.outputs.original_size }} bytes
+            - Compressed: ${{ steps.pack.outputs.compressed_size }} bytes
+            - Ratio: ${{ steps.pack.outputs.ratio }}%
+            - SHA256: `${{ steps.pack.outputs.checksum }}`
+          files: ${{ steps.pack.outputs.file_path }}
+          draft: false
+          prerelease: false
