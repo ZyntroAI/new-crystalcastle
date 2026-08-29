@@ -4,70 +4,40 @@ on:
   push:
     branches:
       - main
-      - master
-      - dev
-      - pure-agent
-      - root
       - develop
-      - crystalcastle-ai
   pull_request:
-    branches:
-      - main
-      - master
-      - dev
-      - pure-agent
-      - root
-      - develop
-      - crystalcastle-ai
-  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  build-and-test:
-    name: Node.js ${{ matrix.node-version }}
+  ci:
     runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: true
-      matrix:
-        node-version: ["20", "22"]
-
-    env:
-      CI: true
-
     steps:
-      - name: Checkout
+      - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: npm
-
-      - name: Validate package lock
+      - name: Install dependencies
         run: npm ci
 
-      - name: Run lint
-        run: npm run lint --if-present
+      - name: Lint
+        run: npm run lint
 
-      - name: Run type check
+      - name: Type Check
         run: npm run typecheck --if-present
 
-      - name: Run tests
-        run: npm run test --if-present
+      - name: Unit Test
+        run: npm test -- --runInBand
 
       - name: Build
-        run: npm run build --if-present
+        run: npm run build
 
-      - name: Upload build artifact
+      - name: Upload Build Artifact
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: build-node-${{ matrix.node-version }}
+          name: build-output
           path: |
-            build
-            dist
-          if-no-files-found: ignore
+            dist/
+            build/

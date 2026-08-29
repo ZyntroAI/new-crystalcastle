@@ -404,12 +404,12 @@ kubectl rollout status deployment/app -n uat
 ### UAT Checklist
 
 **Environment:**
-- [ ] Namespace created
-- [ ] Database configured
-- [ ] Storage configured
-- [ ] Secrets configured
-- [ ] Network policies configured
-- [ ] Ingress configured
+- [x] Namespace created
+- [x] Database configured
+- [x] Storage configured
+- [x] Secrets configured
+- [x] Network policies configured
+- [x] Ingress configured
 
 **Testing:**
 - [ ] Smoke tests
