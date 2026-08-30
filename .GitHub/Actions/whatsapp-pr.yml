@@ -1,0 +1,18 @@
+name: WhatsApp PR Automation
+on:
+  workflow_dispatch:
+    inputs:
+      user_choice: { required: true }
+      pr_number: { required: true }
+
+jobs:
+  handle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          case "${{ github.event.inputs.user_choice }}" in
+            approve_pr) gh pr review ${{ github.event.inputs.pr_number }} --approve ;;
+            request_changes) gh pr comment ${{ github.event.inputs.pr_number }} --body "Changes requested via WhatsApp." ;;
+            merge_pr) gh pr merge ${{ github.event.inputs.pr_number }} --merge --subject "Merged via WhatsApp approval" ;;
+          esac

@@ -1,0 +1,44 @@
+name: WhatsApp + Copilot PR Automation
+
+on:
+  workflow_dispatch:
+    inputs:
+      user_choice:
+        description: 'WhatsApp reply ID'
+        required: true
+      pr_number:
+        description: 'Target PR number'
+        required: true
+
+jobs:
+  handle-whatsapp-reply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Handle PR Action
+        run: |
+          case "${{ github.event.inputs.user_choice }}" in
+            approve_pr) gh pr review ${{ github.event.inputs.pr_number }} --approve ;;
+            request_changes) gh pr comment ${{ github.event.inputs.pr_number }} --body "Changes requested via WhatsApp." ;;
+            merge_pr) gh pr merge ${{ github.event.inputs.pr_number }} --merge --subject "Merged via WhatsApp approval" ;;
+            *) echo "Unknown reply ID: ${{ github.event.inputs.user_choice }}" ;;
+          esac
+
+      - name: Generate Copilot Summary
+        env:
+          COPILOT_TOKEN: ${{ secrets.COPILOT_TOKEN }}
+        run: |
+          curl -X POST https://api.microsoftcopilot.com/v1/summary \
+          -H "Authorization: Bearer $COPILOT_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "pr_number": "${{ github.event.inputs.pr_number }}",
+            "action": "${{ github.event.inputs.user_choice }}"
+          }' > copilot_summary.json
+
+      - name: Upload Copilot Summary Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: copilot-summary
+          path: copilot_summary.json
