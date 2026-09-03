@@ -1,0 +1,23 @@
+name: Auto Triage
+on:
+  issues: { types: [opened] }
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+            - uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue
+            const labels = ['triage']
+
+            if (issue.title.includes('error') || issue.body.includes('error')) labels.push('bug')
+            if (issue.title.includes('add') || issue.title.includes('feature')) labels.push('feature')
+            if (issue.body.includes('docs')) labels.push('docs')
+
+            github.rest.issues.addLabels({
+             ...context.repo,
+              issue_number: issue.number,
+              labels
+            })
