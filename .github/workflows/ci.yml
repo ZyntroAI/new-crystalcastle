@@ -41,3 +41,54 @@ jobs:
           path: |
             dist/
             build/
+            - name: Cache
+  uses: actions/cache@v5.1.0
+  with:
+    # A list of files, directories, and wildcard patterns to cache and restore
+    path: 
+    # An explicit key for restoring and saving the cache
+    key: 
+    # An ordered multiline string listing the prefix-matched keys, that are used for restoring stale cache if no cache hit occurred for key. Note `cache-hit` returns false in this case.
+    restore-keys: # optional
+    # The chunk size used to split up large files during upload, in bytes
+    upload-chunk-size: # optional
+    # An optional boolean when enabled, allows windows runners to save or restore caches that can be restored or saved respectively on other platforms
+    enableCrossOsArchive: # optional, default is false
+    # Fail the workflow if cache entry is not found
+    fail-on-cache-miss: # optional, default is false
+    # Check if a cache entry exists for the given input(s) (key, restore-keys) without downloading the cache
+    lookup-only: # optional, default is false
+    # Run the post step to save the cache even if another step before fails
+    save-always: # optional, default is false
+    - name: Authenticate to HashiCorp Cloud Platform
+  # You may pin to the exact commit or the version.
+  # uses: hashicorp/hcp-auth-action@b11d0bff4bbe76283448ddca08a4a4e93c5ed4b9
+  uses: hashicorp/hcp-auth-action@v0
+  with:
+    # The full resource name of the Workload Identity Provider, for example:
+"iam/project/750ccb51-5426-4935-966a-582e8ec106e2/service-principal/cicd/workload-identity-provider/github".
+This is mutually exclusive with "client_id" and "client_secret".
+    workload_identity_provider: # optional
+    # The value for the audience (aud) parameter in GitHub's generated OIDC
+token. This value defaults to the value of "workload_identity_provider",
+which is also the default value HCP expects for the audience parameter on
+the token when exchanging. It should be rare for this value to be set.
+    audience: # optional
+    # The client ID of the service principal. This is mutually exclusive with
+"workload_identity_provider".
+    client_id: # optional
+    # The client secret of the service principal. This is mutually exclusive with
+"workload_identity_provider".
+    client_secret: # optional
+    # If true, the action will set the access token as an output. This is useful
+for downstream steps that need to directly use the access token to
+authenticate to HashiCorp Cloud Platform.
+    set_access_token: # optional
+    # If true, the action will export the HCP_CRED_FILE environment variable for subsequent
+steps to use.
+
+If false, the action will not export any environment variables, meaning
+future steps are unlikely to be automatically authenticated to HCP and the
+access token must be used directly.
+    export_environment_variables: # optional, default is true
+            
