@@ -31,3 +31,10 @@ jobs:
       run: |
         # Run pytest or your preferred test runner
         poetry run pytest
+- name: Download a Build Artifact
+  uses: actions/download-artifact@v3.1.0
+  with:
+    # Artifact name
+    name: # optional
+    # Destination path
+    path: # optional
