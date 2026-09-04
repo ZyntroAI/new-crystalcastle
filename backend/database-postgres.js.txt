@@ -1,0 +1,284 @@
+const { Pool } = require('pg');
+
+// ============================================================
+// ⚙️ CONFIGURATION
+// ============================================================
+const pool = new Pool({
+  host: process.env.PG_HOST || 'localhost',
+  port: process.env.PG_PORT || 5432,
+  database: process.env.PG_DATABASE || 'github_app',
+  user: process.env.PG_USER || 'postgres',
+  password: process.env.PG_PASSWORD,
+  ssl: process.env.PG_SSL === 'true' ? { rejectUnauthorized: false } : false,
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
+
+// Connection monitoring
+pool.on('connect', () => {
+  console.log('🐘 PostgreSQL connection established');
+});
+
+pool.on('error', (err) => {
+  console.error('🐘 PostgreSQL pool error:', err.message);
+});
+
+// ============================================================
+// 🔧 DATABASE MIGRATION (run on startup)
+// ============================================================
+async function runMigrations() {
+  const client = await pool.connect();
+  try {
+    // Create migrations tracking table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS schema_migrations (
+        version INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        applied_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Check which migrations have been applied
+    const result = await client.query('SELECT version FROM schema_migrations ORDER BY version');
+    const appliedVersions = new Set(result.rows.map(r => r.version));
+
+    const migrations = [
+      { version: 1, name: '001_initial_schema', file: '001_initial_schema.sql' },
+      { version: 2, name: '002_notifications', file: '002_add_notifications.sql' },
+    ];
+
+    for (const migration of migrations) {
+      if (!appliedVersions.has(migration.version)) {
+        console.log(`🐘 Running migration: ${migration.name}`);
+        const fs = require('fs');
+        const path = require('path');
+        const sql = fs.readFileSync(
+          path.join(__dirname, 'migrations', migration.file),
+          'utf8'
+        );
+        await client.query(sql);
+        await client.query(
+          'INSERT INTO schema_migrations (version, name) VALUES ($1, $2)',
+          [migration.version, migration.name]
+        );
+        console.log(`✅ Migration ${migration.name} applied`);
+      }
+    }
+
+    console.log('🐘 Database schema is up to date');
+  } finally {
+    client.release();
+  }
+}
+
+// ============================================================
+// 📝 INSTALLATION QUERIES
+// ============================================================
+async function upsertInstallation(data) {
+  const result = await pool.query(`
+    INSERT INTO installations 
+      (installation_id, account_login, account_id, account_type, target_type, repository_selection, access_token, token_expires_at)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    ON CONFLICT(installation_id) DO UPDATE SET
+      account_login = EXCLUDED.account_login,
+      account_id = EXCLUDED.account_id,
+      account_type = EXCLUDED.account_type,
+      target_type = EXCLUDED.target_type,
+      repository_selection = EXCLUDED.repository_selection,
+      access_token = COALESCE(EXCLUDED.access_token, installations.access_token),
+      token_expires_at = COALESCE(EXCLUDED.token_expires_at, installations.token_expires_at),
+      updated_at = CURRENT_TIMESTAMP
+    RETURNING *
+  `, [
+    data.installation_id, data.account_login, data.account_id,
+    data.account_type, data.target_type, data.repository_selection,
+    data.access_token, data.token_expires_at
+  ]);
+  return result.rows[0];
+}
+
+async function deleteInstallation(installationId) {
+  const result = await pool.query(
+    'DELETE FROM installations WHERE installation_id = $1 RETURNING *',
+    [installationId]
+  );
+  return result.rows[0];
+}
+
+async function getInstallation(installationId) {
+  const result = await pool.query(
+    'SELECT * FROM installations WHERE installation_id = $1',
+    [installationId]
+  );
+  return result.rows[0];
+}
+
+async function getAllInstallations() {
+  const result = await pool.query(
+    'SELECT * FROM installations ORDER BY created_at DESC'
+  );
+  return result.rows;
+}
+
+async function updateInstallationToken(token, expiresAt, installationId) {
+  const result = await pool.query(`
+    UPDATE installations 
+    SET access_token = $1, token_expires_at = $2, updated_at = CURRENT_TIMESTAMP
+    WHERE installation_id = $3
+    RETURNING *
+  `, [token, expiresAt, installationId]);
+  return result.rows[0];
+}
+
+// ============================================================
+// 👤 USER QUERIES
+// ============================================================
+async function upsertUser(data) {
+  const result = await pool.query(`
+    INSERT INTO users 
+      (github_id, login, name, email, avatar_url, access_token, token_expires_at, last_login_at)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
+    ON CONFLICT(github_id) DO UPDATE SET
+      login = EXCLUDED.login,
+      name = COALESCE(EXCLUDED.name, users.name),
+      email = COALESCE(EXCLUDED.email, users.email),
+      avatar_url = COALESCE(EXCLUDED.avatar_url, users.avatar_url),
+      access_token = COALESCE(EXCLUDED.access_token, users.access_token),
+      token_expires_at = COALESCE(EXCLUDED.token_expires_at, users.token_expires_at),
+      last_login_at = CURRENT_TIMESTAMP
+    RETURNING *
+  `, [
+    data.github_id, data.login, data.name, data.email,
+    data.avatar_url, data.access_token, data.token_expires_at
+  ]);
+  return result.rows[0];
+}
+
+async function getUserByGithubId(githubId) {
+  const result = await pool.query(
+    'SELECT * FROM users WHERE github_id = $1',
+    [githubId]
+  );
+  return result.rows[0];
+}
+
+async function linkUserToInstallation(userId, installationId) {
+  await pool.query(`
+    INSERT INTO user_installations (user_id, installation_id)
+    VALUES ($1, $2)
+    ON CONFLICT DO NOTHING
+  `, [userId, installationId]);
+}
+
+// ============================================================
+// 📜 LOG QUERIES
+// ============================================================
+async function logWebhook(data) {
+  const result = await pool.query(`
+    INSERT INTO webhook_logs 
+      (event_type, action, delivery_id, installation_id, repository, payload_summary)
+    VALUES ($1, $2, $3, $4, $5, $6)
+    RETURNING id
+  `, [
+    data.event_type, data.action, data.delivery_id,
+    data.installation_id, data.repository,
+    data.payload_summary ? JSON.stringify(data.payload_summary) : null
+  ]);
+  return result.rows[0];
+}
+
+async function logAudit(data) {
+  const result = await pool.query(`
+    INSERT INTO audit_logs (action, entity_type, entity_id, details)
+    VALUES ($1, $2, $3, $4)
+    RETURNING id
+  `, [
+    data.action, data.entity_type, data.entity_id,
+    data.details ? JSON.stringify(data.details) : null
+  ]);
+  return result.rows[0];
+}
+
+async function getRecentWebhooks(limit = 50) {
+  const result = await pool.query(
+    'SELECT * FROM webhook_logs ORDER BY created_at DESC LIMIT $1',
+    [limit]
+  );
+  return result.rows;
+}
+
+async function getStats() {
+  const result = await pool.query(`
+    SELECT
+      (SELECT COUNT(*) FROM installations) as installations_count,
+      (SELECT COUNT(*) FROM users) as users_count,
+      (SELECT COUNT(*) FROM webhook_logs) as webhooks_processed,
+      (SELECT created_at FROM webhook_logs ORDER BY created_at DESC LIMIT 1) as last_webhook_at
+  `);
+  return result.rows[0];
+}
+
+// ============================================================
+// 🔔 NOTIFICATION PREFERENCES
+// ============================================================
+async function getNotificationPrefs(installationId) {
+  const result = await pool.query(
+    'SELECT * FROM notification_preferences WHERE installation_id = $1',
+    [installationId]
+  );
+  return result.rows[0];
+}
+
+async function upsertNotificationPrefs(data) {
+  const result = await pool.query(`
+    INSERT INTO notification_preferences 
+      (installation_id, slack_webhook_url, slack_channel, email_address, 
+       notify_on_install, notify_on_pr, notify_on_security_alert)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    ON CONFLICT(installation_id) DO UPDATE SET
+      slack_webhook_url = COALESCE(EXCLUDED.slack_webhook_url, notification_preferences.slack_webhook_url),
+      slack_channel = COALESCE(EXCLUDED.slack_channel, notification_preferences.slack_channel),
+      email_address = COALESCE(EXCLUDED.email_address, notification_preferences.email_address),
+      notify_on_install = EXCLUDED.notify_on_install,
+      notify_on_pr = EXCLUDED.notify_on_pr,
+      notify_on_security_alert = EXCLUDED.notify_on_security_alert,
+      updated_at = CURRENT_TIMESTAMP
+    RETURNING *
+  `, [
+    data.installation_id, data.slack_webhook_url, data.slack_channel,
+    data.email_address, data.notify_on_install, data.notify_on_pr,
+    data.notify_on_security_alert
+  ]);
+  return result.rows[0];
+}
+
+// ============================================================
+// 📤 EXPORTS
+// ============================================================
+module.exports = {
+  pool,
+  runMigrations,
+  
+  // Installations
+  upsertInstallation,
+  deleteInstallation,
+  getInstallation,
+  getAllInstallations,
+  updateInstallationToken,
+  
+  // Users
+  upsertUser,
+  getUserByGithubId,
+  linkUserToInstallation,
+  
+  // Logs
+  logWebhook,
+  logAudit,
+  getRecentWebhooks,
+  getStats,
+  
+  // Notifications
+  getNotificationPrefs,
+  upsertNotificationPrefs
+};

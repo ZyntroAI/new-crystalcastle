@@ -1,0 +1,60 @@
+**Full Documentation Guidelines for pnpm (https://pnpm.io/)**  
+
+---
+
+### 1. Purpose & Audience  
+- **Goal:** Provide clear, self‑contained reference material for developers using pnpm, covering installation, core commands, configuration, and advanced features.  
+- **Audience:** Front‑end and back‑end developers, build engineers, and contributors who need a quick, reliable source of truth.
+
+### 2. Structure & Organization  
+| Section | Content | Typical Length |
+|---------|---------|----------------|
+| **Introduction** | What pnpm is, why it matters (performance, disk‑space savings, determinism). | 1‑2 paragraphs |
+| **Getting Started** | Installation methods (npm, corepack, script, Docker), first‑time setup, basic `pnpm install`. | 3‑5 steps |
+| **Core Commands** | Detailed usage of the most common CLI commands (`install`, `add`, `remove`, `update`, `run`, `exec`, `workspace`). Include syntax, flags, examples. | One subsection per command |
+| **Configuration** | `.npmrc` options, `pnpm-workspace.yaml`, environment variables. Explain defaults and how to override them. | Tables + examples |
+| **Workspaces** | Setting up monorepos, linking packages, hoisting behavior, scripts across workspaces. | 2‑3 sub‑sections |
+| **Advanced Topics** | Peer dependencies handling, lockfile format, reproducible builds, custom registries, fallback to node_modules, performance tuning. | Bullet points + code snippets |
+| **Troubleshooting** | Common error messages, diagnostic commands (`pnpm doctor`, `pnpm list`), FAQ. | Q&A format |
+| **Reference** | Complete list of CLI flags, API surface (if any), links to external resources. | Alphabetical index |
+| **Contributing** | How to submit docs changes, style guide, CI checks, link to the source repository. | Short checklist |
+
+### 3. Writing Style  
+- **Concise & Direct:** Use active voice; keep sentences ≤ 25 words.  
+- **Consistent Terminology:** Always refer to the tool as “pnpm”. Use “package” for npm packages, “workspace” for monorepo groups.  
+- **Code Formatting:** Inline commands in backticks (`` `pnpm add lodash` ``). Block examples in fenced code blocks with `bash` language.  
+- **Use of Links:** Hyperlink to related sections or external docs rather than repeating content. Example: “For more on workspaces, see the **Workspaces** section below.”  
+- **Accessibility:** Include alt‑text for any screenshots, and use plain language for non‑technical readers.
+
+### 4. Content Requirements  
+1. **Accuracy:** Verify every command and flag against the latest pnpm release (check the official CLI docs).  
+2. **Versioning:** Note the pnpm version where a feature was introduced or changed (e.g., “Added in v11.0.0”).  
+3. **Examples:** Provide at least one realistic example per command, showing typical use‑cases and edge‑case flags.  
+4. **Cross‑Reference:** Use “see also” links to related sections (e.g., linking `pnpm add` to the **Configuration** section for `-D` flag details).  
+5. **Browser Access:** Mention the “Open a package’s documentation (or homepage) in the browser” shortcut (`pnpm view <pkg> homepage`) as a quick navigation aid.
+
+### 5. Review & Publication Process  
+- **Draft → Review → Merge:**  
+  1. Write in a separate branch following the repository’s contribution guide.  
+  2. Run the CI linting (`npm run lint:docs`) to ensure formatting compliance.  
+  3. Request review from at least one maintainer.  
+  4. Merge only after CI passes and comments are addressed.  
+- **Automated Checks:**  
+  - Broken link detector.  
+  - Spell‑check (English US).  
+  - Code block execution test (optional).  
+
+### 6. Maintenance  
+- **Scheduled Audits:** Quarterly review to align with new pnpm releases.  
+- **Change Log Integration:** When a new version is released, update the “Versioning” notes in relevant sections.  
+- **Community Feedback:** Monitor GitHub issues labeled “documentation” and incorporate suggestions.
+
+### 7. Helpful Tips for Contributors  
+- Start with the **Core Commands** table of contents; fill in one command at a time.  
+- Reuse existing MDX components from the site (e.g., `<Example>`, `<Tip>`).  
+- Test every code snippet in a fresh project to confirm it works as shown.  
+- When describing flags, separate boolean flags (`--offline`) from those requiring values (`--filter <pattern>`).  
+
+---
+
+**Result:** Following this guideline will produce a complete, searchable, and up‑to‑date documentation set for pnpm that aligns with the style and structure used across the DuckDuckGo‑hosted `pnpm.io` site.

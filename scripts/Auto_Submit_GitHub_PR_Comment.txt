@@ -1,0 +1,291 @@
+🇹🇭 Python Script: Auto Submit GitHub PR Comment
+
+สำหรับ new-crystalcastle ผมแนะนำให้ทำเป็น script แยกจาก workflow เพื่อให้ GitHub Actions เรียกใช้ได้ทั้ง PR review, CI result และ knowledge automation โดยใช้ gh CLI และ GITHUB_TOKEN แทนการฝัง PAT ลงใน repository
+
+Structure
+
+scripts/
+├── github/
+│   ├── __init__.py
+│   └── submit_comment.py
+│
+└── knowledge/
+    └── generator.py
+
+scripts/github/submit_comment.py
+
+from __future__ import annotations
+
+import os
+import subprocess
+import sys
+
+
+def run_gh(*args: str) -> str:
+    result = subprocess.run(
+        ["gh", *args],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+
+    return result.stdout.strip()
+
+
+def get_required_env(name: str) -> str:
+    value = os.getenv(name)
+
+    if not value:
+        raise RuntimeError(
+            f"Missing required environment variable: {name}"
+        )
+
+    return value
+
+
+def submit_comment() -> None:
+    repository = get_required_env("GITHUB_REPOSITORY")
+
+    event_name = os.getenv(
+        "GITHUB_EVENT_NAME",
+        "unknown",
+    )
+
+    pr_number = os.getenv("PR_NUMBER")
+
+    body = os.getenv("COMMENT_BODY")
+
+    if not pr_number:
+        raise RuntimeError(
+            "PR_NUMBER is required"
+        )
+
+    if not body:
+        raise RuntimeError(
+            "COMMENT_BODY is required"
+        )
+
+    run_gh(
+        "pr",
+        "comment",
+        pr_number,
+        "--repo",
+        repository,
+        "--body",
+        body,
+    )
+
+    print(
+        f"Comment submitted to {repository}#{pr_number}"
+    )
+    print(f"Event: {event_name}")
+
+
+if __name__ == "__main__":
+    try:
+        submit_comment()
+    except subprocess.CalledProcessError as exc:
+        print(
+            exc.stderr,
+            file=sys.stderr,
+        )
+        raise SystemExit(1) from exc
+
+    except RuntimeError as exc:
+        print(
+            f"ERROR: {exc}",
+            file=sys.stderr,
+        )
+        raise SystemExit(1) from exc
+
+
+---
+
+🇬🇧 GitHub Actions
+
+.github/workflows/pr-auto-comment.yml
+
+name: PR Auto Comment
+
+on:
+  workflow_run:
+    workflows:
+      - "CrystalCastle CodeRabbit + Tests"
+    types:
+      - completed
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  comment:
+    name: Submit CI Comment
+    runs-on: ubuntu-latest
+
+    if: >
+      github.event.workflow_run.event == 'pull_request'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve PR
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          PR_NUMBER=$(gh pr list \
+            --repo "$REPOSITORY" \
+            --search "$HEAD_SHA" \
+            --json number \
+            --jq '.[0].number')
+
+          if [ -z "$PR_NUMBER" ]; then
+            echo "No PR found."
+            exit 1
+          fi
+
+          echo "number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Submit comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          COMMENT_BODY: |
+            ## 🤖 CrystalCastle CI Review
+
+            The automated CI workflow has completed.
+
+            | Gate | Status |
+            |---|---|
+            | CI | `${{ github.event.workflow_run.conclusion }}` |
+            | CodeRabbit | Checked |
+            | Required CI | Checked |
+
+            **Workflow:** `${{ github.event.workflow_run.name }}`
+
+            **Commit:** `${{ github.event.workflow_run.head_sha }}`
+
+            Please review the workflow checks before merging.
+
+        run: |
+          python scripts/github/submit_comment.py
+
+
+---
+
+🇹🇭 Better: Update Existing Bot Comment
+
+ถ้า workflow รันทุกครั้งที่ push เข้า PR การสร้าง comment ใหม่ทุกครั้งจะกลายเป็นกำแพง bot comment อย่างรวดเร็ว ดังนั้น production ผมแนะนำให้ใช้ sticky comment แทน
+
+ตัวอย่างใช้ gh API:
+
+def submit_or_update_comment() -> None:
+    repository = get_required_env("GITHUB_REPOSITORY")
+    pr_number = get_required_env("PR_NUMBER")
+    body = get_required_env("COMMENT_BODY")
+
+    marker = "<!-- crystalcastle-ci-bot -->"
+
+    body = f"{marker}\n{body}"
+
+    comments = run_gh(
+        "api",
+        f"repos/{repository}/issues/{pr_number}/comments",
+        "--paginate",
+    )
+
+    # Production implementation should parse JSON and
+    # PATCH an existing bot comment when marker is found.
+
+ใช้ marker:
+
+<!-- crystalcastle-ci-bot -->
+
+## 🤖 CrystalCastle CI Review
+
+...
+
+แล้ว workflow จะมี comment เดียว:
+
+PR #59
+ │
+ ├── Push
+ │
+ ▼
+CI
+ │
+ ▼
+Auto Comment
+ │
+ ├── Existing bot comment?
+ │       │
+ │       ├── Yes → UPDATE
+ │       └── No  → CREATE
+ │
+ ▼
+One persistent CI status comment
+
+
+---
+
+🔐 Permission
+
+สำหรับ PR comment ใช้เพียง:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+ไม่ต้องให้:
+
+contents: write
+actions: write
+issues: write
+
+ถ้า script มีหน้าที่แค่ comment บน PR
+
+> หมายเหตุ: GitHub PR comments อยู่ใน Issues API model ดังนั้นบาง implementation ที่ใช้ gh issue comment จะต้องใช้ issues: write แทน แต่ถ้าใช้ gh pr comment ให้กำหนด pull-requests: write เป็นหลัก
+
+
+
+
+---
+
+🚀 รวมกับระบบที่คุณกำลังทำ
+
+GitHub PR #59
+     │
+     ▼
+┌──────────────────────┐
+│ Required CI Gates    │
+├──────────────────────┤
+│ React / Node         │
+│ Python Matrix        │
+│ Pytest               │
+│ Dependency Review    │
+│ Security             │
+│ CodeRabbit           │
+└──────────┬───────────┘
+           │
+           ▼
+   Python Auto Comment
+           │
+     ┌─────┼─────┐
+     ▼     ▼     ▼
+    PR    Slack Knowledge
+ Comment   CLI   Generator
+
+แบบนี้ submit_comment.py เป็น notification/output layer ไม่ปนกับ CI logic และสามารถนำไปใช้ซ้ำกับ PR #59, Issues และ automated knowledge ได้โดยไม่ต้องสร้าง workflow script ซ้ำ ๆ แบบวัฒนธรรม copy-paste ที่โลก GitHub มีมากเกินพอแล้ว
+
+I can also write the sticky-comment version with JSON parsing, update-in-place, CI status detection, and Slack CLI notification as a production-ready script.
