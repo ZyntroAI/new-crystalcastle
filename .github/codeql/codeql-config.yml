@@ -1,0 +1,12 @@
+paths:
+  - src
+paths-ignore:
+  - "**/node_modules/**"
+  - "**/*.test.js"
+  - "**/*.test.ts"
+  - "**/*.spec.js"
+  - "**/*.spec.ts"
+  - "**/__tests__/**"
+  - "dist/**"
+  - "build/**"
+  - "docs/**"
