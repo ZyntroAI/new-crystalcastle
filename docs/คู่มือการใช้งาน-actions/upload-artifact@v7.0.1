@@ -1,0 +1,133 @@
+# 📄 คู่มือการใช้งาน: `actions/upload-artifact@v7.0.1`
+> อธิบายทุกพารามิเตอร์ พร้อมตัวอย่างที่ใช้งานจริงครับ ✅
+
+---
+
+## 📋 สรุปพารามิเตอร์ทั้งหมด
+
+| พารามิเตอร์ | ค่าเริ่มต้น | ค่าที่ยอมรับ | คำอธิบาย |
+|---|---|---|---|
+| **`name`** | `artifact` | ข้อความ | ชื่อของ Artifact ที่จะแสดงในหน้า Actions |
+| **`path`** | — | ไฟล์/โฟลเดอร์ / Wildcard | ไฟล์หรือโฟลเดอร์ที่ต้องการอัปโหลด **จำเป็นต้องระบุ** |
+| **`if-no-files-found`** | `warn` | `warn` / `error` / `ignore` | พฤติกรรมเมื่อไม่พบไฟล์ที่ระบุ |
+| **`retention-days`** | ค่าจาก Repo Settings | `0–90` (วัน) | ระยะเวลาเก็บไฟล์ (0 = ใช้ค่าเริ่มต้น) |
+| **`compression-level`** | `6` | `0–9` | ระดับบีบอัด: 0=ไม่บีบอัด, 9=บีบอัดสูงสุด |
+| **`overwrite`** | `false` | `true` / `false` | เขียนทับ Artifact ชื่อเดิมที่มีอยู่หรือไม่ |
+| **`include-hidden-files`** | `false` | `true` / `false` | รวมไฟล์ที่ขึ้นต้นด้วยจุด `.` ด้วยหรือไม่ |
+| **`archive`** | `true` | `true` / `false` | บีบอัดเป็น `.zip` หรืออัปโหลดไฟล์ตามสภาพ |
+
+---
+
+## ✅ ตัวอย่างการใช้งาน แบบครบถ้วน
+
+### 🟢 ตัวอย่างที่ 1: พื้นฐาน — อัปโหลดโฟลเดอร์ Build
+```yaml
+- name: 📦 อัปโหลดไฟล์ Build
+  uses: actions/upload-artifact@v7.0.1
+  with:
+    name: build-artifacts
+    path: ./dist
+    if-no-files-found: error
+    retention-days: 30
+```
+> ✅ อัปโหลดโฟลเดอร์ `dist` ตั้งชื่อ `build-artifacts` เก็บ 30 วัน ถ้าไม่พบไฟล์ให้ล้มงาน
+
+---
+
+### 🟡 ตัวอย่างที่ 2: หลายไฟล์ + ไม่บีบอัด + เขียนทับ
+```yaml
+- name: 📄 อัปโหลดรายงาน
+  uses: actions/upload-artifact@v7.0.1
+  with:
+    name: test-reports
+    path: |
+      ./reports/*.html
+      ./coverage/coverage-summary.json
+    if-no-files-found: warn
+    compression-level: 0
+    overwrite: true
+```
+> ✅ หลายไฟล์ใช้ `|` ขึ้นบรรทัดใหม่, ไม่บีบอัด (เร็วขึ้น), เขียนทับเวอร์ชันเก่า
+
+---
+
+### 🔵 ตัวอย่างที่ 3: ไฟล์เดี่ยว + รวมไฟล์ซ่อน + บีบอัดสูงสุด
+```yaml
+- name: 🔐 อัปโหลดไฟล์ Config
+  uses: actions/upload-artifact@v7.0.1
+  with:
+    name: config-backup
+    path: ./config/
+    include-hidden-files: true
+    compression-level: 9
+    archive: true
+```
+> ✅ รวมไฟล์ `.env` `.gitignore` ด้วย, บีบอัดสูงสุดเพื่อประหยัดพื้นที่
+
+---
+
+### 🟣 ตัวอย่างที่ 4: ไม่บีบอัดเป็น Zip (ไฟล์เดี่ยวเท่านั้น!)
+```yaml
+- name: 📋 อัปโหลด Log ตรงๆ
+  uses: actions/upload-artifact@v7.0.1
+  with:
+    name: build-log
+    path: ./logs/build.log
+    archive: false  # ⚠️ ใช้ได้กับไฟล์เดี่ยวเท่านั้น!
+    retention-days: 7
+```
+> ⚠️ เมื่อ `archive: false` ต้องระบุ **ไฟล์เดี่ยว** เท่านั้น ห้ามเป็นโฟลเดอร์
+
+---
+
+## 💡 คำแนะนำการตั้งค่าตามสถานการณ์
+
+| สถานการณ์ | แนะนำค่า | เหตุผล |
+|---|---|---|
+| Build Output (โฟลเดอร์ใหญ่) | `compression-level: 6`, `retention-days: 7–30` | สมดุลดี เก็บไม่นาน |
+| Binary / Executable | `compression-level: 0` | บีบอัดไม่ได้ขนาดลดมาก แต่เสียเวลา |
+| รายงานขนาดเล็ก / Log | `compression-level: 9` | บีบอัดให้เล็กที่สุด |
+| Release Artifact สำคัญ | `retention-days: 90`, `overwrite: false` | เก็บสูงสุด ห้ามเขียนทับ |
+| Debug / CI Log ชั่วคราว | `retention-days: 3`, `if-no-files-found: ignore` | เก็บชั่วคราว ไม่ให้งานล้มเพราะหาไม่เจอ |
+
+---
+
+## ⚠️ ข้อควรระวังสำคัญ
+1. **`archive: false` → ได้ไฟล์เดี่ยวเท่านั้น** ❌ ห้ามระบุโฟลเดอร์หรือ Wildcard
+2. **`retention-days: 0`** = ใช้ค่าเริ่มต้นของ Repository (Settings → Actions → Artifact retention)
+3. **ชื่อ Artifact ซ้ำกันในงานเดียว** → ต้องใช้ `overwrite: true` ไม่งั้นจะ Error
+4. **Path สัมพันธ์** เริ่มจากรูทของ Repo หลัง `actions/checkout`
+5. **Wildcard** `**/*.zip` รองรับ, หลายบรรทัดใช้ `|` คั่น
+
+---
+
+## ✅ แม่แบบสำเร็จรูป — คัดลอกใช้ได้เลย
+
+```yaml
+# ========== แม่แบบ: อัปโหลด Build Output ==========
+- name: 📦 Upload Build Artifacts
+  uses: actions/upload-artifact@v7.0.1
+  with:
+    name: build-${{ github.sha }}
+    path: ./dist
+    if-no-files-found: error
+    retention-days: 30
+    compression-level: 6
+    overwrite: false
+
+# ========== แม่แบบ: อัปโหลดรายงานทดสอบ ==========
+- name: 📊 Upload Test Reports
+  uses: actions/upload-artifact@v7.0.1
+  with:
+    name: test-reports
+    path: |
+      ./coverage/
+      ./test-results/
+    if-no-files-found: warn
+    retention-days: 7
+    include-hidden-files: false
+```
+
+> 🎯 **สรุปสั้นๆ:** ระบุ `name` และ `path` ให้ชัดเจน, ตั้ง `if-no-files-found: error` เพื่อความปลอดภัย, เลือก `compression-level` ตามประเภทไฟล์, และระวัง `archive: false` ใช้ได้กับไฟล์เดี่ยวเท่านั้นครับ ✨
+> 
+> ต้องการให้ผมช่วยใส่เข้าไปใน Workflow ไฟล์ใดๆ โดยเฉพาะไหมครับ? 🚀

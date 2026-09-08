@@ -1,0 +1,82 @@
+**Default Variables** ใน GitHub Actions คือตัวแปรสภาพแวดล้อม (environment variables) ที่ GitHub ตั้งค่าให้อัตโนมัติบน **runner** ทุกครั้งที่ job รัน
+
+ต่างจาก **Contexts** (`${{ github.xxx }}`) ที่ใช้ได้เกือบทุกที่ใน YAML  
+Default Variables ใช้ได้เฉพาะ **ตอน job กำลังรันบน runner** เท่านั้น (เช่น ใน `run:` script)
+
+### ตัวแปร Default ที่ใช้บ่อยที่สุด
+
+| Variable | ความหมาย | ตัวอย่างค่า |
+|----------|---------|-------------|
+| `GITHUB_SHA` | Commit SHA ที่ trigger workflow | `a1b2c3d4e5f6...` |
+| `GITHUB_REF` | Full ref ของ branch/tag | `refs/heads/main` |
+| `GITHUB_REF_NAME` | ชื่อ branch หรือ tag | `main` |
+| `GITHUB_REPOSITORY` | `owner/repo` | `ZyntroAI/new-crystalcastle` |
+| `GITHUB_REPOSITORY_OWNER` | ชื่อเจ้าของ repo | `ZyntroAI` |
+| `GITHUB_ACTOR` | คนที่ trigger | `zyntromedia` |
+| `GITHUB_WORKFLOW` | ชื่อ workflow | `Deploy to Dev` |
+| `GITHUB_RUN_ID` | ID ของการรันครั้งนี้ | `1234567890` |
+| `GITHUB_RUN_NUMBER` | ลำดับการรันของ workflow | `42` |
+| `GITHUB_JOB` | ชื่อ job ปัจจุบัน | `build-and-deploy` |
+| `GITHUB_EVENT_NAME` | เหตุการณ์ที่ trigger | `push`, `pull_request`, `workflow_dispatch` |
+| `RUNNER_OS` | ระบบปฏิบัติการของ runner | `Linux`, `Windows`, `macOS` |
+| `RUNNER_ARCH` | สถาปัตยกรรม | `X64`, `ARM64` |
+| `RUNNER_TEMP` | โฟลเดอร์ temp | `/home/runner/work/_temp` |
+| `GITHUB_WORKSPACE` | โฟลเดอร์ที่ checkout code | `/home/runner/work/repo/repo` |
+| `GITHUB_TOKEN` | Token สำหรับเรียก GitHub API (มีจำกัดสิทธิ์) | `ghs_...` |
+
+### วิธีใช้
+
+#### 1. ใน shell script (`run:`)
+```yaml
+- name: Print info
+  run: |
+    echo "Commit SHA = $GITHUB_SHA"
+    echo "Branch     = $GITHUB_REF_NAME"
+    echo "Repo       = $GITHUB_REPOSITORY"
+    echo "Actor      = $GITHUB_ACTOR"
+    echo "OS         = $RUNNER_OS"
+```
+
+#### 2. เปรียบเทียบกับ Context (ใช้ `${{ }}`)
+```yaml
+- name: เปรียบเทียบ
+  run: |
+    echo "จาก Default Variable : $GITHUB_SHA"
+    echo "จาก Context          : ${{ github.sha }}"
+```
+
+ทั้งสองให้ค่าเดียวกัน แต่ใช้คนละจังหวะ
+
+### ความแตกต่างสำคัญ: Context vs Default Variable
+
+| หัวข้อ | Context (`${{ }}`) | Default Variable (`$VAR`) |
+|--------|---------------------|---------------------------|
+| ใช้ได้ตอนไหน | เกือบทุกที่ใน YAML (รวม `if:`, `env:`) | เฉพาะตอน job รันบน runner แล้ว |
+| ใช้ใน `if:` ได้ไหม | ได้ | ไม่ได้ |
+| ใช้ใน `env:` ของ job ได้ไหม | ได้ | ไม่ได้ (ต้องใช้ context) |
+| ปลอดภัยกว่าเวลา print | GitHub ช่วย mask บางส่วน | ต้องระวังเอง |
+
+### ตัวอย่างที่ใช้จริงใน workflow ของคุณ
+
+```yaml
+- name: Build and tag image
+  run: |
+    IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+    echo "Building $IMAGE:$GITHUB_SHA"
+    docker build -t "$IMAGE:$GITHUB_SHA" -t "$IMAGE:latest" .
+```
+
+หรือแบบใช้ Default Variable อย่างเดียว:
+
+```yaml
+- name: Show run info
+  run: |
+    echo "Workflow  : $GITHUB_WORKFLOW"
+    echo "Run number: $GITHUB_RUN_NUMBER"
+    echo "Triggered by: $GITHUB_ACTOR"
+    echo "Event     : $GITHUB_EVENT_NAME"
+```
+
+---
+
+ต้องการให้สรุปเป็นตารางตัวแปรทั้งหมด หรือยกตัวอย่างการใช้ใน `deploy-dev.yml` โดยเฉพาะไหมครับ?

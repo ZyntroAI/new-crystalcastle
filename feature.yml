@@ -1,0 +1,10 @@
+name: Feature Request
+description: ขอฟีเจอร์ใหม่
+labels: ["feature", "triage"]
+body:
+    - type: textarea
+    id: problem
+    attributes: { label: "Problem", description: "ปัญหาคืออะไร" }
+    - type: textarea
+    id: solution
+    attributes: { label: "Proposed Solution" }

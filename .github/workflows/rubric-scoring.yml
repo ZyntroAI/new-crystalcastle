@@ -1,0 +1,49 @@
+name: Rubric Scoring & Reporting
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  rubric-scoring:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repo
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. Setup environment (Node.js or Python depending on your agent runner)
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      # 3. Install dependencies
+      - name: Install dependencies
+        run: npm install
+
+      # 4. Run Parser Agent
+      - name: Run Parser Agent
+        run: |
+          node scripts/parser.js rubric.json parsed_items.json
+
+      # 5. Run Evaluator Agent (parallel scoring)
+      - name: Run Evaluator Agent
+        run: |
+          node scripts/evaluator.js parsed_items.json scores.json
+
+      # 6. Run Formatter Agent
+      - name: Run Formatter Agent
+        run: |
+          node scripts/formatter.js scores.json scores.csv scores.doc
+
+      # 7. Post results back to PR
+      - name: Post PR Comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: rubric-scores
+          message: |
+            ✅ Rubric evaluation completed.
+            - CSV: scores.csv
+            - Doc: scores.doc

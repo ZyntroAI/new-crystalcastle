@@ -1,0 +1,447 @@
+โครงสร้างนี้ใช้ได้เป็นแนวคิด แต่ผมแนะนำให้ แยกหน้าที่ + เพิ่ม security + failure handling + caching + artifact โดยเฉพาะ sync-external-docs และ audit-policies เพราะ workflow ปัจจุบันมีจุดเสี่ยงหลายจุด เช่น curl ไม่มี timeout, ไม่มี --fail, ไม่มี authentication สำหรับ index push และ job ที่ commit อาจ fail เมื่อไม่มี changes
+
+สำหรับ repo ที่มี FastAPI CI ผมจะวาง Auto Index Sync เป็น workflow แยก เพราะ lifecycle คนละเรื่องกัน:
+
+.github/workflows/
+├── fastapi-ci.yml          # code quality / tests
+└── auto-index-sync.yml     # docs / search index / policy sync
+
+Recommended version
+
+name: Auto Index Sync
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/**"
+      - "scripts/**"
+
+  schedule:
+    # 02:00 UTC = 09:00 Thailand
+    - cron: "0 2 * * *"
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: auto-index-sync
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  # ============================================================
+  # 1. Index repository documentation
+  # ============================================================
+  index-docs:
+    name: Index Repository Docs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+
+          if [ -f requirements.txt ]; then
+            python -m pip install -r requirements.txt
+          fi
+
+          if [ -f requirements-dev.txt ]; then
+            python -m pip install -r requirements-dev.txt
+          fi
+
+      - name: Validate docs directory
+        run: |
+          test -d docs || {
+            echo "::error::docs/ directory does not exist"
+            exit 1
+          }
+
+      - name: Extract repository metadata
+        run: |
+          python scripts/extract_metadata.py docs/ > repo_index.json
+
+      - name: Validate generated index
+        run: |
+          python -m json.tool repo_index.json > /dev/null
+
+      - name: Push repository index
+        env:
+          ALGOLIA_APP_ID: ${{ secrets.ALGOLIA_APP_ID }}
+          ALGOLIA_API_KEY: ${{ secrets.ALGOLIA_API_KEY }}
+        run: |
+          test -n "$ALGOLIA_APP_ID" || {
+            echo "::error::ALGOLIA_APP_ID is not configured"
+            exit 1
+          }
+
+          test -n "$ALGOLIA_API_KEY" || {
+            echo "::error::ALGOLIA_API_KEY is not configured"
+            exit 1
+          }
+
+          python scripts/push_index.py repo_index.json
+
+      - name: Upload generated index
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-index
+          path: repo_index.json
+          if-no-files-found: warn
+          retention-days: 7
+
+  # ============================================================
+  # 2. Sync external documentation
+  # ============================================================
+  sync-external-docs:
+    name: Sync External Docs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+
+          if [ -f requirements.txt ]; then
+            python -m pip install -r requirements.txt
+          fi
+
+          if [ -f requirements-dev.txt ]; then
+            python -m pip install -r requirements-dev.txt
+          fi
+
+      - name: Fetch OpenClaw docs
+        run: |
+          curl \
+            --fail \
+            --silent \
+            --show-error \
+            --location \
+            --retry 3 \
+            --connect-timeout 10 \
+            --max-time 60 \
+            --output openclaw.html \
+            https://docs.openclaw.ai
+
+      - name: Validate downloaded docs
+        run: |
+          test -s openclaw.html || {
+            echo "::error::OpenClaw docs download is empty"
+            exit 1
+          }
+
+      - name: Parse OpenClaw docs
+        run: |
+          python scripts/parse_docs.py openclaw.html > openclaw_index.json
+
+      - name: Validate external index
+        run: |
+          python -m json.tool openclaw_index.json > /dev/null
+
+      - name: Push external docs index
+        env:
+          ALGOLIA_APP_ID: ${{ secrets.ALGOLIA_APP_ID }}
+          ALGOLIA_API_KEY: ${{ secrets.ALGOLIA_API_KEY }}
+        run: |
+          test -n "$ALGOLIA_APP_ID"
+          test -n "$ALGOLIA_API_KEY"
+
+          python scripts/push_index.py openclaw_index.json
+
+      - name: Upload external index
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: openclaw-index
+          path: openclaw_index.json
+          if-no-files-found: warn
+          retention-days: 7
+
+  # ============================================================
+  # 3. Audit external policies
+  # ============================================================
+  audit-policies:
+    name: Audit Affiliate Policy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Fetch affiliate terms
+        run: |
+          curl \
+            --fail \
+            --silent \
+            --show-error \
+            --location \
+            --retry 3 \
+            --connect-timeout 10 \
+            --max-time 60 \
+            --output affiliate.html \
+            https://www.upcomers.com/policies/affiliate-terms-conditions
+
+      - name: Validate policy download
+        run: |
+          test -s affiliate.html || {
+            echo "::error::Affiliate policy download is empty"
+            exit 1
+          }
+
+      - name: Generate policy diff
+        run: |
+          python scripts/diff_policy.py affiliate.html > policy_diff.md
+
+      - name: Check policy changes
+        id: policy
+        run: |
+          if git diff --quiet -- policy_diff.md; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure Git
+        if: steps.policy.outputs.changed == 'true'
+        run: |
+          git config user.name "index-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit policy changes
+        if: steps.policy.outputs.changed == 'true'
+        run: |
+          git add policy_diff.md
+          git commit -m "chore: update affiliate policy snapshot"
+          git push
+
+      - name: Upload policy diff
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: policy-audit
+          path: policy_diff.md
+          if-no-files-found: warn
+          retention-days: 30จุดสำคัญที่แก้
+
+1. Push เฉพาะตอน docs เปลี่ยน
+
+เดิม:
+
+on:
+  push:
+    branches: [ main ]
+
+จะ trigger ทุก push บน main
+
+ผมเปลี่ยนเป็น:
+
+paths:
+  - "docs/**"
+  - "scripts/**"
+
+ดังนั้น:
+
+Code change
+   │
+   └── app/*.py
+          │
+          ▼
+      ไม่ index
+
+Docs change
+   │
+   └── docs/**
+          │
+          ▼
+      Index Sync
+
+ลด CI usage ได้พอสมควร
+
+
+---
+
+2. curl ต้อง fail เมื่อ external site มีปัญหา
+
+เดิม:
+
+curl -s URL > file
+
+ปัญหาคือ HTTP 404/500 อาจไม่ได้ทำให้ step fail อย่างที่คุณคาด
+
+เวอร์ชันใหม่:
+
+curl \
+  --fail \
+  --silent \
+  --show-error \
+  --location \
+  --retry 3 \
+  --connect-timeout 10 \
+  --max-time 60 \
+  --output file \
+  URL
+
+ทำให้ external dependency มี behavior ที่ predictable มากขึ้น
+
+
+---
+
+3. JSON ต้อง validate ก่อน push
+
+เพิ่ม:
+
+python -m json.tool repo_index.json
+
+Pipeline:
+
+Extract
+  ↓
+JSON
+  ↓
+Validate
+  ↓
+Push
+
+ไม่ใช่:
+
+Extract
+  ↓
+Broken JSON
+  ↓
+💥 Search Index
+
+
+---
+
+4. Secret validation
+
+ก่อนใช้ Algolia:
+
+test -n "$ALGOLIA_APP_ID"
+test -n "$ALGOLIA_API_KEY"
+
+ทำให้ error ชัดเจนกว่า API ล้มแล้วต้องมานั่งเดาว่า secret หายไปไหน
+
+และ ควรใช้ Algolia Admin/API key ที่มีสิทธิ์เฉพาะ index ที่ต้องเขียน ไม่ควรใช้ key ที่มีสิทธิ์เกินจำเป็น
+
+
+---
+
+5. Policy job ต้องไม่ commit ทุกครั้ง
+
+นี่เป็น bug เชิง logic ที่สำคัญในเวอร์ชันเดิม:
+
+git add policy_diff.md
+git commit
+git push
+
+ถ้าไม่มีการเปลี่ยนแปลง:
+
+nothing to commit
+
+แล้ว job fail
+
+เวอร์ชันใหม่ใช้:
+
+git diff --quiet
+
+แล้ว commit เฉพาะเมื่อมี change:
+
+Policy unchanged
+      │
+      └── Skip commit
+
+Policy changed
+      │
+      ├── git add
+      ├── git commit
+      └── git push
+
+
+---
+
+ผมแนะนำเพิ่มอีกหนึ่งระดับสำหรับ repo ของคุณ
+
+เนื่องจากคุณมี FastAPI CI อยู่แล้ว architecture ที่สะอาดกว่าจะเป็น:
+
+.github/workflows/
+│
+├── fastapi-ci.yml
+│     │
+│     ├── Ruff
+│     ├── Pytest
+│     └── Coverage
+│
+├── auto-index-sync.yml
+│     │
+│     ├── Repository Docs
+│     ├── External Docs
+│     └── Policy Audit
+│
+└── security.yml
+      │
+      ├── Dependency Review
+      ├── Secret Scan
+      └── CodeQL
+
+แล้วเพิ่ม dependency ระหว่าง workflow เฉพาะกรณีที่จำเป็น แทนการยัดทุกอย่างเข้า workflow เดียว
+
+สำหรับระบบ AI/search ที่คุณกำลังทำอยู่ architecture ที่น่าสนใจยิ่งกว่าคือ:
+
+┌──────────────┐
+                 │   Git Push   │
+                 └──────┬───────┘
+                        │
+              ┌─────────▼─────────┐
+              │    FastAPI CI     │
+              │ Ruff/Test/Coverage│
+              └───────────────────┘
+
+                 ┌──────────────┐
+                 │ Cron / Manual│
+                 └──────┬───────┘
+                        │
+              ┌─────────▼─────────┐
+              │  Auto Index Sync  │
+              └─────────┬─────────┘
+                        │
+             ┌──────────┼──────────┐
+             ▼          ▼          ▼
+          Repo Docs  External   Policies
+             │        Docs         │
+             └─────────┬───────────┘
+                       ▼
+                ┌──────────────┐
+                │ Validate JSON│
+                └──────┬───────┘
+                       ▼
+                ┌──────────────┐
+                │ Search Index │
+                │   Algolia    │
+                └──────────────┘
+
+ข้อสังเกตสำคัญ: การ crawl https://docs.openclaw.ai ด้วย curl แบบดึงหน้าเดียวอาจไม่ใช่การ sync documentation ทั้งเว็บไซต์ หากเป้าหมายคือทำ searchable knowledge base จริง ควรใช้ crawler ที่เดินตาม sitemap/links และทำ content hash + incremental indexing เพื่อไม่ต้องส่งเอกสารเดิมเข้า search index ทุกคืน ซึ่งจะเข้ากับเป้าหมายลด API/indexing cost ของระบบคุณมากกว่า.

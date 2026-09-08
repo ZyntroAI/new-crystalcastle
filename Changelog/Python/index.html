@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <meta
+    name="description"
+    content="Python Changelog and What's New reference for ZyntroAI new-crystalcastle"
+  />
+
+  <title>Python Changelog | New Crystal Castle</title>
+
+  <style>
+    :root {
+      color-scheme: light dark;
+      --max-width: 1100px;
+      --border: rgba(127, 127, 127, 0.35);
+      --muted: #777;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+      line-height: 1.7;
+      background: Canvas;
+      color: CanvasText;
+    }
+
+    header {
+      border-bottom: 1px solid var(--border);
+    }
+
+    nav {
+      max-width: var(--max-width);
+      margin: auto;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+    }
+
+    nav a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .brand {
+      font-weight: 700;
+    }
+
+    main {
+      max-width: var(--max-width);
+      margin: auto;
+      padding: 40px 20px 80px;
+    }
+
+    section {
+      margin-top: 48px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      line-height: 1.3;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .hero {
+      padding: 40px 0 20px;
+    }
+
+    .hero p {
+      max-width: 760px;
+      color: var(--muted);
+      font-size: 1.1rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(
+        auto-fit,
+        minmax(220px, 1fr)
+      );
+      gap: 16px;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .card h3 {
+      margin-top: 0;
+    }
+
+    .version {
+      font-family:
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        monospace;
+      font-size: 1.1rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 0.8rem;
+      margin-bottom: 10px;
+    }
+
+    .timeline {
+      border-left: 2px solid var(--border);
+      padding-left: 24px;
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 28px;
+    }
+
+    .timeline-item::before {
+      content: "";
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: Canvas;
+      border: 2px solid currentColor;
+      left: -31px;
+      top: 8px;
+    }
+
+    pre {
+      overflow-x: auto;
+      padding: 18px;
+      border-radius: 10px;
+      background: #111;
+      color: #eee;
+    }
+
+    code {
+      font-family:
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        monospace;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .callout {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .checklist {
+      padding-left: 0;
+      list-style: none;
+    }
+
+    .checklist li {
+      margin: 10px 0;
+    }
+
+    .checklist li::before {
+      content: "✓";
+      margin-right: 10px;
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 30px 20px;
+      color: var(--muted);
+    }
+
+    footer > div {
+      max-width: var(--max-width);
+      margin: auto;
+    }
+
+    @media (max-width: 650px) {
+      nav {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      main {
+        padding-top: 20px;
+      }
+
+      th,
+      td {
+        padding: 8px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <nav>
+      <a class="brand" href="#top">
+        ZyntroAI / New Crystal Castle
+      </a>
+
+      <a
+        href="https://docs.python.org/3/whatsnew/changelog.html"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Python Official Changelog
+      </a>
+    </nav>
+  </header>
+
+  <main id="top">
+
+    <section class="hero">
+      <span class="badge">CHANGELOG / PYTHON</span>
+
+      <h1>Python Changelog</h1>
+
+      <p>
+        A centralized Python release, compatibility, upgrade,
+        and migration reference for the
+        <strong>new-crystalcastle</strong> project.
+      </p>
+
+      <p>
+        This page provides links to the official Python
+        <em>What's New</em> documentation and defines the
+        project's Python upgrade workflow.
+      </p>
+    </section>
+
+    <section id="official">
+      <h2>Official Documentation</h2>
+
+      <div class="grid">
+
+        <article class="card">
+          <h3>Python Changelog</h3>
+
+          <p>
+            Complete CPython changelog and release history.
+          </p>
+
+          <a
+            href="https://docs.python.org/3/whatsnew/changelog.html"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Open official changelog →
+          </a>
+        </article>
+
+        <article class="card">
+          <h3>What's New</h3>
+
+          <p>
+            Version-specific feature, compatibility,
+            deprecation, and migration information.
+          </p>
+
+          <a
+            href="https://docs.python.org/3/whatsnew/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Open What's New →
+          </a>
+        </article>
+
+        <article class="card">
+          <h3>Python Documentation</h3>
+
+          <p>
+            Official Python language and standard-library
+            documentation.
+          </p>
+
+          <a
+            href="https://docs.python.org/3/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Open Python Docs →
+          </a>
+        </article>
+
+      </div>
+    </section>
+
+    <section id="versions">
+      <h2>Python Version Matrix</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Version</th>
+            <th>Role</th>
+            <th>Purpose</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td class="version">3.14</td>
+            <td>Primary</td>
+            <td>Current development target</td>
+          </tr>
+
+          <tr>
+            <td class="version">3.13</td>
+            <td>Compatibility</td>
+            <td>CI compatibility validation</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout">
+        <strong>Policy:</strong>
+        Python runtime upgrades should be validated against
+        supported versions before merging into the main branch.
+      </div>
+    </section>
+
+    <section id="timeline">
+      <h2>Upgrade Timeline</h2>
+
+      <div class="timeline">
+
+        <article class="timeline-item">
+          <h3>Python 3.14</h3>
+
+          <p>
+            Primary development target.
+            Review the official What's New documentation
+            before adopting new language or runtime features.
+          </p>
+
+          <a
+            href="https://docs.python.org/3.14/whatsnew/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Python 3.14 What's New →
+          </a>
+        </article>
+
+        <article class="timeline-item">
+          <h3>Python 3.13</h3>
+
+          <p>
+            Compatibility target for CI and dependency
+            validation.
+          </p>
+
+          <a
+            href="https://docs.python.org/3.13/whatsnew/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Python 3.13 What's New →
+          </a>
+        </article>
+
+      </div>
+    </section>
+
+    <section id="governance">
+      <h2>Python Upgrade Governance</h2>
+
+      <pre><code>Python Changelog
+       │
+       ▼
+What's New
+       │
+       ▼
+Compatibility Review
+       │
+       ├── Runtime
+       │
+       ├── FastAPI
+       │
+       ├── Dependencies
+       │
+       ├── Docker
+       │
+       └── GitHub Actions
+       │
+       ▼
+CI Matrix
+       │
+       ▼
+Tests
+       │
+       ▼
+Build
+       │
+       ▼
+Merge</code></pre>
+    </section>
+
+    <section id="ci">
+      <h2>GitHub Actions Strategy</h2>
+
+      <p>
+        Python versions should be tested through a CI matrix
+        rather than relying on a single local environment.
+      </p>
+
+      <pre><code>strategy:
+  matrix:
+    python-version:
+      - "3.13"
+      - "3.14"</code></pre>
+
+      <p>
+        A backend project can then validate installation,
+        linting, type checking, tests, and packaging across
+        supported Python versions.
+      </p>
+    </section>
+
+    <section id="workflow">
+      <h2>Upgrade Workflow</h2>
+
+      <ol>
+        <li>
+          Review the official Python What's New documentation.
+        </li>
+
+        <li>
+          Review deprecated and removed functionality.
+        </li>
+
+        <li>
+          Review framework compatibility.
+        </li>
+
+        <li>
+          Update the Python runtime.
+        </li>
+
+        <li>
+          Update dependency constraints.
+        </li>
+
+        <li>
+          Run the complete test suite.
+        </li>
+
+        <li>
+          Validate Docker builds.
+        </li>
+
+        <li>
+          Validate GitHub Actions.
+        </li>
+
+        <li>
+          Merge only after CI passes.
+        </li>
+      </ol>
+    </section>
+
+    <section id="checklist">
+      <h2>Upgrade Checklist</h2>
+
+      <ul class="checklist">
+        <li>
+          Review Python What's New
+        </li>
+
+        <li>
+          Review Python changelog
+        </li>
+
+        <li>
+          Review deprecations
+        </li>
+
+        <li>
+          Review removed APIs
+        </li>
+
+        <li>
+          Check FastAPI compatibility
+        </li>
+
+        <li>
+          Check dependency compatibility
+        </li>
+
+        <li>
+          Update Docker image
+        </li>
+
+        <li>
+          Update CI Python matrix
+        </li>
+
+        <li>
+          Run tests
+        </li>
+
+        <li>
+          Run linting
+        </li>
+
+        <li>
+          Run type checking
+        </li>
+
+        <li>
+          Run production build
+        </li>
+      </ul>
+    </section>
+
+    <section id="architecture">
+      <h2>Project Architecture</h2>
+
+      <pre><code>new-crystalcastle/
+│
+├── Changelog/
+│   └── Python/
+│       └── index.html
+│
+├── backend/
+│   └── Python / FastAPI
+│
+├── .github/
+│   └── workflows/
+│
+├── Dockerfile
+│
+├── pyproject.toml
+│
+└── requirements/
+    └── *.txt</code></pre>
+    </section>
+
+    <section id="sources">
+      <h2>References</h2>
+
+      <ul>
+        <li>
+          <a
+            href="https://docs.python.org/3/whatsnew/changelog.html"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Python Changelog
+          </a>
+        </li>
+
+        <li>
+          <a
+            href="https://docs.python.org/3/whatsnew/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Python What's New
+          </a>
+        </li>
+
+        <li>
+          <a
+            href="https://docs.python.org/3/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Python Documentation
+          </a>
+        </li>
+
+        <li>
+          <a
+            href="https://github.com/ZyntroAI/new-crystalcastle"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            ZyntroAI/new-crystalcastle
+          </a>
+        </li>
+      </ul>
+    </section>
+
+  </main>
+
+  <footer>
+    <div>
+      <strong>ZyntroAI / New Crystal Castle</strong>
+      <p>
+        Python changelog and runtime upgrade governance.
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>

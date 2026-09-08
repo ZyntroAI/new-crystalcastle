@@ -1,0 +1,35 @@
+name: Payment Governance
+
+on:
+  pull_request:
+    paths:
+      - "src/payment/**"
+      - "tests/payment/**"
+      - ".github/workflows/payment-governance.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  payment-tests:
+    name: Payment Governance
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Test payment rules
+        run: npm test -- --run tests/payment
+
+      - name: Typecheck
+        run: npm run typecheck

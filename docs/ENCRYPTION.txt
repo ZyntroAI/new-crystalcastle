@@ -1,0 +1,49 @@
+## ENCRYPTION.md Summary
+
+**ENCRYPTION.md is an open standard specification (v1.0, 2026) that defines technical encryption implementation standards for AI agents.** It serves as a version-controlled, auditable record of security requirements placed in a repository's root directory.
+
+---
+
+## Core Purpose
+
+The specification addresses a critical gap: without explicit encryption standards, developers make ad-hoc security choices based on convenience rather than correctness. ENCRYPTION.md removes ambiguity by making encryption controls explicit, version-controlled, and compliant with regulatory requirements.
+
+---
+
+## Key Requirements
+
+**Approved algorithms:**
+- Symmetric encryption: **AES-256-GCM** and **ChaCha20-Poly1305**
+- Hashing: **SHA-256, SHA-512, BLAKE3**
+
+**Forbidden algorithms:**
+- DES, RC4 (symmetric)
+- MD5, SHA-1 (hashing)
+
+**Key rotation schedules:**
+- Data encryption keys: **90-day maximum** (immediate rotation on breach)
+- API keys: **30-day maximum**
+- TLS certificates: **Annual rotation** (quarterly preferred)
+
+**Infrastructure requirements:**
+- **TLS 1.3 minimum** for all new connections
+- **4096-bit RSA minimum** for asymmetric encryption
+- Approved key storage: environment variables, secrets managers (AWS Secrets Manager, HashiCorp Vault), hardware security modules
+
+---
+
+## Relationship to ENCRYPT.md
+
+ENCRYPT.md defines the **data classification policy** (what is critical, sensitive, internal, or public). ENCRYPTION.md defines the **technical implementation** (which algorithms, TLS versions, and key rotation procedures). Together they provide complete data protection documentation.
+
+---
+
+## Compliance Mapping
+
+ENCRYPTION.md maps to four regulatory standards: **FIPS 140-3, SOC2, ISO 27001, and GDPR** (effective August 2, 2026). It provides the auditable record required by Article 32 of GDPR, SOC2 control CC6.7, ISO 27001 control A.10.1, and the EU AI Act.
+
+---
+
+## Role in AI Safety Stack
+
+ENCRYPTION.md is file **07/12** in a broader 12-file AI agent safety escalation stack that ranges from operational control (throttling, escalation, failsafe, killswitch) through data security and output quality to accountability and benchmarking.

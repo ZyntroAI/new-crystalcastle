@@ -1,32 +1,164 @@
+# ============================================
+# Dependencies
+# ============================================
+node_modules/
+.pnp
+.pnp.js
 
-npm-debug.log*, 
-yarn-debug.log*, 
-yarn-error.log*, 
-dist/, 
-build/, 
-.vite/, 
-coverage/, 
-.env, 
-.env.local, 
-.env.development, 
-.env.Production, 
-.env.test, 
-.vscode/, 
-.idea/,
-.DS_Store,
-Thumbs.db,
-*.log,
-*.tmp,
-*pnpm,
-*.swp,
+# ============================================
+# Environment & Secrets
+# ============================================
+.env
+.env.local
+.env.*.local
+# Keep .env.example as a safe template
+!.env.example
+
+# ============================================
+# Build Outputs
+# ============================================
+dist/
+build/
+.next/
+.out/
+.nuxt/
+.svelte-kit/
+.turbo/
+.parcel-cache/
 .vercel/
+*.tsbuildinfo
 
+# ============================================
+# Testing & Coverage
+# ============================================
+coverage/
+*.lcov
+coverage*.json
+coverage*.xml
+coverage*.info
+.nyc_output/
+cypress/videos/
+cypress/screenshots/
+playwright-report/
+test-results/
 
-💡 You can also add project‑specific ignores for generated reports or AI‑related outputs, like:
-`gitignore
+# ============================================
+# Logs
+# ============================================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-AI Studio artifacts
-Ai-studio/output/
-Azure-AI/temp/
-Final-Report/*.pdf
-`
+# ============================================
+# Python
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ============================================
+# Editors & IDEs
+# ============================================
+# VS Code — keep shared config
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# JetBrains (WebStorm, PyCharm)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Local history
+.history/
+
+# ============================================
+# OS Generated
+# ============================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ============================================
+# Archives & Packages
+# ============================================
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# ============================================
+# Misc
+# ============================================
+*.swp
+*.swo
+*~
+# 🔒 Secrets & Credentials (ห้ามเด็ดขาด)
+.env
+.env.*
+!.env.example
+.credentials/
+.secrets/
+*.key
+*.pem
+*.crt
+*.pfx
+id_*
+*token*
+*apikey*
+*secret*
+
+# 🐍 Python Artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyc
+venv/
+.venv/
+.pytest_cache/
+
+# 📦 Node/Dependencies
+node_modules/
+dist/
+build/
+
+# 🐳 Docker & Sandbox
+.docker/
+sandbox-*/
+
+# 📊 Logs & Reports (เก็บเฉพาะที่ตั้งใจ)
+logs/
+*.log
+audit/temp/
+
+# 💻 OS Junk
+.DS_Store
+Thumbs.db
+*.swp
+
+# 📂 Local Config (ไม่แชร์)
+config.local.json
+settings.local.yaml

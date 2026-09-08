@@ -1,0 +1,157 @@
+ทำได้ครับ และสำหรับ repo ที่มี CI/CD อยู่แล้ว ผมแนะนำให้ใช้ GitHub Actions + GitHub CLI (gh) โดยให้ Action ตรวจเงื่อนไขก่อนแล้วค่อยปิด Issue ไม่ใช่ไล่ปิดทุกอย่างแบบเครื่องจักรที่เพิ่งค้นพบปุ่ม close 😏
+
+This can be implemented cleanly with GitHub Actions + GitHub CLI (gh). The workflow can automatically close issues based on labels, inactivity, stale status, or a successful linked PR.
+
+1. Auto-close when a PR is merged
+
+ถ้าต้องการ workflow ที่ปลอดภัยและ predictable ที่สุด ให้ใช้รูปแบบนี้:
+
+name: Auto Close Issue
+
+on:
+  pull_request:
+    types:
+      - closed
+
+permissions:
+  issues: write
+  pull-requests: read
+
+jobs:
+  close-issue:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Close linked issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          REPO: ${{ github.repository }}
+        run: |
+          echo "$PR_BODY" \
+            | grep -oE '#[0-9]+' \
+            | tr -d '#' \
+            | while read issue; do
+                echo "Closing issue #$issue"
+                gh issue close "$issue" \
+                  --repo "$REPO" \
+                  --comment "Automatically closed because PR #${{ github.event.pull_request.number }} was merged."
+              done
+
+PR เช่น:
+
+Fix authentication flow
+
+Closes #123
+
+จริง ๆ GitHub มี native behavior สำหรับ Closes #123, Fixes #123 และ Resolves #123 อยู่แล้ว ดังนั้น ไม่จำเป็นต้องสร้าง Action เพื่อทำสิ่งที่ GitHub ทำให้เอง.
+
+
+---
+
+2. Auto-close stale issues
+
+กรณีนี้เหมาะกว่าเมื่อคุณต้องการ housekeeping:
+
+name: Auto Close Stale Issues
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Mark and close stale issues
+        uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+          stale-issue-message: >
+            This issue has been automatically marked as stale
+            because it has had no recent activity.
+
+          close-issue-message: >
+            This issue has been automatically closed due to inactivity.
+
+          days-before-stale: 30
+          days-before-close: 7
+
+          stale-issue-label: stale
+          close-issue-label: auto-closed
+
+          exempt-issue-labels: |
+            pinned
+            security
+            critical
+            roadmap
+
+Flow:
+
+30 days inactive
+      │
+      ▼
+   stale
+      │
+      │ + 7 days
+      ▼
+ auto-closed
+
+
+---
+
+3. Recommended repository policy
+
+สำหรับ project ที่มี CI/CD ผมแนะนำให้แยก behavior แบบนี้:
+
+.github/
+└── workflows/
+    ├── ci.yml
+    ├── secret-scan.yml
+    ├── dependency-review.yml
+    ├── deploy-dev.yml
+    ├── deploy-uat.yml
+    ├── release.yml
+    ├── issue-auto-close.yml
+    └── stale.yml
+
+โดยแบ่ง responsibility:
+
+Workflow	Responsibility
+
+issue-auto-close.yml	Close issue เมื่อ condition สำเร็จ
+stale.yml	จัดการ issue ที่ไม่มี activity
+ci.yml	Build / Test / Lint
+release.yml	Release
+deploy-*.yml	Deployment
+
+
+4. Best practice
+
+ใช้ label เป็น safety gate:
+
+auto-close
+    │
+    ├── bug
+    ├── feature
+    ├── stale
+    └── resolved
+
+และ อย่า auto-close label สำคัญ เช่น:
+
+security
+critical
+production
+roadmap
+pinned
+legal
+
+สำหรับ production repo ผมจะเลือก native Closes #123 สำหรับ PR-linked issues + actions/stale สำหรับ inactive issues เพราะเรียบง่าย ตรวจสอบง่าย และลด custom automation ที่ต้องคอยเลี้ยงเหมือนสัตว์เลี้ยงดิจิทัล.

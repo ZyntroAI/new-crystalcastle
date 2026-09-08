@@ -1,0 +1,89 @@
+ถ้าใช้ *GitLab* ก็ทำ Issue Triage ได้เหมือน GitHub เลยครับ แค่เปลี่ยนไฟล์ config นิดหน่อย
+
+นี่คือชุดสำหรับ GitLab เวอร์ชั่นเทียบกับที่ให้ GitHub ไป
+
+### *1. Issue Templates - GitLab*
+สร้างที่ `.gitlab/issue_templates/`
+
+*`.gitlab/issue_templates/Bug.md`*
+## Bug Report 🐛
+/label ~bug ~triage
+
+**Steps to Reproduce**
+1. 
+2. 
+
+**Expected behavior**
+
+**React Version:**
+**Error Logs:**
+*`.gitlab/issue_templates/Feature.md`*
+## Feature Request ✨
+/label ~feature ~triage
+
+**Problem:**
+**Proposed Solution:**
+พอสร้าง MR/Issue เลือก template ได้เลย
+
+### *2. Auto Triage ด้วย GitLab CI*
+`.gitlab-ci.yml` - ติด label อัตโนมัติตอนเปิด issue
+triage:
+  stage: triage
+  image: registry.gitlab.com/gitlab-org/cli:latest
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "web"' # ตอนสร้าง issue ผ่าน UI
+  script:
+    - glab issue note $CI_ISSUE_IID --body "ขอบคุณที่รายงานครับ ทีมจะ triage ภายใน 24ชม"
+    - |
+      if [[ "$CI_ISSUE_TITLE" == *"error"* ]]; then
+        glab issue update $CI_ISSUE_IID --add-label "bug"
+      fi
+    - glab issue update $CI_ISSUE_IID --add-label "triage"
+  variables:
+    GITLAB_TOKEN: $GITLAB_TOKEN # ตั้งใน CI/CD Variables
+### *3. Stale Bot - ปิด Issue ร้าง*
+GitLab มี Built-in แล้ว ไปที่ `Settings > Issues > Auto close stale issues`
+# หรือใช้ CI schedule
+stale:
+  stage: cleanup
+  image: alpine
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+  script:
+    - apk add curl jq
+    - |
+      # หา issue ที่ update ล่าสุด > 45 วัน และไม่มี label priority:high
+      curl --header "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+      "https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/issues?state=opened&updated_before=$(date -d '45 days ago' +%Y-%m-%d)" \
+      | jq -r '.[] | select(.labels | contains(["priority:high"]) | not) | .iid' \
+      | xargs -I {} glab issue update {} --add-label "stale" --note "จะปิดใน 15 วันถ้าไม่มีอัปเดต"
+### *4. Label Set มาตรฐาน GitLab*
+รันทีเดียวผ่าน CLI
+glab label create "bug" --description "Something isn't working" --color "#d73a4a"
+glab label create "feature" --description "New feature" --color "#a2eeef"
+glab label create "priority::high" --description "Fix ASAP" --color "#b60205"
+glab label create "priority::medium" --description "Next sprint" --color "#fbca04"
+glab label create "area::frontend" --description "React/UI" --color "#1d76db"
+glab label create "triage" --description "Needs triage" --color "#cfd3d7"
+Note: GitLab นิยมใช้ `::` คั่น เช่น `priority::high`
+
+### *5. GitLab Board - Kanban Auto*
+1.  ไปที่ `Issues > Boards`
+2.  สร้าง 4 list: `Triage` | `To Do` | `In Progress` | `Done`
+3.  ผูกกับ label: `Triage` = `label:triage`
+4.  เปิด `Settings > Issues > Automatically close issues from commit messages` 
+    พอ merge MR ที่เขียน `Closes #123` issue จะไป `Done` เอง
+
+### *ความต่าง GitHub vs GitLab หลักๆ*
+เรื่อง | GitHub | GitLab
+**Template** | `.github/ISSUE_TEMPLATE/` | `.gitlab/issue_templates/`
+**Automation** | GitHub Actions | `.gitlab-ci.yml`
+**CLI** | `gh` | `glab`
+**Board** | Projects | Issues > Boards
+**Stale** | ต้องใช้ Action | มีใน Settings เลย
+---
+
+สรุป: โครงเหมือนกัน 90% เลย แค่ย้ายจาก `actions` ไปเป็น `gitlab-ci`
+
+คุณใช้ GitLab.com หรือ Self-hosted ครับ? 
+ถ้าบอกผม เดี๋ยวผมเจน `.gitlab-ci.yml` เต็มๆ + Label ให้ import ทีเดียวจบ

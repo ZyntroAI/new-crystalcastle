@@ -1,0 +1,9 @@
+{
+  channels: {
+    whatsapp: {
+      allowFrom: ["+15555550123"],
+      groups: { "*": { requireMention: true } },
+    },
+  },
+  messages: { groupChat: { mentionPatterns: ["@openclaw"] } },
+}

@@ -1,0 +1,201 @@
+const Database = require('better-sqlite3');
+const path = require('path');
+const fs = require('fs');
+
+// Ensure data directory exists
+const dataDir = path.join(__dirname, 'data');
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
+const dbPath = path.join(dataDir, 'github-app.db');
+const db = new Database(dbPath);
+
+// Enable WAL mode for better concurrency
+db.pragma('journal_mode = WAL');
+db.pragma('foreign_keys = ON');
+
+// ============================================================
+// 📊 SCHEMA
+// ============================================================
+db.exec(`
+  CREATE TABLE IF NOT EXISTS installations (
+    id INTEGER PRIMARY KEY,
+    installation_id INTEGER UNIQUE NOT NULL,
+    account_login TEXT NOT NULL,
+    account_id INTEGER NOT NULL,
+    account_type TEXT NOT NULL,
+    target_type TEXT,
+    repository_selection TEXT,
+    access_token TEXT,
+    token_expires_at TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    github_id INTEGER UNIQUE NOT NULL,
+    login TEXT NOT NULL,
+    name TEXT,
+    email TEXT,
+    avatar_url TEXT,
+    access_token TEXT,
+    token_expires_at TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    last_login_at TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS user_installations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    installation_id INTEGER NOT NULL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (installation_id) REFERENCES installations(installation_id) ON DELETE CASCADE,
+    UNIQUE(user_id, installation_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS webhook_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_type TEXT NOT NULL,
+    action TEXT,
+    delivery_id TEXT,
+    installation_id INTEGER,
+    repository TEXT,
+    payload_summary TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS audit_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    action TEXT NOT NULL,
+    entity_type TEXT,
+    entity_id TEXT,
+    details TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_installations_installation_id ON installations(installation_id);
+  CREATE INDEX IF NOT EXISTS idx_users_github_id ON users(github_id);
+  CREATE INDEX IF NOT EXISTS idx_webhook_logs_event_type ON webhook_logs(event_type);
+  CREATE INDEX IF NOT EXISTS idx_webhook_logs_created_at ON webhook_logs(created_at);
+`);
+
+// ============================================================
+// 📝 INSTALLATION QUERIES
+// ============================================================
+const upsertInstallation = db.prepare(`
+  INSERT INTO installations 
+    (installation_id, account_login, account_id, account_type, target_type, repository_selection, access_token, token_expires_at)
+  VALUES 
+    (@installation_id, @account_login, @account_id, @account_type, @target_type, @repository_selection, @access_token, @token_expires_at)
+  ON CONFLICT(installation_id) DO UPDATE SET
+    account_login = excluded.account_login,
+    account_id = excluded.account_id,
+    account_type = excluded.account_type,
+    target_type = excluded.target_type,
+    repository_selection = excluded.repository_selection,
+    access_token = COALESCE(excluded.access_token, access_token),
+    token_expires_at = COALESCE(excluded.token_expires_at, token_expires_at),
+    updated_at = CURRENT_TIMESTAMP
+`);
+
+const deleteInstallation = db.prepare(`
+  DELETE FROM installations WHERE installation_id = ?
+`);
+
+const getInstallation = db.prepare(`
+  SELECT * FROM installations WHERE installation_id = ?
+`);
+
+const getAllInstallations = db.prepare(`
+  SELECT * FROM installations ORDER BY created_at DESC
+`);
+
+const updateInstallationToken = db.prepare(`
+  UPDATE installations 
+  SET access_token = ?, token_expires_at = ?, updated_at = CURRENT_TIMESTAMP
+  WHERE installation_id = ?
+`);
+
+// ============================================================
+// 👤 USER QUERIES
+// ============================================================
+const upsertUser = db.prepare(`
+  INSERT INTO users 
+    (github_id, login, name, email, avatar_url, access_token, token_expires_at, last_login_at)
+  VALUES 
+    (@github_id, @login, @name, @email, @avatar_url, @access_token, @token_expires_at, CURRENT_TIMESTAMP)
+  ON CONFLICT(github_id) DO UPDATE SET
+    login = excluded.login,
+    name = COALESCE(excluded.name, name),
+    email = COALESCE(excluded.email, email),
+    avatar_url = COALESCE(excluded.avatar_url, avatar_url),
+    access_token = COALESCE(excluded.access_token, access_token),
+    token_expires_at = COALESCE(excluded.token_expires_at, token_expires_at),
+    last_login_at = CURRENT_TIMESTAMP
+`);
+
+const getUserByGithubId = db.prepare(`
+  SELECT * FROM users WHERE github_id = ?
+`);
+
+const linkUserToInstallation = db.prepare(`
+  INSERT OR IGNORE INTO user_installations (user_id, installation_id)
+  VALUES (?, ?)
+`);
+
+// ============================================================
+// 📜 LOG QUERIES
+// ============================================================
+const logWebhook = db.prepare(`
+  INSERT INTO webhook_logs (event_type, action, delivery_id, installation_id, repository, payload_summary)
+  VALUES (@event_type, @action, @delivery_id, @installation_id, @repository, @payload_summary)
+`);
+
+const logAudit = db.prepare(`
+  INSERT INTO audit_logs (action, entity_type, entity_id, details)
+  VALUES (@action, @entity_type, @entity_id, @details)
+`);
+
+const getRecentWebhooks = db.prepare(`
+  SELECT * FROM webhook_logs ORDER BY created_at DESC LIMIT ?
+`);
+
+const getStats = db.prepare(`
+  SELECT
+    (SELECT COUNT(*) FROM installations) as installations_count,
+    (SELECT COUNT(*) FROM users) as users_count,
+    (SELECT COUNT(*) FROM webhook_logs) as webhooks_processed,
+    (SELECT created_at FROM webhook_logs ORDER BY created_at DESC LIMIT 1) as last_webhook_at
+`);
+
+// ============================================================
+// 📤 EXPORTS
+// ============================================================
+module.exports = {
+  db,
+  
+  // Installations
+  upsertInstallation: (data) => upsertInstallation.run(data),
+  deleteInstallation: (id) => deleteInstallation.run(id),
+  getInstallation: (id) => getInstallation.get(id),
+  getAllInstallations: () => getAllInstallations.all(),
+  updateInstallationToken: (token, expiresAt, id) => 
+    updateInstallationToken.run(token, expiresAt, id),
+  
+  // Users
+  upsertUser: (data) => upsertUser.run(data),
+  getUserByGithubId: (id) => getUserByGithubId.get(id),
+  linkUserToInstallation: (userId, installationId) => 
+    linkUserToInstallation.run(userId, installationId),
+  
+  // Logs
+  logWebhook: (data) => logWebhook.run(data),
+  logAudit: (data) => logAudit.run(data),
+  getRecentWebhooks: (limit = 50) => getRecentWebhooks.all(limit),
+  getStats: () => getStats.get()
+};
+
+console.log('✅ Database initialized at:', dbPath);
