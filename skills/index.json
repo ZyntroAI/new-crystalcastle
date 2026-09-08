@@ -1,8 +1,34 @@
 {
   "python-dev": {
     "path": "skills/python-dev",
-    "depends": ["pyflakes", "ipython"],
-    "provides": ["static-analysis", "lint", "execute", "debug", "inspect", "reproduce"],
+    "depends": [
+      "pyflakes",
+      "ipython"
+    ],
+    "provides": [
+      "static-analysis",
+      "lint",
+      "execute",
+      "debug",
+      "inspect",
+      "reproduce"
+    ],
+    "priority": 1
+  },
+  "crystalcastlex-skill-suite": {
+    "path": "skills/crystalcastlex-skill-suite",
+    "depends": [],
+    "provides": [
+      "github-workflow-repair",
+      "monorepo-turborepo",
+      "git-repair",
+      "semantic-release",
+      "graphql-federation-gateway",
+      "vercel-deployment",
+      "package-lockfile-management",
+      "fastapi-research",
+      "langchain-research"
+    ],
     "priority": 1
   }
 }
