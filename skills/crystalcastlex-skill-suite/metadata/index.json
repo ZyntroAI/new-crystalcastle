@@ -1,0 +1,42 @@
+{
+  "id": "crystalcastlex-core-suite-v1.0.0",
+  "name": "CrystalCastleX Core Skill Suite",
+  "skills": [
+    {
+      "id": "github-workflow-repair",
+      "path": "skills/github-workflow-repair"
+    },
+    {
+      "id": "monorepo-turborepo",
+      "path": "skills/monorepo-turborepo"
+    },
+    {
+      "id": "git-repair",
+      "path": "skills/git-repair"
+    },
+    {
+      "id": "semantic-release",
+      "path": "skills/semantic-release"
+    },
+    {
+      "id": "graphql-federation-gateway",
+      "path": "skills/graphql-federation-gateway"
+    },
+    {
+      "id": "vercel-deployment",
+      "path": "skills/vercel-deployment"
+    },
+    {
+      "id": "package-lockfile-management",
+      "path": "skills/package-lockfile-management"
+    },
+    {
+      "id": "fastapi-research",
+      "path": "skills/fastapi-research"
+    },
+    {
+      "id": "langchain-research",
+      "path": "skills/langchain-research"
+    }
+  ]
+}
