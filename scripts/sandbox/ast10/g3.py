@@ -14,11 +14,14 @@ from typing import Any, Callable, Dict, Optional
 
 # Allow importing the sibling hardened sandbox whether run as a package or a
 # loose script (tests set this up, but be safe).
-_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if _ROOT not in sys.path:
-    sys.path.insert(0, _ROOT)
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # scripts/sandbox
+_SELF = os.path.dirname(os.path.abspath(__file__))  # ast10
+for _p in (_ROOT, _SELF):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 from sandbox import sandbox_execution_node  # noqa: E402  (hardened executor)
+from slack_alert import make_alert  # noqa: E402
 
 G3_MIN_SCORE = 0.8
 
@@ -43,6 +46,9 @@ def _g2_passed(g2: Optional[Dict[str, Any]]) -> bool:
     )
 
 
+_DEFAULT_ALERT = make_alert()
+
+
 def g3_sandbox_node(
     state: Dict[str, Any],
     *,
@@ -60,6 +66,8 @@ def g3_sandbox_node(
     ``sandbox_exec`` overrides the executor for tests.
     ``sandbox_config`` tunes timeout/image only.
     """
+    alert_fn = alert if alert is not None else _DEFAULT_ALERT
+
     script = state.get("proposed_script")
     g2 = state.get("g2_verification")
     manifest = state.get("permission_manifest", {})
@@ -69,8 +77,8 @@ def g3_sandbox_node(
 
     if not _g2_passed(g2):
         reason = g2.get("reason", "Failed G2 Semantic Check") if isinstance(g2, dict) else "No G2 result"
-        if alert:
-            alert("WARNING", {"event": "G2 Blocked", "stage": "G3", "msg": reason})
+        if alert_fn:
+            alert_fn("WARNING", {"event": "G2 Blocked", "stage": "G3", "msg": reason})
         return {
             "status": "blocked",
             "stage": "G3",
@@ -101,8 +109,8 @@ def g3_sandbox_node(
             "isolated": True,
             "g2_score": g2["intent_score"],
         }
-        if alert:
-            alert("SUCCESS", {"event": "Script Executed", "stage": "G3"})
+        if alert_fn:
+            alert_fn("SUCCESS", {"event": "Script Executed", "stage": "G3"})
         return out
 
     # Runtime anomaly / timeout / policy error
@@ -129,6 +137,6 @@ def g3_sandbox_node(
     else:
         severity = "ERROR"
 
-    if alert:
-        alert(severity, {"event": "G3 Runtime Failure", "msg": out["error"]})
+    if alert_fn:
+        alert_fn(severity, {"event": "G3 Runtime Failure", "msg": out["error"]})
     return out
