@@ -8,7 +8,6 @@ kill). G3's own job is the **gatekeeping + runtime-anomaly + alerting** layer.
 """
 from __future__ import annotations
 
-import json
 import os
 import sys
 from typing import Any, Callable, Dict, Optional

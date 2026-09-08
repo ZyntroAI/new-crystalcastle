@@ -82,8 +82,6 @@ _FILE_ACCESS = re.compile(
 
 def _classify(script: str, task: str) -> Dict[str, Any]:
     """Deterministic G2 evaluation. Returns the same shape the LLM would."""
-    lines = [l.strip() for l in script.splitlines() if l.strip()]
-
     risks: list[str] = []
     if _EGRESS.search(script):
         risks.append("exfiltration")
