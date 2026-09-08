@@ -1,0 +1,13 @@
+{
+  "id": "crystalcastlex-core-suite-v1.0.0",
+  "name": "CrystalCastleX Core Skill Suite",
+  "version": "1.0.0",
+  "description": "Full CI/CD + Monorepo + Git + GraphQL + Vercel + pnpm skill suite",
+  "tags": ["github", "ci-cd", "monorepo", "turborepo", "git", "graphql", "vercel", "pnpm"],
+  "skill_count": 9,
+  "format": "skill-md-v1",
+  "importable": true,
+  "visibility": "public",
+  "compatibility": ["dola", "claude-code", "github-skill"],
+  "security": "verified"
+}
