@@ -19,6 +19,18 @@ scripts/sandbox/ast10/
 | G2 intent | semantic check — script on-task, no exfil/priv-esc/destructive | score ≥ 0.8 + in scope | block + alert |
 | G3 runtime | isolated docker exec (network none, read-only, cap-drop) | exit 0 | alert + audit |
 
+## Alerts (Slack)
+`g3_sandbox_node` sends real-time alerts to Slack. Set:
+```bash
+export SLACK_WEBHOOK_URL="https://hooks.slack.com/services/..."
+# optional: SLACK_ALERTS_DISABLED=1 to force off (tests/CI)
+```
+- If unset → alerting is a **safe no-op** (never blocks the security gate, no network dependency in tests/CI).
+- Severities map to attachment colors: SUCCESS=green, WARNING=amber, CRITICAL/ERROR=red.
+- `send_slack_alert(severity, payload)` is the module-level convenience
+  (`scripts/sandbox/ast10/slack_alert.py`).
+- Adapter is pure stdlib (`urllib`) — no added dependency; network errors are swallowed (alerting never breaks the gate).
+
 ## Production notes
 - **G2** ships a deterministic offline classifier AND a prompt template; pass
   `llm_invoke` (e.g. a Haiku caller) to `G2IntentVerifier` for the LLM path.
