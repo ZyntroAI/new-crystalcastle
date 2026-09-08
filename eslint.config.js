@@ -17,7 +17,11 @@ export default [
     files: ['src/**/*.{js,jsx,ts,tsx}'],
     languageOptions: { ecmaVersion: 2022, globals: globals.browser, parserOptions: { ecmaFeatures: { jsx: true } } },
     plugins: { 'react-hooks': reactHooks },
-    rules: { ...reactHooks.configs.recommended.rules },
+    rules: {
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+    },
   },
   { files: ['**/*.{js,jsx}'], rules: { ...js.configs.recommended.rules } },
 ]
