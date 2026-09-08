@@ -1,0 +1,8 @@
+{
+  "python-dev": {
+    "path": "skills/python-dev",
+    "depends": ["pyflakes", "ipython"],
+    "provides": ["static-analysis", "lint", "execute", "debug", "inspect", "reproduce"],
+    "priority": 1
+  }
+}
