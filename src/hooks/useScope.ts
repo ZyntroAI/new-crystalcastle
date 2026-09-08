@@ -177,16 +177,14 @@ export function useSelector<T extends ScopeData, R = T>(
   selector?: Selector<T, R>,
   equalityFn: (a: R, b: R) => boolean = Object.is
 ): R {
-  const initialData = useMemo(() => {
-    const entry = SCOPE_REGISTRY.get(scopeId);
-    return (entry?.data ?? {}) as T;
-  }, [scopeId]);
+  const scope = useScope<T>(scopeId, {} as T);
+  const initialData = scope.data;
 
   const selectedRef = useRef<R>(selector ? selector(initialData) : (initialData as unknown as R));
   const [, forceRender] = useState(0);
 
   useEffect(() => {
-    return useScope(scopeId, initialData).subscribe((data) => {
+    return scope.subscribe((data) => {
       const next = selector ? selector(data) : (data as unknown as R);
       if (!equalityFn(selectedRef.current, next)) {
         selectedRef.current = next;

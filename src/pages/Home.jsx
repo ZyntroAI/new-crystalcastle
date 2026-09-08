@@ -6,7 +6,7 @@ import PoeRouter from '@/components/integration/PoeRouter';
 import { Loader2, Bot, Zap, Network } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { SERVICES, SERVICE_KEYS } from '@/lib/integrationServices';
+import { SERVICE_KEYS } from '@/lib/integrationServices';
 
 export default function Home() {
   const [connections, setConnections] = useState([]);
