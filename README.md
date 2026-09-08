@@ -1,76 +1,40 @@
-# New-CrystalCastle
+# CrystalCastle
 
-*Crystal Castle* is a full-stack platform built by ZyntroAI for managing documentation, tickets, and AI-powered research workflows. It uses a federated GraphQL architecture with an onboarding system, CI/CD, and automation tooling.
+Full-stack platform by ZyntroAI for documentation, tickets, and AI-assisted research workflows. This repository is a **monorepo under active consolidation** — it currently hosts several workstreams and a large amount of scratch/archival material at the root that is being organized into the `backend/`, `frontend/`, and `docs/` trees.
 
-### *Tech Stack*
-- *Language*: TypeScript, JavaScript, Shell
-- *Gateway*: GraphQL Hive Gateway with subgraphs for `docs` and `tickets`
-- *Frontend*: React components like `OnboardingWizard` with validation
-- *Backend*: Database schemas for Deeper Research System
-- *CI/CD*: GitHub Actions for build, deploy, staging, and auto-updating dependencies
-- *Tooling*: AI-based PR review script with OpenAI
- 1d3c552e6d18aee786d82cd3
+## Current state
 
-### *Key Features*
-1. *GraphQL Hive Gateway* 
-   Federated gateway config in `backend/gateway.config.ts` with plugins for auth, rate limiting, caching, and OpenTelemetry
+> **Heads-up:** the repository root still contains many loose files (screenshots, `.docx` notes, stray workflow YAMLs, `.md` snapshots, merged-in component snippets). Treat anything outside the directories below as **scratch/archival**, not part of the running platform. Cleaning this up is tracked work.
 
-2. *Onboarding Wizard* 
-   Multi-step onboarding component that validates project type and feature selection. Types documented in `src/types/Readme.md`
+## What actually lives here
 
-3. *Deeper Research System* 
-   SQL DDL + JSON schema for researchers, projects, topics, sources, and findings
+### `backend/` — Node/Express API (`crystalcastle-backend`)
+- **Runtime:** Express + Supabase Auth + Groq AI (`backend/server.js` is the entry — `npm start` runs it)
+- **Config:** `.env.example`, Dockerfile, prisma schema, Redis/auth/gateway modules under `backend/src`
+- **Scripts:** `start` (node server.js), `dev` (nodemon), `lint` (eslint), `check` (lint + npm audit)
+- Mixed NestJS scaffold artifacts (`nest-cli.json`, `src/app.module.ts`) coexist with the Express server — consolidation in progress.
 
-4. *CI/CD & Automation*
-   - `ci.yml`: Staging deploys to Vercel + audit trail TH/EN
-   - `auto-update-package.yml`: Weekly npm lockfile updates
-   - `build-vsix.yml`: Lint + build on push/PR
-   - `scripts/build.sh`: Project setup and production build
-   - `scripts/ai-pr-review.js`: Automated AI code reviews for PRs
+### `frontend/` — canvas/web app components
+- Contains React/TSX source (`Canvas.tsx`, `Toolbar.tsx`, `ComponentLibrary.tsx`, layouts) under `frontend/src/components`
+- **No standalone package.json/Vite build here yet** — components are being migrated in; currently not independently runnable.
 
-5. *Docs Structure* 
-   Reorganized to fix path length errors. Main docs in `docs/` and `docs/kb/`
- 1d3c552e7b196d1886d8aee788a78bfb2cd31f2d
+### `src/` — legacy React work
+- Vite React template content (`main.tsx`, `App.tsx`) that was merged in and is **not wired to a runnable build**; `index.html` at root is a static snapshot rather than the app entry. Being reconciled.
 
-### *Getting Started*
-# 1. Clone the repo
-git clone https://github.com/ZyntroAI/new-crystalcastle.git
-cd new-crystalcastle
+### `docs/`
+- Working documentation and knowledge-base material (see `docs/` and `docs/kb/`).
 
-# 2. Install dependencies
+### `.github/workflows/`
+- Many workflow files, several copied from a FastAPI boilerplate and **mismatched to this Node/Express + React stack**. The active set for CI on this repo is being corrected; until then, workflow checks on PRs are **not reliable signals**.
+
+## Getting started
+```bash
+# Backend
+cd backend
+cp .env.example .env   # fill in Supabase/Groq keys
 npm install
+npm run dev
+```
 
-# 3. Build for production
-./scripts/build.sh
-### *Project Structure*
-.
-├── backend/
-│ └── gateway.config.ts # GraphQL Hive gateway config
-├── src/
-│ ├── components/
-│ │ └── OnboardingWizard.tsx # Onboarding flow with validation
-│ └── types/
-│ └── Readme.md # Onboarding type docs
-├── docs/
-│ ├── howtos.md
-│ └── kb/ # Knowledge base
-├──.github/workflows/
-│ ├── ci.yml # Staging + deploy
-│ ├── auto-update-package.yml # Weekly dependency update
-│ └── build-vsix.yml # Build + lint
-└── scripts/
-    ├── build.sh # Setup + build
-    └── ai-pr-review.js # AI PR reviewer
-### *Environment Variables*
-Set these for local dev and CI:
-- `GITHUB_TOKEN` - for CI and AI PR review
-- `OPENAI_API_KEY` - for AI PR review
-- `VERCEL_TOKEN` - for deployment
-
-### *Contributing*
-1. Push to `staging` branch for auto deploy
-2. PRs get AI review comments automatically
- 86d82cd3
-
-### *License*
-MIT
+## Notes
+- This is an honest snapshot of the repo as of September 2026. Sections describing `app/`, `infrastructure/helm/`, Kubernetes charts, and a full DevSecOps layout **do not exist here yet** and were removed from this README to avoid implying otherwise.
