@@ -1,0 +1,19 @@
+name: Apply Branch Protection Rules
+on:
+  push:
+    branches: [main]
+    paths: [.github/rulesets/**]
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      repository-projects: write
+      administration: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/github-ruleset-toolkit@v1
+        with:
+          config-path: .github/rulesets/
+          github-token: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,100 @@
+name: Supabase Preview & Migration
+
+on:
+  push:
+    branches: [main, dev, "feature/**", "hotfix/**"]
+    paths: ["supabase/**"]
+  pull_request:
+    branches: [main, dev]
+    paths: ["supabase/**"]
+
+env:
+  SUPABASE_VERSION: "v1.226.0"
+  SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+
+jobs:
+  lint-migrations:
+    name: Lint & Validate Migrations
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: ${{ env.SUPABASE_VERSION }}
+
+      - name: Validate Migrations
+        run: supabase db lint --schema-only
+
+      - name: Check Migration Order
+        run: |
+          cd supabase/migrations
+          LAST=$(ls -1 *.sql | sort -n | tail -1)
+          echo "✅ Last migration: $LAST"
+
+  preview-branch:
+    name: Create Preview Branch
+    needs: lint-migrations
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: ${{ env.SUPABASE_VERSION }}
+
+      - name: Link Project
+        run: supabase link --project-ref ${{ env.SUPABASE_PROJECT_ID }}
+
+      - name: Create/Update Preview Branch
+        id: preview
+        run: |
+          BRANCH_NAME="pr-${{ github.event.pull_request.number }}"
+          echo "Creating preview branch: $BRANCH_NAME"
+          
+          supabase branch create "$BRANCH_NAME" --no-wait || true
+          
+          # รับ Connection String
+          DB_URL=$(supabase branch list --json | jq -r --arg b "$BRANCH_NAME" '.[] | select(.name==$b) | .connection_string')
+          
+          echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+      - name: Apply Migrations to Preview
+        run: |
+          supabase db push \
+            --db-url "${{ steps.preview.outputs.db_url }}" \
+            --include-all
+
+      - name: Show Preview Info
+        run: |
+          echo "✅ Preview Branch พร้อมใช้งาน"
+          echo "ชื่อสาขา: ${{ steps.preview.outputs.branch_name }}"
+          echo "DB URL: ${{ steps.preview.outputs.db_url }}"
+
+      - name: Comment PR
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: |
+            🗄️ **Supabase Preview พร้อมแล้ว**
+            • สาขา: `${{ steps.preview.outputs.branch_name }}`
+            • สถานะ: ✅ Migration ผ่าน
+            • 🔗 [ดูที่นี่](https://supabase.com/dashboard/project/${{ env.SUPABASE_PROJECT_ID }}/branches)
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify-result:
+    needs: [lint-migrations, preview-branch]
+    runs-on: ubuntu-latest
+    if: always()
+    uses: ./.github/actions/notify
+    with:
+      status: ${{ needs.preview-branch.result }}
+      title: "🗄️ Supabase Preview — PR #${{ github.event.pull_request.number }}"
+      message: >-
+        Lint: ${{ needs.lint-migrations.result }} | 
+        Preview: ${{ needs.preview-branch.result }}

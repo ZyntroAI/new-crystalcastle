@@ -1,0 +1,23 @@
+name: Supabase Status Monitor
+
+on:
+  workflow_run:
+    workflows: ["Supabase Preview & Migration", "Supabase Deploy to Production"]
+    types: [completed]
+
+jobs:
+  alert:
+    runs-on: ubuntu-latest
+    if: >-
+      github.event.workflow_run.conclusion == 'failure' ||
+      github.event.workflow_run.conclusion == 'cancelled'
+    steps:
+      - name: Send Alert
+        uses: ./.github/actions/notify
+        with:
+          status: failure
+          title: "⚠️ Supabase Pipeline ล้มเหลว"
+          message: >-
+            เวิร์กโฟลว์: ${{ github.event.workflow_run.name }}
+            • สาขา: ${{ github.event.workflow_run.head_branch }}
+            • [ดูรายละเอียด](${{ github.event.workflow_run.html_url }})

@@ -1,0 +1,12 @@
+# Supabase temp files
+supabase/.temp
+supabase/migrations/*.sql.tmp
+supabase/seed.sql.tmp
+
+# Local overrides
+.env
+.env.local
+.config.local.toml
+
+# Logs
+*.log

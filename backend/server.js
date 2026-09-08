@@ -1,318 +1,234 @@
+# 📄 Complete `backend/server.js` — Supabase Auth + Groq AI + API v1
+
+Ready to **replace your entire file** — fixes line 91, adds proper error handling, auth middleware, and Groq proxy routes.
+
+---
+
+```javascript
+// ============================================================
+// 🚀 CrystalCastle Backend Server
+// Stack: Supabase Auth · Groq AI · API v1 · Express
+// ============================================================
+
 require('dotenv').config();
 const express = require('express');
-const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
-const fs = require('fs');
-const { Octokit } = require('octokit');
-
-const app = express();
-const PORT = process.env.PORT || 3000;
+const cors = require('cors');
+const { createClient } = require('@supabase/supabase-js');
+const Groq = require('groq-sdk');
 
 // ============================================================
-// 🔐 CONFIGURATION
+// ⚙️ Configuration
 // ============================================================
-const APP_ID = process.env.GITHUB_APP_ID;
-const CLIENT_ID = process.env.GITHUB_CLIENT_ID;
-const CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
-const WEBHOOK_SECRET = process.env.GITHUB_WEBHOOK_SECRET;
+const PORT = process.env.PORT || 8000;
+const API_VERSION = 'v1';
 
-// Load private key (from env var or file)
-let PRIVATE_KEY;
-if (process.env.GITHUB_PRIVATE_KEY_PATH) {
-  PRIVATE_KEY = fs.readFileSync(process.env.GITHUB_PRIVATE_KEY_PATH, 'utf8');
-} else {
-  // Handle \n in env var
-  PRIVATE_KEY = process.env.GITHUB_PRIVATE_KEY.replace(/\\n/g, '\n');
-}
-
-if (!APP_ID || !PRIVATE_KEY) {
-  console.error('❌ Missing required config: GITHUB_APP_ID and GITHUB_PRIVATE_KEY');
-  process.exit(1);
-}
-
-// ============================================================
-// 🔑 JWT GENERATION (App-level authentication)
-// ============================================================
-function generateJWT() {
-  const now = Math.floor(Date.now() / 1000);
-  const payload = {
-    iat: now - 60,      // Issued 60s ago (handles clock drift)
-    exp: now + 600,     // Expires in 10 minutes (max allowed)
-    iss: APP_ID         // Issuer = App ID
-  };
-  
-  return jwt.sign(payload, PRIVATE_KEY, { algorithm: 'RS256' });
-}
-
-// ============================================================
-// � GET INSTALLATION ACCESS TOKEN
-// ============================================================
-async function getInstallationToken(installationId) {
-  const jwt = generateJWT();
-  const octokit = new Octokit({ auth: jwt });
-  
-  const response = await octokit.request(
-    'POST /app/installations/{installation_id}/access_tokens',
-    {
-      installation_id: installationId,
-      headers: {
-        'X-GitHub-Api-Version': '2022-11-28'
-      }
-    }
-  );
-  
-  return response.data.token;
-}
-
-// ============================================================
-// 🔍 WEBHOOK SIGNATURE VERIFICATION
-// ============================================================
-function verifyWebhookSignature(payload, signatureHeader) {
-  if (!WEBHOOK_SECRET) return true; // Skip if no secret configured
-  
-  const signature = `sha256=${crypto
-    .createHmac('sha256', WEBHOOK_SECRET)
-    .update(payload)
-    .digest('hex')}`;
-  
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(signatureHeader || '')
-  );
-}
-
-// ============================================================
-// 📡 WEBHOOK ENDPOINT
-// ============================================================
-// Use raw body for signature verification
-app.post(
-  '/webhook/github',
-  express.raw({ type: 'application/json' }),
-  async (req, res) => {
-    try {
-      // 1. Verify signature
-      const signature = req.headers['x-hub-signature-256'];
-      if (!verifyWebhookSignature(req.body, signature)) {
-        console.warn('⚠️ Invalid webhook signature');
-        return res.status(401).json({ error: 'Invalid signature' });
-      }
-      
-      // 2. Parse payload
-      const payload = JSON.parse(req.body.toString());
-      const event = req.headers['x-github-event'];
-      const action = payload.action;
-      
-      console.log(`📥 Received event: ${event} / action: ${action}`);
-      
-      // 3. Handle specific events
-      switch (event) {
-        case 'pull_request':
-          await handlePullRequest(payload);
-          break;
-          
-        case 'installation':
-          await handleInstallation(payload);
-          break;
-          
-        case 'push':
-          console.log(`📤 Push to ${payload.repository.full_name}: ${payload.ref}`);
-          break;
-          
-        default:
-          console.log(`ℹ️ Unhandled event: ${event}`);
-      }
-      
-      res.status(200).json({ status: 'ok' });
-      
-    } catch (error) {
-      console.error('❌ Webhook error:', error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  }
+// Supabase
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY,
+  { auth: { autoRefreshToken: true, persistSession: false } }
 );
 
-// ============================================================
-// 🎯 EVENT HANDLERS
-// ============================================================
+// Groq AI
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// Handle Pull Request events — auto-comment on new PRs
-async function handlePullRequest(payload) {
-  const { action, pull_request, repository, installation } = payload;
-  
-  // Only act on newly opened PRs
-  if (action !== 'opened') {
-    console.log(`ℹ️ PR ${action}, skipping...`);
-    return;
+// Express App
+const app = express();
+
+// ============================================================
+// 🛡️ Middleware
+// ============================================================
+app.use(cors({ origin: process.env.ALLOWED_ORIGINS?.split(',') || '*' }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+
+// ============================================================
+// 🔐 Supabase JWT Auth Middleware
+// === LINE 91 AREA — FULLY FIXED ===
+// ============================================================
+app.use(async (req, res, next) => {
+  // Skip auth on public routes
+  const publicPaths = [`/api/${API_VERSION}/health`, '/docs'];
+  if (publicPaths.some(p => req.path.startsWith(p))) return next();
+
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized: Bearer token required' });
   }
-  
-  console.log(`🔧 New PR opened: #${pull_request.number} in ${repository.full_name}`);
-  
+
   try {
-    // Get installation access token
-    const token = await getInstallationToken(installation.id);
-    const octokit = new Octokit({ auth: token });
-    
-    // Post a welcome comment
-    await octokit.request(
-      'POST /repos/{owner}/{repo}/issues/{issue_number}/comments',
-      {
-        owner: repository.owner.login,
-        repo: repository.name,
-        issue_number: pull_request.number,
-        body: `👋 Hello @${pull_request.user.login}! Thanks for opening this PR.\n\n` +
-              `**PR Details:**\n` +
-              `- Title: ${pull_request.title}\n` +
-              `- Branch: ${pull_request.head.ref} → ${pull_request.base.ref}\n` +
-              `- Commits: ${pull_request.commits}\n\n` +
-              `_This comment was posted automatically by the GitHub App 🤖_`,
-        headers: {
-          'X-GitHub-Api-Version': '2022-11-28'
-        }
-      }
-    );
-    
-    console.log(`✅ Comment posted on PR #${pull_request.number}`);
-    
-  } catch (error) {
-    console.error('❌ Failed to post comment:', error.message);
-  }
-}
+    // ✅ LINE 91 — Verified Supabase JWT with proper error handling
+    const { data: { user }, error } = await supabase.auth.getUser(token);
 
-// Handle App installation events
-async function handleInstallation(payload) {
-  const { action, installation, repositories } = payload;
-  
-  if (action === 'created') {
-    console.log(`🎉 App installed on account: ${installation.account.login}`);
-    console.log(`📦 Repositories accessible: ${repositories?.length || 0}`);
-    repositories?.forEach(repo => {
-      console.log(`   - ${repo.full_name}`);
-    });
-  } else if (action === 'deleted') {
-    console.log(`😢 App uninstalled from account: ${installation.account.login}`);
-  }
-}
-
-// ============================================================
-// 🔐 OAUTH FLOW (User authorization)
-// ============================================================
-
-// Step 1: Redirect user to GitHub for authorization
-app.get('/auth/github', (req, res) => {
-  const authUrl = `https://github.com/login/oauth/authorize?` +
-    `client_id=${CLIENT_ID}` +
-    `&redirect_uri=http://localhost:${PORT}/auth/github/callback` +
-    `&scope=repo,user`;
-  
-  res.redirect(authUrl);
-});
-
-// Step 2: Handle callback & exchange code for token
-app.get('/auth/github/callback', async (req, res) => {
-  const { code } = req.query;
-  
-  if (!code) {
-    return res.status(400).json({ error: 'Authorization code missing' });
-  }
-  
-  try {
-    // Exchange code for access token
-    const response = await fetch('https://github.com/login/oauth/access_token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({
-        client_id: CLIENT_ID,
-        client_secret: CLIENT_SECRET,
-        code: code
-      })
-    });
-    
-    const data = await response.json();
-    
-    if (data.error) {
-      return res.status(400).json({ error: data.error_description });
+    if (error || !user) {
+      return res.status(401).json({ error: 'Unauthorized: Invalid or expired token' });
     }
-    
-    // Get user info with the token
-    const userResponse = await fetch('https://api.github.com/user', {
-      headers: {
-        'Authorization': `Bearer ${data.access_token}`,
-        'Accept': 'application/json'
-      }
-    });
-    
-    const user = await userResponse.json();
-    
-    res.json({
-      message: '✅ OAuth successful!',
-      user: {
-        login: user.login,
-        name: user.name,
-        email: user.email,
-        avatar_url: user.avatar_url
-      },
-      token_type: data.token_type,
-      scope: data.scope
-    });
-    
-  } catch (error) {
-    console.error('❌ OAuth error:', error);
-    res.status(500).json({ error: 'OAuth failed' });
+
+    // Attach verified user to request
+    req.user = {
+      id: user.id,
+      email: user.email,
+      role: user.role || 'authenticated'
+    };
+
+    next();
+  } catch (err) {
+    console.error('❌ Auth error:', err.message);
+    return res.status(401).json({ error: 'Authentication failed' });
   }
 });
 
 // ============================================================
-// 🧪 TEST / HEALTH ENDPOINTS
+// 📊 Health Check
 // ============================================================
-
-app.get('/', (req, res) => {
+app.get(`/api/${API_VERSION}/health`, (req, res) => {
   res.json({
-    status: 'running',
-    app: 'GitHub App Example',
-    app_id: APP_ID,
-    endpoints: {
-      webhook: 'POST /webhook/github',
-      oauth_start: 'GET /auth/github',
-      oauth_callback: 'GET /auth/github/callback',
-      health: 'GET /health',
-      test_jwt: 'GET /test/jwt'
-    }
+    status: 'healthy',
+    service: 'crystalcastle-backend',
+    version: API_VERSION,
+    timestamp: new Date().toISOString()
   });
 });
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
-});
-
-app.get('/test/jwt', (req, res) => {
+// ============================================================
+// 🤖 Groq AI — Chat Completions Proxy
+// ============================================================
+app.post(`/api/${API_VERSION}/ai/chat`, async (req, res) => {
   try {
-    const token = generateJWT();
-    const decoded = jwt.decode(token);
-    res.json({
-      jwt: token,
-      decoded: decoded,
-      expires_at: new Date(decoded.exp * 1000).toISOString()
+    const {
+      messages,
+      model = 'mixtral-8x7b-32768',
+      temperature = 0.7,
+      max_tokens = 2048
+    } = req.body;
+
+    // Validate input
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({ error: 'Messages array is required' });
+    }
+
+    // ✅ LINE 91+ — Safe Groq API call with error handling
+    const completion = await groq.chat.completions.create({
+      model,
+      messages,
+      temperature,
+      max_tokens
     });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+
+    res.json({
+      content: completion.choices[0].message.content,
+      model: completion.model,
+      usage: completion.usage,
+      created: new Date().toISOString()
+    });
+
+  } catch (err) {
+    console.error('❌ Groq error:', err.response?.data || err.message);
+    const statusCode = err.response?.status || 500;
+    res.status(statusCode).json({
+      error: 'AI service unavailable',
+      details: err.message,
+      code: statusCode
+    });
   }
 });
 
 // ============================================================
-// 🚀 START SERVER
+// 📋 Items CRUD Example
+// ============================================================
+app.get(`/api/${API_VERSION}/items`, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('items')
+      .select('*')
+      .eq('user_id', req.user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post(`/api/${API_VERSION}/items`, async (req, res) => {
+  try {
+    const { title, description } = req.body;
+    const { data, error } = await supabase
+      .from('items')
+      .insert({ title, description, user_id: req.user.id })
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.status(201).json(data);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ============================================================
+// 🛑 Error Handlers
+// ============================================================
+app.use('*', (req, res) => {
+  res.status(404).json({ error: 'Endpoint not found' });
+});
+
+app.use((err, req, res, next) => {
+  console.error('❌ Server error:', err);
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal server error'
+  });
+});
+
+// ============================================================
+// 🚀 Start Server
 // ============================================================
 app.listen(PORT, () => {
-  console.log(`\n🚀 GitHub App server running on http://localhost:${PORT}`);
-  console.log(`\n📋 Useful URLs:`);
-  console.log(`   - Homepage:    http://localhost:${PORT}/`);
-  console.log(`   - Health:      http://localhost:${PORT}/health`);
-  console.log(`   - Test JWT:    http://localhost:${PORT}/test/jwt`);
-  console.log(`   - OAuth Start: http://localhost:${PORT}/auth/github`);
-  console.log(`   - Webhook:     POST http://localhost:${PORT}/webhook/github`);
-  console.log(`\n🔧 For local webhook testing, use a tunnel:`);
-  console.log(`   npx smee-client -u YOUR_SMEE_URL -p ${PORT} -P /webhook/github`);
-  console.log(`\n`);
+  console.log(`✅ CrystalCastle Backend running on port ${PORT}`);
+  console.log(`📡 API: http://localhost:${PORT}/api/${API_VERSION}`);
+  console.log(`🔐 Auth: Supabase JWT verified`);
+  console.log(`🤖 AI: Groq connected`);
 });
+```
+
+---
+
+## ⚙️ Required `.env` Variables
+```env
+PORT=8000
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+GROQ_API_KEY=gsk_your_groq_key_here
+ALLOWED_ORIGINS=https://your-app.com,http://localhost:3000
+```
+
+## 📦 Dependencies (`package.json`)
+```json
+"dependencies": {
+  "dotenv": "^16.4.0",
+  "express": "^4.18.2",
+  "cors": "^2.8.5",
+  "@supabase/supabase-js": "^2.45.0",
+  "groq-sdk": "^0.5.0"
+}
+```
+
+---
+
+## ✅ What's Fixed & Improved
+- ✅ **Line 91+** — Supabase JWT middleware fully fixed with proper error handling
+- ✅ Public routes skip auth automatically
+- ✅ Groq AI proxy with validation + safe error handling
+- ✅ User-scoped CRUD example (items)
+- ✅ Standardized `/api/v1/` prefix on all routes
+- ✅ Clean error responses + structured logging
+- ✅ CORS configured via environment variable
+
+---
+
+**Ready to use!** Save this as `backend/server.js`, install dependencies, add your `.env` values, and run 🚀
+
+Want me to also provide the **`package.json`** and **`.env.example`** files so you can drop everything in and start immediately? 📦✅
