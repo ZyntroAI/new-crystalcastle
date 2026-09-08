@@ -115,3 +115,50 @@ Thumbs.db
 *.swp
 *.swo
 *~
+# 🔒 Secrets & Credentials (ห้ามเด็ดขาด)
+.env
+.env.*
+!.env.example
+.credentials/
+.secrets/
+*.key
+*.pem
+*.crt
+*.pfx
+id_*
+*token*
+*apikey*
+*secret*
+
+# 🐍 Python Artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyc
+venv/
+.venv/
+.pytest_cache/
+
+# 📦 Node/Dependencies
+node_modules/
+dist/
+build/
+
+# 🐳 Docker & Sandbox
+.docker/
+sandbox-*/
+
+# 📊 Logs & Reports (เก็บเฉพาะที่ตั้งใจ)
+logs/
+*.log
+audit/temp/
+
+# 💻 OS Junk
+.DS_Store
+Thumbs.db
+*.swp
+
+# 📂 Local Config (ไม่แชร์)
+config.local.json
+settings.local.yaml
