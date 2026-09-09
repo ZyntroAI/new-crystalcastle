@@ -344,3 +344,266 @@ tsx
 - 🧪 พร้อมทดสอบ: รองรับ Next.js/App Router + Client Components
  
 ต้องการให้ผมเพิ่ม Cache Layer หรือ Analytics Hook ต่อเลยไหมครับ? หรืออยากให้ปรับให้เข้ากับโครงสร้าง Feature-based ที่คุณวางไว้ก่อน?
+📦 เริ่มกันที่ จัดโครงสร้างระดับ Enterprise ก่อน ✅
+ 
+เพราะโครงสร้างที่ชัดเจนเป็นรากฐานสำคัญ—ทำให้เพิ่ม Cache, Analytics หรือ AI ภายหลังได้ง่าย ไม่ยุ่งเหยิง พร้อมรองรับทีมขนาดใหญ่และการขยายระบบยาวนาน
+ 
+ 
+ 
+🗂️ โครงสร้างไฟล์ — Enterprise Feature-First
+ 
+วางไว้ที่  features/shared/ui/image/  (แยกส่วนประกอบชัดเจน):
+ 
+plaintext
+  
+src/features/shared/ui/image/
+├── index.ts                 # 🔓 Export สาธารณะ (Entry Point)
+├── image.tsx                # 🧠 Component หลัก
+├── types.ts                 # 📘 TypeScript Interfaces ทั้งหมด
+├── constants.ts             # 📌 ค่าคงที่ (Default, Limit, Config)
+├── utils/
+│   ├── index.ts
+│   ├── format-detector.ts   # ตรวจสอบรูปภาพ AVIF/WebP
+│   ├── url-builder.ts       # สร้าง URL CDN/Wix/Cloudinary
+│   └── focal-point.ts       # คำนวณตำแหน่ง Crop
+├── cache/                   # 🧩 เตรียมไว้สำหรับ v3.0 Cache Layer
+│   ├── index.ts
+│   ├── memory-store.ts
+│   └── indexeddb-store.ts
+└── __tests__/               # 🧪 ทดสอบครบชุด
+    ├── image.test.tsx
+    ├── url-builder.test.ts
+    └── format-detector.test.ts
+ 
+ 
+📜 ไฟล์หลักแต่ละส่วน
+ 
+1️⃣  types.ts  — สัญญาและประเภทข้อมูล
+ 
+ts
+  
+export type ImageFormat = "auto" | "webp" | "avif" | "jpg";
+export type PlaceholderType = "none" | "blur" | "skeleton";
+export type LoadingStrategy = "lazy" | "eager";
+export type FittingType = "fill" | "fit";
+export type CropMode = "fill" | "fit" | "smart";
+export type LoadStatus = "idle" | "loading" | "loaded" | "error";
+
+export interface FocalPoint { x: number; y: number }
+
+export interface ImageProps {
+  src: string;
+  alt: string;
+  width?: number;
+  height?: number;
+  fittingType?: FittingType;
+  cropMode?: CropMode;
+  focalPoint?: FocalPoint;
+  aspectRatio?: string | number;
+
+  priority?: boolean;
+  placeholder?: PlaceholderType;
+  placeholderBlur?: string;
+  format?: ImageFormat;
+  loadingStrategy?: LoadingStrategy;
+  fallbackImages?: string[];
+  retry?: number;
+  retryDelay?: number;
+
+  className?: string;
+  containerClassName?: string;
+  objectFit?: "contain" | "cover" | "fill" | "none";
+  objectPosition?: string;
+
+  onLoad?: () => void;
+  onError?: (err: Error) => void;
+  onStatusChange?: (status: LoadStatus) => void;
+}
+
+export interface UrlBuildOptions {
+  format: ImageFormat;
+  width?: number;
+  quality?: number;
+  focal?: FocalPoint;
+  crop: CropMode;
+}
+ 
+ 
+2️⃣  constants.ts  — ค่ามาตรฐาน
+ 
+ts
+  
+export const IMAGE_DEFAULTS = {
+  FORMAT: "auto" as const,
+  FITTING: "fit" as const,
+  CROP: "fill" as const,
+  LOADING: "lazy" as const,
+  PLACEHOLDER: "blur" as const,
+  RETRY: 2,
+  RETRY_DELAY: 1000,
+  QUALITY: 75,
+};
+
+export const BREAKPOINTS = [640, 1080, 1920];
+export const CACHE_KEY = "img-sdk-cache";
+export const CACHE_TTL = 86400000; // 24 ชม.
+ 
+ 
+3️⃣  utils/format-detector.ts 
+ 
+ts
+  
+export const supportsFormat = async (format: ImageFormat): Promise<boolean> => {
+  if (typeof document === "undefined") return false;
+  const mimeMap: Record<string, string> = { avif: "image/avif", webp: "image/webp" };
+  const mime = mimeMap[format];
+  if (!mime) return true;
+
+  const canvas = document.createElement("canvas");
+  if (!canvas.toBlob) return false;
+  return new Promise(res => canvas.toBlob(b => res(!!b), mime));
+};
+
+export const detectBestFormat = async (): Promise<ImageFormat> => {
+  if (await supportsFormat("avif")) return "avif";
+  if (await supportsFormat("webp")) return "webp";
+  return "jpg";
+};
+ 
+ 
+4️⃣  utils/url-builder.ts 
+ 
+ts
+  
+import type { UrlBuildOptions } from "../types";
+
+export const buildImageUrl = (base: string, opts: UrlBuildOptions): string => {
+  const params = new URLSearchParams();
+  if (opts.format !== "auto") params.set("fmt", opts.format);
+  if (opts.width) params.set("w", String(opts.width));
+  if (opts.quality) params.set("q", String(opts.quality));
+  if (opts.focal) params.set("fp", `${opts.focal.x},${opts.focal.y}`);
+  params.set("crop", opts.crop);
+
+  const sep = base.includes("?") ? "&" : "?";
+  return `${base}${sep}${params}`;
+};
+
+export const generateSrcSet = (src: string, widths: number[], opts: Omit<UrlBuildOptions, "width">) =>
+  widths.map(w => `${buildImageUrl(src, { ...opts, width: w })} ${w}w`).join(", ");
+ 
+ 
+5️⃣  image.tsx  — Component หลัก (ปรับให้เข้ากับโครงสร้าง)
+ 
+tsx
+  
+import React, { forwardRef, useState, useEffect, useMemo, useCallback } from "react";
+import { cn } from "@/lib/utils";
+import type { ImageProps, LoadStatus } from "./types";
+import { IMAGE_DEFAULTS, BREAKPOINTS } from "./constants";
+import { detectBestFormat, generateSrcSet, buildImageUrl } from "./utils";
+
+export const Image = forwardRef<HTMLImageElement, ImageProps>((props, ref) => {
+  const {
+    src, alt, width, height,
+    fittingType = IMAGE_DEFAULTS.FITTING,
+    cropMode = IMAGE_DEFAULTS.CROP,
+    focalPoint, aspectRatio,
+    priority = false,
+    placeholder = IMAGE_DEFAULTS.PLACEHOLDER,
+    placeholderBlur,
+    format = IMAGE_DEFAULTS.FORMAT,
+    loadingStrategy = IMAGE_DEFAULTS.LOADING,
+    fallbackImages = [],
+    retry = IMAGE_DEFAULTS.RETRY,
+    retryDelay = IMAGE_DEFAULTS.RETRY_DELAY,
+    className, containerClassName, objectFit = "cover", objectPosition,
+    onLoad, onError, onStatusChange
+  } = props;
+
+  const [status, setStatus] = useState<LoadStatus>("loading");
+  const [currentSrc, setCurrentSrc] = useState(src);
+  const [usedRetries, setUsedRetries] = useState(0);
+  const [finalFormat, setFinalFormat] = useState(format);
+
+  useEffect(() => {
+    if (format === "auto") detectBestFormat().then(setFinalFormat);
+    else setFinalFormat(format);
+  }, [format]);
+
+  useEffect(() => onStatusChange?.(status), [status, onStatusChange]);
+
+  const srcSet = useMemo(() =>
+    generateSrcSet(src, BREAKPOINTS, { format: finalFormat, crop: cropMode }),
+    [src, finalFormat, cropMode]
+  );
+
+  const handleError = useCallback(() => {
+    if (usedRetries < retry) setTimeout(() => setUsedRetries(p => p + 1), retryDelay);
+    else { setStatus("error"); onError?.(new Error("Load failed")); }
+  }, [usedRetries, retry, retryDelay, onError]);
+
+  useEffect(() => { if (usedRetries > 0) setCurrentSrc([src, ...fallbackImages][Math.min(usedRetries, fallbackImages.length)]); }, [usedRetries, src, fallbackImages]);
+
+  const containerStyle: React.CSSProperties = {
+    position: fittingType === "fill" ? "relative" : undefined,
+    width: fittingType === "fill" ? "100%" : width,
+    height: fittingType === "fill" ? "100%" : height,
+    aspectRatio, overflow: "hidden"
+  };
+
+  return (
+    <div className={cn("image-container", containerClassName)} style={containerStyle}>
+      {status === "loading" && placeholder !== "none" && (
+        <>
+          {placeholder === "skeleton" && <div className="absolute inset-0 bg-gray-200 dark:bg-gray-800 animate-pulse" />}
+          {placeholder === "blur" && placeholderBlur && <img alt="" src={placeholderBlur} className="absolute inset-0 w-full h-full object-cover blur-sm" />}
+        </>
+      )}
+      <img
+        ref={ref}
+        src={buildImageUrl(currentSrc, { format: finalFormat, width, crop: cropMode, focal: focalPoint })}
+        srcSet={srcSet} sizes="100vw" alt={alt}
+        loading={priority ? "eager" : loadingStrategy} decoding={priority ? "sync" : "async"}
+        onLoad={() => { setStatus("loaded"); onLoad?.(); }} onError={handleError}
+        className={cn("transition-opacity duration-300", fittingType === "fill" && "absolute inset-0 w-full h-full", status === "loaded" ? "opacity-100" : "opacity-0", className)}
+        style={{ objectFit, objectPosition: focalPoint ? `${focalPoint.x*100}% ${focalPoint.y*100}%` : objectPosition }}
+      />
+      {status === "error" && <div className="absolute inset-0 flex items-center justify-center bg-gray-100 text-gray-500">🖼️ {alt}</div>}
+    </div>
+  );
+});
+Image.displayName = "Image";
+ 
+ 
+6️⃣  index.ts  — ส่งออกสาธารณะ
+ 
+ts
+  
+export { Image } from "./image";
+export type { ImageProps, ImageFormat, PlaceholderType, FocalPoint } from "./types";
+ 
+ 
+ 
+ 
+✅ ข้อดีของโครงสร้างนี้
+ 
+- แยกภาระชัดเจน: ประเภท/ค่าคงที่/ตัวช่วย/ตรรกะ ไม่ปนกัน
+- ทดสอบง่าย: แต่ส่วนแยกกัน → Unit Test ได้
+- ขยายได้: เพิ่ม Cache/Analytics/AI เข้าโฟลเดอร์ตัวเองได้เลย
+- นำกลับมาใช้ใหม่:  utils/  ใช้ร่วมกับส่วนอื่นได้
+- อ่านง่าย: ทีมรู้ว่าไฟล์อะไรอยู่ที่ไหน
+ 
+ 
+ 
+➡️ ต่อไป: เริ่มทำ Cache Layer (v3.0)
+ 
+พร้อมไหมครับ? เราจะสร้าง:
+ 
+- ✅ Memory Cache (เร็วที่สุด)
+- ✅ IndexedDB Cache (คงอยู่ข้ามเซสชัน)
+- ✅ Service Worker Hook
+- ✅ TTL / Limit / Eviction Policy
+- ✅ ผสานเข้ากับ  <Image>  อัตโนมัติ
+ 
+ต้องการเริ่มส่วนนี้เลยไหมครับ? 🚀🧠
