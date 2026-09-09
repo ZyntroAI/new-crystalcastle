@@ -1,0 +1,319 @@
+# 🛡️ กฎตรวจจับ ReDoS + บูรณาการเข้าชุดความรู้ความปลอดภัย
+
+---
+
+## 📋 ส่วนที่ 1: กฎตรวจจับ ReDoS สำหรับ JavaScript & Python
+
+### 🔴 กฎระดับสูง — ต้องแก้ทันที
+
+#### กฎที่ 1: Quantifier ซ้อนกัน (Nested Quantifiers)
+**รูปแบบที่ตรวจจับ:** `(X+)*` / `(X*)+` / `(X+)+` / `(X*){n,}`
+```regex
+\([^)]+[+*]\)\s*[+*]\{?\d*,?\d*\}?
+```
+**คำอธิบาย:** กลุ่มที่มี Quantifier ภายใน แล้วมี Quantifier ภายนอกซ้อนออก → ความซับซ้อนเลขชี้กำลัง
+**อันตราย:** ⚠️ สูงมาก — พบบ่อยที่สุดสาเหตุ ReDoS
+**ตัวอย่างอันตราย:**
+```javascript
+/^(\w+\s?)*$/        // ❌ ซ้อนกัน → อันตราย
+/(a+)*$/              // ❌ ซ้อนกัน → อันตราย
+/([a-z]+){10,}/      // ❌ ซ้อนกัน + ขอบเขตบน → อันตรายมาก
+```
+**วิธีแก้:** ใช้ Lookahead หรือเขียนใหม่ให้ไม่ซ้อนกัน
+```javascript
+/^((?=(\w+))\2\s?)*$/  // ✅ ปลอดภัย
+```
+
+#### กฎที่ 2: กลุ่มจับที่ซ้อนทับกัน (Overlapping Alternation)
+**รูปแบบที่ตรวจจับ:** `(X|XY|XYZ)*` — ทางเลือกที่ขยายออกไปซ้อนกัน
+```regex
+\([^)]+\|[^)]+\|[^)]+\)\s*[+*]
+```
+**คำอธิบาย:** ทางเลือกในกลุ่มมีส่วนซ้อนทับกัน → เครื่องมือลองทุกทางเลือก → Backtracking มหาศาล
+**ตัวอย่างอันตราย:**
+```python
+r'^(a|ab|abc)*$'      # ❌ ซ้อนทับกัน → อันตราย
+r'^(foo|foobar|foobaz)+$'  # ❌ ซ้อนทับกัน → อันตราย
+```
+
+#### กฎที่ 3: Quantifier ที่ไม่มีขอบเขตบน + ข้อความยาว
+**รูปแบบที่ตรวจจับ:** `X+` / `X*` ร่วมกับข้อมูลจากภายนอก
+```regex
+\.[*+].{0,5}(test|match|search|compile)
+```
+**คำอธิบาย:** RegEx ที่รับข้อความยาวจากผู้ใช้ โดยไม่จำกัดความยาว และมีกลุ่มที่อาจเกิด Backtracking
+**เงื่อนไข:**
+- มี `*` หรือ `+` ที่ไม่มีขอบเขตสูงสุด
+- ข้อมูลมาจาก input ผู้ใช้ / request body / query string
+- ไม่มีการตรวจสอบความยาวก่อน
+
+---
+
+### 🟡 กฎระดับปานกลาง — ควรตรวจสอบ
+
+#### กฎที่ 4: Quantifier ที่มีขอบเขตล่างมาก
+```regex
+[+*]\{\d{2,},\}
+```
+**คำอธิบาย:** `{10,}` `{20,}` — จำนวนขั้นต่ำสูงโดยไม่ระบุขอบบน → พื้นที่ค้นหากว้างมาก
+```python
+r'^[a-z]{20,}$'      # ⚠️ อาจมีปัญหาเมื่อไม่ตรงกับรูปแบบ
+```
+
+#### กฎที่ 5: ตัวอักษรที่ตรวจทับกันในกลุ่ม
+```regex
+\[.*\w.*\d.*\]|\[.*\W.*\D.*\]
+```
+**คำอธิบาย:** `[\w\d]+` — ชุดอักขระที่ครอบคลุมกันซ้อนทับ → เมื่อไม่ตรงกับรูปแบบ เครื่องมือย้อนกลับเยอะ
+
+---
+
+### ✅ กฎที่ปลอดภัย — ผ่าน
+- ❌ ไม่มี Quantifier ซ้อนกัน
+- ❌ ไม่มีทางเลือกที่ซ้อนทับกัน
+- ✅ ใช้ Lookahead เพื่อป้องกัน Backtracking: `(?=(PATTERN))\1`
+- ✅ จำกัดความยาวข้อความก่อนประมวลผล
+- ✅ ใช้ RegEx ที่กำหนดขอบเขตบนชัดเจน `{min,max}`
+
+---
+
+## 📄 ไฟล์กฎตรวจจับพร้อมใช้งาน
+
+### `redos-rules.js` — สำหรับ JavaScript
+```javascript
+/**
+ * ReDoS Detection Rules — JavaScript Edition
+ * CWE-1333: Inefficient Regular Expression Complexity
+ * Version: 1.0 | 2026-09-09
+ */
+
+const REDOS_RULES = [
+  {
+    id: "RD-001",
+    severity: "CRITICAL",
+    name: "Nested Quantifiers",
+    pattern: /\([^()]*[+*][^()]*\)\s*[+*]\??/g,
+    message: "Quantifier ซ้อนกัน เช่น (A+)* ทำให้เกิด Backtracking แบบเลขชี้กำลัง — แก้ด้วย Lookahead",
+    fixExample: "เปลี่ยน /^(\\w+\\s?)*$/ เป็น /^((?=(\\w+))\\2\\s?)*$/"
+  },
+  {
+    id: "RD-002",
+    severity: "HIGH",
+    name: "Overlapping Alternation",
+    pattern: /\([^)|]+\|[^)|]+\|[^)|]+\)\s*[+*]/g,
+    message: "ทางเลือกที่ซ้อนทับกัน เช่น (a|ab|abc)* เพิ่มเวลาประมวลผลแบบเลขชี้กำลัง",
+    fixExample: "ลดทางเลือกให้ไม่ซ้อนทับกัน หรือเรียงจากยาวไปสั้น"
+  },
+  {
+    id: "RD-003",
+    severity: "HIGH",
+    name: "Unbounded Quantifier with User Input",
+    pattern: /(test|match|search|exec|compile)\s*\([^)]*\.(body|query|params|input)/gi,
+    message: "RegEx ทำงานกับข้อมูลผู้ใช้โดยไม่จำกัดความยาว — เสี่ยง ReDoS",
+    fixExample: "จำกัดความยาวข้อความก่อน: if (str.length > 1000) reject"
+  },
+  {
+    id: "RD-004",
+    severity: "MEDIUM",
+    name: "Large Minimum Quantifier",
+    pattern: /[+*]\{(\d{2,}),\}/g,
+    message: `Quantifier ขั้นต่ำมากโดยไม่มีขอบบน — อาจช้ามากเมื่อไม่ตรงกับรูปแบบ`,
+    fixExample: "กำหนดขอบเขตบนเสมอ: {min,max}"
+  }
+];
+
+// ตรวจสอบ RegEx
+function detectReDoS(pattern) {
+  const findings = [];
+  for (const rule of REDOS_RULES) {
+    if (rule.pattern.test(pattern)) {
+      findings.push({ ...rule });
+    }
+  }
+  return findings;
+}
+
+module.exports = { detectReDoS, REDOS_RULES };
+```
+
+### `redos-rules.py` — สำหรับ Python
+```python
+"""
+ReDoS Detection Rules — Python Edition
+CWE-1333: Inefficient Regular Expression Complexity
+Version: 1.0 | 2026-09-09
+"""
+import re
+from dataclasses import dataclass
+from typing import List, Dict
+
+@dataclass
+class ReDoSRule:
+    id: str
+    severity: str
+    name: str
+    pattern: re.Pattern
+    message: str
+    fix_example: str
+
+REDOS_RULES: List[ReDoSRule] = [
+    ReDoSRule(
+        id="RD-001",
+        severity="CRITICAL",
+        name="Nested Quantifiers",
+        pattern=re.compile(r"\([^()]*[+*][^()]*\)\s*[+*]\??"),
+        message="Quantifier ซ้อนกัน เช่น (A+)* ทำให้เกิด Backtracking แบบเลขชี้กำลัง",
+        fix_example="เปลี่ยน r'^(\\w+\\s?)*$' เป็น r'^((?=(\\w+))\\2\\s?)*$'"
+    ),
+    ReDoSRule(
+        id="RD-002",
+        severity="HIGH",
+        name="Overlapping Alternation",
+        pattern=re.compile(r"\([^)|]+\|[^)|]+\|[^)|]+\)\s*[+*]"),
+        message="ทางเลือกที่ซ้อนทับกัน เพิ่มเวลาประมวลผลแบบเลขชี้กำลัง",
+        fix_example="ลดทางเลือกให้ไม่ซ้อนทับกัน หรือเรียงจากยาวไปสั้น"
+    ),
+    ReDoSRule(
+        id="RD-003",
+        severity="HIGH",
+        name="Unbounded Quantifier + User Input",
+        pattern=re.compile(r"(re\.|regex|search|match|fullmatch).*(request|input|form|query)"),
+        message="RegEx กับข้อมูลผู้ใช้โดยไม่จำกัดความยาว — เสี่ยง ReDoS",
+        fix_example="ตรวจความยาวก่อน: if len(s) > 1000: raise ValueError"
+    ),
+    ReDoSRule(
+        id="RD-004",
+        severity="MEDIUM",
+        name="Large Minimum Quantifier",
+        pattern=re.compile(r"[+*]\{(\d{2,}),\}"),
+        message="Quantifier ขั้นต่ำมากโดยไม่มีขอบบน — อาจช้ามาก",
+        fix_example="กำหนดขอบเขตบนเสมอ: {min,max}"
+    )
+]
+
+def detect_redos(pattern: str) -> List[Dict]:
+    """ตรวจจับรูปแบบ ReDoS จากสตริง RegEx"""
+    findings = []
+    for rule in REDOS_RULES:
+        if rule.pattern.search(pattern):
+            findings.append({
+                "id": rule.id,
+                "severity": rule.severity,
+                "name": rule.name,
+                "message": rule.message,
+                "fix_example": rule.fix_example
+            })
+    return findings
+```
+
+---
+
+## 🧠 ส่วนที่ 2: บูรณาการเข้าชุดความรู้ความปลอดภัย
+
+### 📂 โครงสร้างเอกสารความรู้
+```
+docs/security/
+  ├── CWE-1333-ReDoS.md           # ← นี้
+  ├── CWE-007-Input.md
+  ├── CWE-079-XSS.md
+  ├── CWE-89-SQLi.md
+  └── README.md
+```
+
+### 📄 `CWE-1333-ReDoS.md` — เอกสารความรู้ฉบับสมบูรณ์
+```markdown
+---
+id: CWE-1333
+title: CWE-1333 — ReDoS / Inefficient Regular Expression Complexity
+category: Security / CWE
+cwe_id: 1333
+cwe_name: Inefficient Regular Expression Complexity
+cwe_alt_names: ReDoS, Catastrophic Backtracking
+severity: High
+likelihood: High
+impact: Availability (CPU Consumption)
+related_cwes: [CWE-407, CWE-1226]
+capec: CAPEC-492
+references:
+  - javascript.info: Catastrophic Backtracking
+  - cwe.mitre.org: CWE-1333
+  - OWASP: ReDoS
+  - USENIX Security 2018: ReDoS Study
+created: 2026-09-09
+tags: [cwe, redos, regex, security, dos, backtracking, javascript, python]
+---
+
+# 🛡️ CWE-1333 — ReDoS: Regular Expression Denial of Service
+
+## 📌 ภาพรวม
+**CWE-1333:** ผลิตภัณฑ์ใช้ Regular Expression ที่มีความซับซ้อนในกรณีแย่ที่สุดเป็นแบบ **เลขชี้กำลัง** ทำให้ผู้โจมตีสามารถสร้างข้อความที่กระตุ้นให้เกิด Backtracking มหาศาล → CPU พุ่งสูง → บริการล่ม
+
+**ชื่ออื่น:** ReDoS, Catastrophic Backtracking
+
+---
+
+## ⚠️ สาเหตุหลัก
+- ✅ **Quantifier ซ้อนกัน:** `(A+)*` → จำนวนทางเลือก = 2ⁿ⁻¹
+- ✅ **ทางเลือกซ้อนทับกัน:** `(a|ab|abc)*` → ทุกทางเลือกถูกลอง
+- ✅ **กลุ่มจับที่ซ้อนกัน:** `(a+)+` → ทุกการแบ่งส่วนถูกลอง
+- ✅ **ข้อความยาว + ไม่ตรงกับรูปแบบ** → เครื่องมือย้อนกลับทุกทาง
+
+---
+
+## 🔍 รูปแบบอันตราย (ตรวจจับได้ด้วยกฎ RD-001 ถึง RD-004)
+
+### ❌ อันตราย
+```javascript
+/^(\w+\s?)*$/i           // Nested Quantifiers
+/(a+)+$/                  // Nested Quantifiers
+/^(a|ab|abc)+$/           // Overlapping Alternation
+```
+
+### ✅ ปลอดภัย
+```javascript
+/^((?=(\w+))\2\s?)*$/i   // Lookahead ป้องกัน Backtracking
+/^(\w+\s)*\w*$/           // เขียนใหม่ — ไม่ซ้อนกัน
+/^[a-z]{1,20}$/           // ขอบเขตชัดเจน
+```
+
+---
+
+## 🛡️ มาตรการป้องกัน
+1. **ออกแบบ:** กำจัด Quantifier ซ้อนกัน — ใช้ Lookahead `(?=(PATTERN))\1`
+2. **ตรวจสอบ:** จำกัดความยาวข้อความก่อนประมวลผล
+   ```python
+   if len(input_str) > 1000:
+       raise ValueError("Input too long")
+   ```
+3. **จำกัดเวลา:** ตั้งค่าเวลาประมวลผลสูงสุด / ขีดจำกัด Backtracking
+4. **หลีกเลี่ยง:** อย่าใช้ RegEx จากผู้ใช้โดยตรง
+
+---
+
+## 📊 CVE ที่เกี่ยวข้อง
+- CVE-2020-5243 — User-Agent Parser ReDoS
+- CVE-2021-21317 — npm Package ReDoS
+- CVE-2019-16215 — Markdown Parser ReDoS
+- CVE-2019-6785, CVE-2019-12041, CVE-2017-16021
+
+---
+
+## 🔗 อ้างอิง
+- [MITRE CWE-1333](https://cwe.mitre.org/data/definitions/1333.html)
+- [OWASP ReDoS](https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS)
+- [javascript.info: Catastrophic Backtracking](https://javascript.info/regexp-catastrophic-backtracking)
+- [USENIX Security 2018: ReDoS Study](https://www.usenix.org/system/files/conference/usenixsecurity18/sec18-staicu.pdf)
+```
+
+---
+
+## ✅ สรุปสิ่งที่สร้างเสร็จ
+| รายการ | สถานะ |
+|---|---|
+| 📄 กฎตรวจจับ ReDoS (JavaScript) | ✅ `redos-rules.js` |
+| 📄 กฎตรวจจับ ReDoS (Python) | ✅ `redos-rules.py` |
+| 📄 เอกสารความรู้ CWE-1333 | ✅ บูรณาการเข้า KB |
+| 🧩 4 กฎหลัก (CRITICAL → MEDIUM) | ✅ พร้อมใช้งาน |
+| 🔧 ตัวอย่างโค้ด อันตราย/ปลอดภัย | ✅ พร้อมอ้างอิง |
+
+ต้องการให้ผม **ส่งไฟล์จริงขึ้น repo** หรือ **รวมเข้ากับ SAST/CI** เพื่อตรวจอัตโนมัติทุกครั้งที่ Commit ไหมครับ? 🤖🔍✅
