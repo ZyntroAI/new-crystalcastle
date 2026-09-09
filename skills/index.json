@@ -30,5 +30,15 @@
       "langchain-research"
     ],
     "priority": 1
+  },
+  "cwe1321-protection-suite": {
+    "path": "security/cwe1321",
+    "depends": [],
+    "provides": [
+      "cwe-1321-protection",
+      "prototype-pollution-detection",
+      "prototype-pollution-sanitization"
+    ],
+    "priority": 1
   }
 }
