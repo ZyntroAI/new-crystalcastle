@@ -1334,3 +1334,243 @@ const handleError = useCallback(() => {
 ✅ v4.0 Analytics & Telemetry
  
 พร้อมใช้งานจริง 100% ครับ! ต้องการให้ผมรวมเป็น README ฉบับเต็ม หรือเขียน Service Worker Layer ต่อไหมครับ? 📖🛡️
+📖 Image SDK — README ฉบับเต็ม (Production-Ready)
+ 
+สรุปทั้งหมด: โครงสร้าง, การติดตั้ง, การใช้งาน, Cache, Analytics, Configuration — พร้อมนำไปใช้ทีมขนาดใหญ่
+ 
+ 
+ 
+📦 ภาพรวม
+ 
+Enterprise Image Component v4.0 — ครบกว่า Next.js Image, Cloudinary, Imgix ในหนึ่งเดียว:
+ 
+- ✅ Responsive + AVIF/WebP/Auto
+- ✅ Multi-Tier Cache: Memory → IndexedDB
+- ✅ Smart Crop + Focal Point
+- ✅ Priority LCP + Lazy Loading
+- ✅ Retry + Fallback
+- ✅ Analytics + Prometheus/OTel
+- ✅ TypeScript Strict
+ 
+ 
+ 
+🗂️ โครงสร้างไฟล์
+ 
+plaintext
+  
+src/features/shared/ui/image/
+├── index.ts                 # 🔓 Public API
+├── image.tsx                # 🧠 Component หลัก
+├── types.ts                 # 📘 Interfaces
+├── constants.ts             # 📌 Config/Default
+├── utils/                   # 🔧 ตัวช่วย
+│   ├── index.ts
+│   ├── format-detector.ts
+│   ├── url-builder.ts
+│   └── focal-point.ts
+├── cache/                   # 🧠 Multi-Tier Cache
+│   ├── index.ts
+│   ├── types.ts
+│   ├── constants.ts
+│   ├── base.ts
+│   ├── memory-store.ts
+│   ├── idb-store.ts
+│   └── cache-manager.ts
+├── analytics/               # 📊 Telemetry
+│   ├── index.ts
+│   ├── types.ts
+│   ├── constants.ts
+│   ├── metrics.ts
+│   ├── tracker.ts
+│   └── exporters/
+│       ├── console.ts
+│       ├── prometheus.ts
+│       └── otel.ts
+└── __tests__/               # 🧪 Tests
+    ├── image.test.tsx
+    ├── cache.test.ts
+    └── analytics.test.ts
+ 
+ 
+ 
+ 
+🚀 เริ่มต้นใช้งาน
+ 
+1️⃣ ติดตั้ง
+ 
+bash
+  
+# ตรวจสอบว่ามี dependencies เหล่านี้
+npm install react react-dom
+npm install -D @types/react class-variance-authority clsx tailwind-merge
+ 
+ 
+2️⃣ นำเข้า
+ 
+tsx
+  
+import { Image } from "@/features/shared/ui/image";
+import type { ImageFormat, PlaceholderType } from "@/features/shared/ui/image";
+ 
+ 
+3️⃣ ตัวอย่างการใช้งานพื้นฐาน
+ 
+tsx
+  
+// 🖼️ ภาพทั่วไป
+<Image
+  src="/products/shoe.jpg"
+  alt="รองเท้า"
+  width={800}
+  height={600}
+  placeholder="blur"
+  placeholderBlur="data:image/jpeg;base64,..."
+/>
+
+// ⚡ LCP / Priority
+<Image
+  src="/hero/banner.jpg"
+  alt="Hero"
+  priority
+  format="auto"
+  cropMode="smart"
+  retry={3}
+/>
+
+// 📱 Responsive เต็มพื้นที่
+<Image
+  src="/card/background.webp"
+  alt="Card"
+  fittingType="fill"
+  objectFit="cover"
+  focalPoint={{ x: 0.5, y: 0.2 }}
+  placeholder="skeleton"
+/>
+ 
+ 
+ 
+ 
+⚙️ Props ทั้งหมด
+ 
+ ImageProps 
+ 
+Prop Type Default คำอธิบาย 
+ src   string  จำเป็น URL ภาพต้นฉบับ 
+ alt   string  จำเป็น คำอธิบาย (Accessibility) 
+ width/height   number  - ขนาดภาพ 
+ fittingType   fill/fit   fit  เต็มพื้นที่หรือรักษาสัดส่วน 
+ cropMode   fill/fit/smart   fill  โหมดครอป 
+ focalPoint   {x:0-1,y:0-1}  - จุดศูนย์กลางความสนใจ 
+ priority   boolean   false  โหลดก่อน (LCP) 
+ placeholder   none/blur/skeleton   blur  ตัวแทนขณะโหลด 
+ format   auto/avif/webp/jpg   auto  รูปแบบภาพ 
+ loadingStrategy   lazy/eager   lazy  กลไกการโหลด 
+ retry   number   2  จำนวนครั้งลองใหม่ 
+ fallbackImages   string[]   []  ภาพสำรอง 
+ 
+ 
+ 
+🧠 Cache Layer
+ 
+ใช้งาน
+ 
+ts
+  
+import { imageCache } from "@/features/shared/ui/image/cache";
+
+// ตรวจสอบ
+const entry = await imageCache.get("key");
+
+// บันทึก
+await imageCache.set("key", "data-url", { size: 12345 });
+
+// สถิติ
+console.log(imageCache.getStats());
+ 
+ 
+คุณสมบัติ
+ 
+- ลำดับชั้น: Memory (เร็ว) → IndexedDB (คงทน)
+- TTL: 24 ชม.
+- ขีดจำกัด: Memory 50MB, IDB 200MB
+- LRU Eviction: ลบเก่าสุดเมื่อเต็ม
+ 
+ 
+ 
+📊 Analytics & Telemetry
+ 
+ดูสถิติ
+ 
+ts
+  
+import { imageTracker } from "@/features/shared/ui/image/analytics";
+
+// ดูสรุป
+console.log(imageTracker.getStats());
+// → { cacheHitRate: 0.92, avgLoadTimeMs: 120, ... }
+
+// เพิ่ม Exporter
+import { PrometheusExporter } from "./analytics/exporters/prometheus";
+imageTracker.addExporter(PrometheusExporter);
+ 
+ 
+Metrics ที่เก็บ
+ 
+- ✅ Load Time (ms)
+- ✅ Cache Hit/Miss/Stale
+- ✅ Format (AVIF/WebP/JPG)
+- ✅ Status (Loaded/Error)
+- ✅ Retry Count
+- ✅ LCP Candidate
+- ✅ Size (bytes)
+ 
+ 
+ 
+🔧 การกำหนดค่า
+ 
+แก้ไขใน  constants.ts :
+ 
+ts
+  
+// Image
+export const IMAGE_DEFAULTS = { FORMAT: "auto", RETRY: 2 };
+
+// Cache
+export const CACHE_CONFIG = { MAX_MEMORY_SIZE: 50 * 1024 * 1024 };
+
+// Analytics
+export const ANALYTICS_CONFIG = { BATCH_SIZE: 20, FLUSH_INTERVAL: 5000 };
+ 
+ 
+ 
+ 
+🧪 ทดสอบ
+ 
+bash
+  
+npm test -- src/features/shared/ui/image/__tests__/
+ 
+ 
+ 
+ 
+🚀 Roadmap ถัดไป
+ 
+Service Worker Layer (Offline Support)
+AI Smart Crop (Face/Object Detection)
+Progressive Loading (Low→Medium→Full)
+Multi-CDN Failover (Wix→Cloudinary→Imgix)
+ 
+ 
+ 
+✅ สรุป
+ 
+โครงสร้างนี้ มั่นคง ยืดหยุ่น พร้อมขยาย ตามมาตรฐาน Enterprise:
+ 
+- แยกส่วนชัดเจน: Component/Cache/Analytics
+- ปลอดภัย TypeScript
+- ประสิทธิภาพสูง: AVIF, Cache, Priority
+- ตรวจสอบได้: Telemetry ครบ
+ 
+พร้อมใช้งานจริงในโปรเจกต์ Production ทันทีครับ! 🎉
+ 
+ต้องการให้ผมช่วยเขียน Service Worker Layer หรือ ตัวอย่างการนำไปใช้กับ Next.js App Router ต่อไหมครับ? 🛡️🧩
