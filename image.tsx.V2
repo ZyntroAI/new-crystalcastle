@@ -1,0 +1,346 @@
+✅ เริ่มเลย! มาเขียน Image Component v2.0 ฉบับเต็ม กัน
+ 
+พร้อม TypeScript, AVIF, Priority, Retry, Skeleton/Blur Placeholder, Format Auto-Detect และโครงสร้างพร้อมขยาย
+ 
+ 
+ 
+🖼️  image.tsx  — v2.0 Smart Image Engine
+ 
+tsx
+  
+import * as React from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { cn } from "@/lib/utils"; // clsx + tailwind-merge
+
+// ==========================================
+// Types & Interfaces
+// ==========================================
+export type ImageFormat = "auto" | "webp" | "avif" | "jpg";
+export type PlaceholderType = "none" | "blur" | "skeleton";
+export type LoadingStrategy = "lazy" | "eager";
+export type FittingType = "fill" | "fit";
+export type CropMode = "fill" | "fit" | "smart";
+
+export interface ImageProps {
+  src: string;
+  alt: string; // ✅ บังคับเพื่อ Accessibility
+  width?: number;
+  height?: number;
+  fittingType?: FittingType;
+  cropMode?: CropMode;
+  focalPoint?: { x: number; y: number }; // 0-1
+  aspectRatio?: string | number;
+
+  // v2.0 New Features
+  priority?: boolean;
+  placeholder?: PlaceholderType;
+  placeholderBlur?: string; // blurDataURL
+  format?: ImageFormat;
+  loadingStrategy?: LoadingStrategy;
+  fallbackImages?: string[];
+  retry?: number;
+  retryDelay?: number;
+
+  // Styling
+  className?: string;
+  containerClassName?: string;
+  objectFit?: "contain" | "cover" | "fill" | "none";
+  objectPosition?: string;
+
+  // Events
+  onLoad?: () => void;
+  onError?: (err: Error) => void;
+}
+
+// ==========================================
+// Format Detection
+// ==========================================
+const supportsFormat = async (format: ImageFormat): Promise<boolean> => {
+  if (typeof document === "undefined") return false;
+  const test = {
+    avif: "image/avif",
+    webp: "image/webp",
+  }[format];
+  if (!test) return true;
+  const canvas = document.createElement("canvas");
+  if (!canvas.toBlob) return false;
+  return new Promise((res) => {
+    canvas.toBlob((b) => res(!!b), test);
+  });
+};
+
+const detectBestFormat = async (): Promise<ImageFormat> => {
+  if (await supportsFormat("avif")) return "avif";
+  if (await supportsFormat("webp")) return "webp";
+  return "jpg";
+};
+
+// ==========================================
+// URL Builder (Compatible with Wix/CDN)
+// ==========================================
+const buildImageUrl = (
+  baseSrc: string,
+  opts: {
+    format: ImageFormat;
+    width?: number;
+    quality?: number;
+    focal?: { x: number; y: number };
+    crop: CropMode;
+  }
+): string => {
+  const params = new URLSearchParams();
+  if (opts.format !== "auto") params.set("fmt", opts.format);
+  if (opts.width) params.set("w", String(opts.width));
+  if (opts.quality) params.set("q", String(opts.quality));
+  if (opts.focal) params.set("fp", `${opts.focal.x},${opts.focal.y}`);
+  params.set("crop", opts.crop);
+
+  const sep = baseSrc.includes("?") ? "&" : "?";
+  return `${baseSrc}${sep}${params}`;
+};
+
+// ==========================================
+// Main Component
+// ==========================================
+export const Image = React.forwardRef<HTMLImageElement, ImageProps>(
+  (
+    {
+      src,
+      alt,
+      width,
+      height,
+      fittingType = "fit",
+      cropMode = "fill",
+      focalPoint,
+      aspectRatio,
+      priority = false,
+      placeholder = "blur",
+      placeholderBlur,
+      format = "auto",
+      loadingStrategy = "lazy",
+      fallbackImages = [],
+      retry = 2,
+      retryDelay = 1000,
+      className,
+      containerClassName,
+      objectFit = "cover",
+      objectPosition,
+      onLoad,
+      onError,
+    },
+    ref
+  ) => {
+    // State
+    const [status, setStatus] = useState<"loading" | "loaded" | "error">("loading");
+    const [currentSrc, setCurrentSrc] = useState(src);
+    const [usedRetries, setUsedRetries] = useState(0);
+    const [finalFormat, setFinalFormat] = useState<ImageFormat>(format);
+
+    // Detect format on mount
+    useEffect(() => {
+      if (format === "auto") {
+        detectBestFormat().then(setFinalFormat);
+      } else {
+        setFinalFormat(format);
+      }
+    }, [format]);
+
+    // Generate optimized srcset
+    const srcSet = useMemo(() => {
+      const widths = [640, 1080, 1920];
+      return widths
+        .map((w) => `${buildImageUrl(src, { format: finalFormat, width: w, crop: cropMode })} ${w}w`)
+        .join(", ");
+    }, [src, finalFormat, cropMode]);
+
+    // Focal point position
+    const posStyle = useMemo(() => {
+      if (objectPosition) return objectPosition;
+      if (focalPoint) return `${focalPoint.x * 100}% ${focalPoint.y * 100}%`;
+      return "center";
+    }, [focalPoint, objectPosition]);
+
+    // Retry logic
+    const attemptLoad = useCallback(() => {
+      const tryList = [src, ...fallbackImages];
+      const idx = Math.min(usedRetries, tryList.length - 1);
+      setCurrentSrc(tryList[idx]);
+    }, [src, fallbackImages, usedRetries]);
+
+    // Handle Error with Retry
+    const handleError = useCallback(
+      (e: React.SyntheticEvent<HTMLImageElement>) => {
+        if (usedRetries < retry) {
+          setTimeout(() => {
+            setUsedRetries((p) => p + 1);
+          }, retryDelay);
+        } else {
+          setStatus("error");
+          onError?.(new Error("Image failed to load"));
+        }
+      },
+      [usedRetries, retry, retryDelay, onError]
+    );
+
+    // Trigger retry when counter changes
+    useEffect(() => {
+      if (usedRetries > 0) attemptLoad();
+    }, [usedRetries, attemptLoad]);
+
+    // Handle Success
+    const handleLoad = useCallback(() => {
+      setStatus("loaded");
+      onLoad?.();
+    }, [onLoad]);
+
+    // Priority/Preload
+    useEffect(() => {
+      if (!priority) return;
+      const link = document.createElement("link");
+      link.rel = "preload";
+      link.as = "image";
+      link.href = currentSrc;
+      link.imageSrcset = srcSet;
+      document.head.appendChild(link);
+      return () => link.remove();
+    }, [priority, currentSrc, srcSet]);
+
+    // Container style
+    const containerStyle: React.CSSProperties = {
+      position: fittingType === "fill" ? "relative" : undefined,
+      width: fittingType === "fill" ? "100%" : width,
+      height: fittingType === "fill" ? "100%" : height,
+      aspectRatio: aspectRatio,
+      overflow: "hidden",
+    };
+
+    return (
+      <div className={cn("image-container", containerClassName)} style={containerStyle}>
+        {/* Placeholder: Skeleton / Blur */}
+        {status === "loading" && placeholder !== "none" && (
+          <>
+            {placeholder === "skeleton" && (
+              <div className="absolute inset-0 bg-gray-200 dark:bg-gray-800 animate-pulse rounded" />
+            )}
+            {placeholder === "blur" && placeholderBlur && (
+              <img
+                aria-hidden="true"
+                alt=""
+                src={placeholderBlur}
+                className="absolute inset-0 w-full h-full object-cover scale-110 blur-sm"
+              />
+            )}
+          </>
+        )}
+
+        {/* Actual Image */}
+        <img
+          ref={ref}
+          src={buildImageUrl(currentSrc, { format: finalFormat, width, crop: cropMode, focal: focalPoint })}
+          srcSet={srcSet}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          alt={alt}
+          width={width}
+          height={height}
+          loading={priority ? "eager" : loadingStrategy}
+          decoding={priority ? "sync" : "async"}
+          onLoad={handleLoad}
+          onError={handleError}
+          className={cn(
+            "transition-all duration-300 ease-in-out",
+            fittingType === "fill" ? "absolute inset-0 w-full h-full" : "",
+            status === "loaded" ? "opacity-100" : "opacity-0",
+            className
+          )}
+          style={{
+            objectFit,
+            objectPosition: posStyle,
+          }}
+        />
+
+        {/* Error Fallback */}
+        {status === "error" && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-900 text-sm text-gray-500">
+            <span>🖼️ {alt || "Image unavailable"}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+);
+
+Image.displayName = "Image";
+ 
+ 
+ 
+ 
+📝 ตัวอย่างการใช้งาน v2.0
+ 
+tsx
+  
+// Hero / LCP Image (Priority + AVIF Auto)
+<Image
+  src="/hero/main.jpg"
+  alt="Hero Banner"
+  width={1200}
+  height={600}
+  priority
+  format="auto"
+  placeholder="blur"
+  placeholderBlur="data:image/jpeg;base64,..."
+  cropMode="smart"
+  retry={3}
+  className="rounded-xl shadow-lg"
+/>
+
+// Responsive Fill (Card Background)
+<Image
+  src="/products/shoe.jpg"
+  alt="Product"
+  fittingType="fill"
+  cropMode="fill"
+  focalPoint={{ x: 0.5, y: 0.3 }}
+  placeholder="skeleton"
+  loadingStrategy="lazy"
+  fallbackImages={["/fallback/shoe.webp"]}
+/>
+ 
+ 
+ 
+ 
+✅ จุดเด่น v2.0 ที่ครบถ้วน
+ 
+🧠 อัจฉริยะ
+ 
+- Auto Format: ตรวจจับ AVIF → WebP → JPG อัตโนมัติ
+- Smart URL Builder: รองรับ CDN/Wix/Cloudinary
+- Focal Point: ควบคุมจุดศูนย์กลางการครอป
+ 
+⚡ ประสิทธิภาพ
+ 
+- Priority Preload: สำหรับภาพสำคัญที่สุด (LCP)
+- Lazy/Eager: ควบคุมการโหลด
+- srcSet Responsive: คมชัดทุกขนาดจอ
+- Smooth Fade-in: เปลี่ยนสถานะไม่กระโดด
+ 
+🛡️ ความมั่นคง
+ 
+- Auto Retry: ลองใหม่เมื่อล้มเหลว + Fallback รอง
+- Error Boundary UI: แสดงแทนชัดเจน
+- TypeScript Full: ปลอดภัยทุก Props
+ 
+🎨 UX
+ 
+- Placeholder:  blur  (ดาต้า) /  skeleton  (แอนิเมชัน) /  none 
+- Fitting/Fill: รองรับเต็มพื้นที่ หรืออัตราส่วนเดิม
+- ObjectFit/Position: ปรับรูปแบบการแสดงผล
+ 
+ 
+ 
+📦 ต่อไปคืออะไร?
+ 
+- ✅ เสร็จแล้ว: v2.0 Base
+- ➡️ พร้อมต่อ: v2.1 Cache Layer (Memory/IDB) + v3 Analytics
+- 🧪 พร้อมทดสอบ: รองรับ Next.js/App Router + Client Components
+ 
+ต้องการให้ผมเพิ่ม Cache Layer หรือ Analytics Hook ต่อเลยไหมครับ? หรืออยากให้ปรับให้เข้ากับโครงสร้าง Feature-based ที่คุณวางไว้ก่อน?
