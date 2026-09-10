@@ -4,7 +4,7 @@
 **Tags:** github, ci-cd, monorepo, turborepo, git, graphql, vercel, pnpm, fastapi, langchain
 **Visibility:** Public · Production Ready
 
-## Sub-skills (9)
+## Sub-skills (10)
 
 - **`github-workflow-repair`** — Diagnose/repair GitHub Actions CI/CD.
 - **`monorepo-turborepo`** — Manage pnpm workspaces + Turborepo.
