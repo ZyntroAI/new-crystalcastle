@@ -1,20 +1,4 @@
 {
-  "python-dev": {
-    "path": "skills/python-dev",
-    "depends": [
-      "pyflakes",
-      "ipython"
-    ],
-    "provides": [
-      "static-analysis",
-      "lint",
-      "execute",
-      "debug",
-      "inspect",
-      "reproduce"
-    ],
-    "priority": 1
-  },
   "crystalcastlex-skill-suite": {
     "path": "skills/crystalcastlex-skill-suite",
     "depends": [],
@@ -39,6 +23,35 @@
       "cwe-1321-protection",
       "prototype-pollution-detection",
       "prototype-pollution-sanitization"
+    ],
+    "priority": 1
+  },
+  "python-dev": {
+    "path": "skills/python-dev",
+    "depends": [
+      "pyflakes",
+      "ipython"
+    ],
+    "provides": [
+      "static-analysis",
+      "lint",
+      "execute",
+      "debug",
+      "inspect",
+      "reproduce"
+    ],
+    "priority": 1
+  },
+  "supabase-agent-suite": {
+    "path": "skills/supabase-agent-suite",
+    "depends": [],
+    "provides": [
+      "supabase-connect",
+      "supabase-schema-inventory",
+      "supabase-migrations",
+      "supabase-concurrency",
+      "supabase-security",
+      "supabase-postgres-best-practices"
     ],
     "priority": 1
   }
