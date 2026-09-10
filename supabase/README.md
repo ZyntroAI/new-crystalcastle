@@ -451,5 +451,488 @@ If you share your current server action code, I can show exactly where to add/ad
 [2] @supabase/server https://supabase.com/docs/guides/auth/choosing-a-server-package
 [3] Supabase Auth + Next.js: Complete Authentication Guide (2026) https://designrevision.com/blog/supabase-auth-nextjs
 [4] Supabase + Next.js 15: Complete Full-Stack Guide (2026) https://stacknotice.com/blog/supabase-nextjs-15-complete-guide-2026
+
+
+# 🧠 Deep Research: Supabase Full Platform Guide
+Comprehensive breakdown of **all topics** from the footer + core architecture, features, compliance, and use cases.
+
+---
+
+## 📑 Table of Contents
+1. **Product Core** — Database, Auth, Functions, Realtime, Storage, Vector, Cron
+2. **Solutions by Audience/Industry** — AI, Enterprise, Healthcare, FinServ, Agencies, etc.
+3. **Security & Compliance** — HIPAA, SOC 2, GDPR, RLS, Encryption
+4. **Developer Ecosystem** — Docs, Libraries, CI/CD, MCP
+5. **Resources & Community** — Support, Open Source, Events
+6. **Architecture & Tech Stack** — Postgres, Deno, Edge, Network
+7. **Migration Paths** — From Firebase, Neon, MySQL, MSSQL
+8. **Pricing & Scaling** — Tiers, Compute, Replicas
+
+---
+
+## 🚀 1. PRODUCT CORE — Deep Dive
+
+### 🗄️ Database (Postgres 100%)
+✅ **Pure Postgres**: No forks; full SQL, ACID, standards-compliant  
+✅ **Auto-Generated APIs**: REST/GraphQL/JSON instantly  
+✅ **Row Level Security (RLS)**: Native row-level isolation  
+✅ **Extensions**: 40+ pre-installed — pgvector, PostGIS, pg_cron, pgcrypto  
+✅ **Dev Tools**: SQL Editor, Table GUI, Diagrams, Query Plan Explainer  
+✅ **Performance**: Connection Pooler (Supavisor), Read Replicas, PITR, Backups
+
+### 🔐 Authentication
+✅ **Methods**: Email/Password, Magic Link, OAuth (Google/GitHub/Apple), SAML/SSO, Phone/SMS OTP  
+✅ **Features**: JWT auto-injected, RBAC, MFA, Passwordless, Auth Hooks  
+✅ **Integration**: Directly ties into Postgres RLS (`auth.uid()`)  
+✅ **Enterprise**: SSO, Custom JWT Claims, Domain Restrictions
+
+### ⚡ Edge Functions
+✅ **Runtime**: Deno 2.0 — TypeScript-first, secure sandbox  
+✅ **Deploy**: Global low-latency OR pinned near DB  
+✅ **Auto-Env**: `SUPABASE_URL`, `ANON_KEY`, `SERVICE_ROLE_KEY` built-in  
+✅ **Use Cases**: Webhooks (Stripe), Auth Hooks, AI/LLM, PDF parsing, Email  
+✅ **Dev**: `supabase functions serve` hot reload, local testing
+
+### 🔄 Realtime
+✅ **Postgres Logical Replication**: No polling — true push  
+✅ **Channels**: Listen to inserts/updates/deletes; filter by user/RLS  
+✅ **Presence**: Track online/offline; sync collaborative UIs  
+✅ **Broadcast**: Send messages between clients directly  
+✅ **Scale**: Distributed globally; works with RLS out of box
+
+### 📦 Storage
+✅ **S3-Compatible**: Buckets, folders, permissions via RLS  
+✅ **Features**: Image Transform (resize/format), CDN, Signed URLs, TTL  
+✅ **Security**: No public access by default; policies tied to `auth.uid()`  
+✅ **Use**: Avatars, medical files, PDFs, backups, media
+
+### 🧩 Vector / AI
+✅ **pgvector**: Built-in extension — `vector(1536)` columns  
+✅ **Indexing**: HNSW (fast) / IVFFlat (large scale)  
+✅ **Search**: Cosine, L2, Dot Product; hybrid SQL+semantic  
+✅ **RAG Ready**: Store docs + embeddings + auth in one DB  
+✅ **Scale**: Millions of vectors + ACID + backups
+
+### ⏱️ Cron Jobs
+✅ **pg_cron**: Native database scheduler  
+✅ **Schedule**: `* * * * *` syntax  
+✅ **Run**: SQL queries, functions, RPC calls  
+✅ **Use**: Cleanup, reports, embeddings sync, summaries
+
+---
+
+## 🎯 2. SOLUTIONS — All Verticals
+
+### 🤖 AI Builders
+✅ **All-in-One**: Vector DB + Auth + Edge Functions + Storage  
+✅ **RAG Pipeline**: Embeddings → Store → Query → Generate  
+✅ **Local Option**: Ollama integration + GPU detection  
+✅ **MCP Server**: Connect to Cursor/VS Code/Claude AI  
+✅ **Streaming**: Real-time chat SSE responses
+
+### 🏢 Enterprise
+✅ **Compliance**: SOC 2 Type II, HIPAA, GDPR  
+✅ **Support**: 24/7 Global + Dedicated CSE  
+✅ **Scale**: Multi-AZ, HA, Read Replicas, Private Link  
+✅ **Security**: Audit Logs, RBAC, RLS, Network Restrictions
+
+### 🏥 Healthcare
+✅ **HIPAA + Signed BAA**: Official Business Associate Agreement  
+✅ **Audit Logging**: Full access tracking  
+✅ **RLS**: Patient/provider isolation  
+✅ **Encryption**: At rest + TLS 1.3  
+✅ **Data Residency**: US/EU region lock
+
+### 🏦 FinServ
+✅ **ACID Postgres**: Transactions safe for finance  
+✅ **Audit**: Full log retention  
+✅ **SOC 2**: Controls validated  
+✅ **Low Latency**: Edge + optimized pooler
+
+### 🏢 B2B SaaS
+✅ **Multi-Tenant**: RLS-based isolation  
+✅ **No Lock-In**: Pure Postgres — export anytime  
+✅ **Scale**: MVP → Enterprise same platform
+
+### 🧑‍💻 Vibe Coders / Hackathons
+✅ **Speed**: 30-second project creation  
+✅ **Local Dev**: `supabase start` full stack offline  
+✅ **Auto-Types**: TS/Pydantic generation  
+✅ **One-Click Deploy**
+
+### 🚀 Startups / Agencies
+✅ **Free Tier**: Generous limits to launch  
+✅ **Managed**: No DB maintenance  
+✅ **Portable**: Self-host option later
+
+### 🔄 Migration Paths
+✅ **From Firebase**: Auth, Data, Storage import  
+✅ **From Neon**: Postgres dump/restore  
+✅ **From MySQL/MSSQL**: Logical replication or dump  
+✅ **From Heroku/Render**: Guided tools
+
+---
+
+## 🛡️ 3. SECURITY & COMPLIANCE — Deep
+### ✅ Certifications
+- **SOC 2 Type II**: Full audit controls
+- **HIPAA**: BAA available
+- **GDPR**: Data residency
+- **PCI-DSS Ready**: Architecture compliant
+
+### 🔒 Core Security
+- **Encryption**: Disk + Transit TLS 1.3
+- **Access**: RLS + RBAC + SSO + MFA
+- **Network**: IP Whitelist, PrivateLink, DDoS
+- **Audit**: Logs retained, query logs, auth logs
+- **Isolation**: Compute per-project, no shared resources
+
+---
+
+## 🧱 4. ARCHITECTURE OVERVIEW
+```
+Client ←→ Supavisor(Pooler) ←→ Postgres DB
+                  ↓
+        Edge Functions (Global)
+                  ↓
+        Auth / Realtime / Storage
+```
+✅ **Postgres**: Core — 15/16 latest  
+✅ **Supavisor**: Smart connection pooling (10k+ connections)  
+✅ **Deno**: Edge runtime — fast, secure  
+✅ **Network**: AWS/GCP multi-region, CDN, Anycast
+
+---
+
+## 🛠️ 5. DEV WORKFLOW
+### 📥 Install
+```bash
+npm i @supabase/supabase-js
+brew install supabase/cli
+```
+### 📁 Local
+```bash
+supabase start      # Full stack offline
+supabase db push    # Schema to cloud
+supabase functions serve
+```
+### 🚢 Deploy
+```bash
+supabase functions deploy
+supabase db push
+```
+
+### 📝 Schema/Migration
+- SQL-first
+- Migrations in `supabase/migrations`
+- Seed data
+- `supabase/functions`
+- Type generation: `supabase gen types`
+
+---
+
+## 📊 6. SCALE & PRICING
+### 📈 Tiers
+- Free → Pro → Team → Enterprise
+### ⚙️ Compute
+- Micro → Small → Medium → Large → XL
+### 📉 Limits
+- Connections: Pooled 500–10k+
+- DB Size: Up to TBs
+- Edge: Million invocations/mo
+
+---
+
+## 📚 7. RESOURCES & LINKS
+- Docs: https://supabase.com/docs
+- Changelog: https://supabase.com/changelog
+- Status: https://status.supabase.com
+- GitHub: https://github.com/supabase
+- Discord: https://discord.supabase.com
+- Security: https://supabase.com/security
+- Open Source: MIT licensed
+
+---
+
+Would you like me to **expand any specific topic** into a full detailed guide (e.g., RLS patterns, pgvector RAG, migration checklist, Edge Function security)?
+
+
+# 📖 Full Detailed Guide — Row Level Security (RLS) in Supabase
+**The Foundation of Secure, Multi-Tenant Applications**
+
+---
+
+## 🎯 What Is Row Level Security?
+**Row Level Security (RLS)** is a **Postgres-native security feature** that restricts *which rows each user can read or write* — automatically, at the database level. Supabase builds on it so your auth and data stay perfectly aligned.
+
+> Instead of filtering in your app code → **Postgres enforces it everywhere**.
+
+✅ **Enforced Everywhere**: Dashboard, API, direct DB connections, Edge Functions  
+✅ **Zero Leakage**: Impossible to bypass — policies run inside Postgres  
+✅ **Performance**: Policies use indexes — no performance hit  
+✅ **Works With Auth**: `auth.uid()`, `auth.jwt()`, custom claims built-in
+
+---
+
+## 🔑 Core Concepts
+
+### 1. Policy = Rule
+A policy says: **Who can do what on which rows**.
+```sql
+CREATE POLICY "Users see only their own rows"
+ON public.documents
+FOR SELECT USING ( auth.uid() = user_id );
+```
+
+### 2. Two Key Clauses
+- **`USING`** — Filter rows *before* operation (read/check existence)
+- **`WITH CHECK`** — Validate rows *before writing* (insert/update)
+
+### 3. States
+- **ENABLE/DISABLE ROW LEVEL SECURITY** — Turn on per table
+- **FORCE ROW LEVEL SECURITY** — Even service/admin role respects policies (optional)
+
+---
+
+## 🚀 Step-by-Step Implementation
+
+### Step 1 — Prepare Your Schema
+```sql
+-- 1. Enable extensions
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- 2. Create a table linked to auth.users
+CREATE TABLE public.documents (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) NOT NULL,
+  title TEXT NOT NULL,
+  content TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 3. Enable RLS
+ALTER TABLE public.documents ENABLE ROW LEVEL SECURITY;
+```
+
+### Step 2 — Basic Policies (Single-User Isolation)
+```sql
+-- ✅ Users can view only their own documents
+CREATE POLICY "Users can view own documents"
+ON public.documents
+FOR SELECT
+USING ( auth.uid() = user_id );
+
+-- ✅ Users can insert their own documents
+CREATE POLICY "Users can create documents"
+ON public.documents
+FOR INSERT
+WITH CHECK ( auth.uid() = user_id );
+
+-- ✅ Users can update their own documents
+CREATE POLICY "Users can update own documents"
+ON public.documents
+FOR UPDATE
+USING ( auth.uid() = user_id )                -- existing row matches
+WITH CHECK ( auth.uid() = user_id );          -- new row matches
+
+-- ✅ Users can delete their own documents
+CREATE POLICY "Users can delete own documents"
+ON public.documents
+FOR DELETE
+USING ( auth.uid() = user_id );
+```
+
+### Step 3 — Simplify with a Helper Function
+```sql
+-- Reusable: automatically sets user_id on insert
+CREATE OR REPLACE FUNCTION public.set_user_id()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.user_id := auth.uid();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Attach trigger
+CREATE TRIGGER set_user_id_before_insert
+BEFORE INSERT ON public.documents
+FOR EACH ROW EXECUTE FUNCTION public.set_user_id();
+
+-- Now INSERT policies don't need to check user_id — it's automatic!
+```
+
+---
+
+## 🏢 Advanced Patterns
+
+### Pattern A — Multi-Tenant / Organization Isolation
+```sql
+-- Schema: organizations ↔ members ↔ documents
+CREATE TABLE public.organizations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL
+);
+
+CREATE TABLE public.org_members (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  org_id UUID REFERENCES public.organizations(id) NOT NULL,
+  user_id UUID REFERENCES auth.users(id) NOT NULL,
+  role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('member','admin','owner')),
+  UNIQUE(org_id, user_id)
+);
+
+CREATE TABLE public.documents (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  org_id UUID REFERENCES public.organizations(id) NOT NULL,
+  title TEXT NOT NULL,
+  content TEXT
+);
+
+-- 🔒 Policy: Users see only their org's documents
+ALTER TABLE public.documents ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Org members view documents"
+ON public.documents
+FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM public.org_members m
+    WHERE m.org_id = documents.org_id
+    AND m.user_id = auth.uid()
+  )
+);
+
+-- 🔒 Policy: Only admins can write
+CREATE POLICY "Admins can manage documents"
+ON public.documents
+FOR ALL
+USING (
+  EXISTS (
+    SELECT 1 FROM public.org_members m
+    WHERE m.org_id = documents.org_id
+    AND m.user_id = auth.uid()
+    AND m.role IN ('admin','owner')
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM public.org_members m
+    WHERE m.org_id = documents.org_id
+    AND m.user_id = auth.uid()
+    AND m.role IN ('admin','owner')
+  )
+);
+```
+
+### Pattern B — Public / Shared Data
+```sql
+-- Allow anyone to read (even unauthenticated)
+CREATE POLICY "Public documents readable by anyone"
+ON public.documents
+FOR SELECT
+USING ( is_public = true OR auth.uid() = user_id );
+```
+
+### Pattern C — JWT Custom Claims (Advanced Roles)
+```sql
+-- From your auth token: app_metadata → { "role": "manager" }
+CREATE POLICY "Managers see all rows"
+ON public.documents
+FOR ALL
+USING ( auth.jwt() ->> 'role' = 'manager' );
+```
+
+### Pattern D — Disable for Service Role (Admin Access)
+```sql
+-- Service role bypasses RLS by default — safe for backend/admin
+-- To ENFORCE RLS even on service role:
+ALTER TABLE public.documents FORCE ROW LEVEL SECURITY;
+```
+
+---
+
+## ✅ Production Checklist
+
+### ✅ Schema & Setup
+- [ ] Every table has `user_id UUID REFERENCES auth.users(id)` or `org_id`
+- [ ] **RLS ENABLED** on EVERY table (don't forget!)
+- [ ] Foreign keys validated
+- [ ] `created_at` / `updated_at` triggers
+
+### ✅ Policies
+- [ ] **SELECT** — users see only authorized rows
+- [ ] **INSERT** — can't impersonate others
+- [ ] **UPDATE** — can't take over others' rows
+- [ ] **DELETE** — restricted appropriately
+- [ ] No overly permissive `true` policies (unless intentional)
+
+### ✅ Testing
+```sql
+-- Test as specific user
+SET ROLE TO authenticated;
+SET LOCAL jwt.claims.sub TO 'user-uuid-here';
+
+-- Should return ONLY your rows
+SELECT * FROM public.documents;
+```
+
+### ✅ Common Pitfalls to Avoid
+| ❌ Mistake | ✅ Fix |
+|---|---|
+| Forgot to enable RLS | `ALTER TABLE ... ENABLE ROW LEVEL SECURITY;` |
+| Missing `WITH CHECK` on INSERT/UPDATE | Always include both `USING` + `WITH CHECK` |
+| Policy uses `id` instead of `user_id` | Reference the foreign key to auth.users |
+| Infinite recursion in policies | Avoid querying same table inside policy |
+| Service role access leaking | Test with anon key, not service key |
+
+---
+
+## 📝 Policy Template Library
+
+### 🔹 Standard CRUD (Copy-Paste)
+```sql
+-- Read own
+CREATE POLICY "Read own" ON table_name FOR SELECT USING ( auth.uid() = user_id );
+
+-- Insert own
+CREATE POLICY "Insert own" ON table_name FOR INSERT WITH CHECK ( auth.uid() = user_id );
+
+-- Update own
+CREATE POLICY "Update own" ON table_name FOR UPDATE USING ( auth.uid() = user_id ) WITH CHECK ( auth.uid() = user_id );
+
+-- Delete own
+CREATE POLICY "Delete own" ON table_name FOR DELETE USING ( auth.uid() = user_id );
+```
+
+### 🔹 Authenticated Only
+```sql
+CREATE POLICY "All authenticated can read" ON table_name FOR SELECT TO authenticated USING ( true );
+```
+
+### 🔹 Public Read, Owner Write
+```sql
+CREATE POLICY "Public read" ON table_name FOR SELECT USING ( true );
+CREATE POLICY "Owner write" ON table_name FOR ALL USING ( auth.uid() = user_id ) WITH CHECK ( auth.uid() = user_id );
+```
+
+---
+
+## 🧪 Test Your Policies
+```bash
+# Local dev — Supabase auto-generates test helpers
+supabase db reset
+supabase test db           # Runs pgTAP tests
+```
+
+---
+
+## 📚 Resources
+🔗 **Official RLS Docs**: https://supabase.com/docs/guides/auth/row-level-security  
+🔗 **Postgres RLS**: https://www.postgresql.org/docs/current/ddl-rowsecurity.html  
+🔗 **Auth Helpers**: `auth.uid()`, `auth.jwt()`, `auth.role()`
+
+---
+
+Would you like me to expand **any other topic** into a similarly detailed guide — such as **pgvector + RAG**, **Edge Functions patterns**, **Stripe webhook integration**, or **multi-region HA setup**?
 [5] @supabase/ssr: Cookie-Based Auth for SSR Frameworks https://openapps.pro/packages/supabase-ssr
 [6] Fix Supabase JWT Expired (PGRST301) in Next.js - GuardLayer https://www.guardlayer.io/blog/supabase-jwt-expired
