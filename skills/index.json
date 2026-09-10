@@ -27,7 +27,8 @@
       "vercel-deployment",
       "package-lockfile-management",
       "fastapi-research",
-      "langchain-research"
+      "langchain-research",
+      "auto-debugging"
     ],
     "priority": 1
   },

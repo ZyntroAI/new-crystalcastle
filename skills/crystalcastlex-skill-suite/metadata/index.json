@@ -37,6 +37,10 @@
     {
       "id": "langchain-research",
       "path": "skills/langchain-research"
+    },
+    {
+      "id": "auto-debugging",
+      "path": "skills/auto-debugging"
     }
   ]
 }
