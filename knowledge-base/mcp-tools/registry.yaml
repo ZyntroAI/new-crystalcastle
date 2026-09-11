@@ -1,0 +1,269 @@
+# MCP & AI Tools Registry
+# Source of truth for the MCP & AI tools catalog.
+# Aligned with OWASP LLM Top 10 and AST Security Tiering (T1–T4).
+# T1 = อ่านสาธารณะ, T2 = อ่านข้อมูลภายใน, T3 = เขียน/รันคำสั่ง, T4 = จัดการสิทธิ์/ความปลอดภัย
+
+version: "1.0"
+updated: "2026-09-11"
+reference:
+  - "OWASP LLM Top 10"
+  - "AST Security Tiering (T1–T4)"
+  - "MCP Protocol"
+
+tiers:
+  T1: { name: "Public read",    risk: low,    description: "อ่านข้อมูลสาธารณะ ไม่แตะข้อมูลภายใน" }
+  T2: { name: "Internal read",  risk: medium, description: "อ่านข้อมูลภายในองค์กร" }
+  T3: { name: "Write / Execute", risk: high,  description: "เขียนข้อมูลหรือรันคำสั่งในระบบ" }
+  T4: { name: "Admin / Security", risk: critical, description: "จัดการสิทธิ์ ความปลอดภัย และขอบเขตการเข้าถึง" }
+
+categories:
+  marketing:      { title: "การตลาด & เนื้อหา",        tier: "T2–T3", security: "🟡 Moderate" }
+  development:    { title: "พัฒนา & โค้ด & ระบบ",      tier: "T3",    security: "🔴 High" }
+  data:           { title: "ข้อมูล & ฐานข้อมูล & วิเคราะห์", tier: "T2–T3", security: "🟡 Moderate" }
+  collaboration:  { title: "การทำงานร่วมกัน & ประสิทธิภาพ", tier: "T1–T2", security: "🟢 Low" }
+  ai-core:        { title: "แกนกลาง AI & การประสานงาน",  tier: "T2",    security: "🟡 Moderate" }
+
+tools:
+  # ---------- Marketing ----------
+  - name: AdCreative AI
+    category: marketing
+    tier: T3
+    status: ready
+    permissions: [read:campaigns, write:creative, generate:media]
+    redact: [api_key, oauth_token, ad_account_id]
+  - name: Google Ads MCP
+    category: marketing
+    tier: T3
+    status: ready
+    permissions: [read:campaigns, write:campaigns, read:budget, write:budget]
+    redact: [developer_token, refresh_token, customer_id]
+  - name: Meta Ads MCP
+    category: marketing
+    tier: T3
+    status: ready
+    permissions: [read:campaigns, write:campaigns, read:audience, write:audience]
+    redact: [access_token, ad_account_id, app_secret]
+  - name: AdBuilder Meta Ads
+    category: marketing
+    tier: T3
+    status: ready
+    permissions: [read:campaigns, write:creative]
+    redact: [access_token, app_secret]
+  - name: Advertiser
+    category: marketing
+    tier: T3
+    status: ready
+    permissions: [read:campaigns, write:campaigns, read:analytics]
+    redact: [api_key, account_id]
+  - name: Adpliot MCP
+    category: marketing
+    tier: T2
+    status: ready
+    permissions: [read:revenue, read:affiliates, read:analytics]
+    redact: [api_key, affiliate_id]
+  - name: A/B Testing
+    category: marketing
+    tier: T3
+    status: ready
+    permissions: [read:experiments, write:experiments]
+    redact: [api_key]
+  - name: Adlogy MCP Server
+    category: marketing
+    tier: T2
+    status: ready
+    permissions: [read:analytics, read:reports]
+    redact: [api_key, workspace_id]
+
+  # ---------- Development ----------
+  - name: GitHub MCP
+    category: development
+    tier: T3
+    status: ready
+    permissions: [read:repos, write:repos, read:prs, write:prs, read:issues, write:issues, read:workflows]
+    redact: [pat, oauth_token, app_private_key]
+  - name: GitLab MCP
+    category: development
+    tier: T3
+    status: ready
+    permissions: [read:repos, write:repos, read:pipelines, write:pipelines, read:registry]
+    redact: [personal_access_token, deploy_token]
+  - name: API Connect / GraphQL
+    category: development
+    tier: T3
+    status: ready
+    permissions: [read:schema, write:requests, execute:queries]
+    redact: [api_key, bearer_token, client_secret]
+  - name: Activity / Logging
+    category: development
+    tier: T2
+    status: ready
+    permissions: [read:logs, read:audit]
+    redact: [api_key]
+  - name: Workflow / Cron
+    category: development
+    tier: T3
+    status: ready
+    permissions: [read:schedules, write:schedules, execute:triggers]
+    redact: [api_key, webhook_secret]
+  - name: Docker / Kubernetes
+    category: development
+    tier: T3
+    status: ready
+    permissions: [read:containers, write:containers, read:pods, execute:deploy]
+    redact: [kubeconfig, registry_password, service_token]
+  - name: Security / Scan
+    category: development
+    tier: T3
+    status: ready
+    permissions: [read:code, execute:scan, read:findings]
+    redact: [api_key, scan_token]
+  - name: Terminal / Shell
+    category: development
+    tier: T3
+    status: ready
+    permissions: [execute:commands]
+    redact: [env_secrets, ssh_key]
+
+  # ---------- Data ----------
+  - name: Airtable MCP
+    category: data
+    tier: T3
+    status: ready
+    permissions: [read:bases, write:bases, read:records, write:records]
+    redact: [personal_access_token, base_id]
+  - name: PostgreSQL / Redis MCP
+    category: data
+    tier: T3
+    status: ready
+    permissions: [read:db, write:db, execute:queries]
+    redact: [db_password, connection_string, redis_password]
+  - name: S3 / Object Storage
+    category: data
+    tier: T3
+    status: ready
+    permissions: [read:objects, write:objects, read:buckets]
+    redact: [access_key_id, secret_access_key, bucket_arn]
+  - name: AdMetrics / Dash
+    category: data
+    tier: T2
+    status: ready
+    permissions: [read:metrics, read:dashboards]
+    redact: [api_key, workspace_id]
+  - name: Alerts / Monitoring
+    category: data
+    tier: T2
+    status: ready
+    permissions: [read:alerts, write:alerts]
+    redact: [api_key, webhook_url]
+  - name: Search / Retrieval (RAG)
+    category: data
+    tier: T2
+    status: ready
+    permissions: [read:index, execute:search]
+    redact: [api_key, index_id]
+  - name: Archive / Export
+    category: data
+    tier: T3
+    status: ready
+    permissions: [read:data, write:exports]
+    redact: [api_key, storage_credentials]
+
+  # ---------- Collaboration ----------
+  - name: Notion MCP
+    category: collaboration
+    tier: T2
+    status: ready
+    permissions: [read:pages, write:pages, read:databases, write:databases]
+    redact: [integration_token, database_id]
+  - name: Slack / Discord
+    category: collaboration
+    tier: T2
+    status: ready
+    permissions: [read:channels, write:messages, read:users]
+    redact: [bot_token, oauth_token, webhook_url]
+  - name: Calendar / Task
+    category: collaboration
+    tier: T2
+    status: ready
+    permissions: [read:events, write:events, read:tasks, write:tasks]
+    redact: [oauth_token, refresh_token]
+  - name: Email / Inbox
+    category: collaboration
+    tier: T2
+    status: ready
+    permissions: [read:mail, write:mail, send:mail]
+    redact: [oauth_token, refresh_token, app_password]
+  - name: Drive / File
+    category: collaboration
+    tier: T2
+    status: ready
+    permissions: [read:files, write:files, share:files]
+    redact: [oauth_token, refresh_token]
+  - name: Todo / Reminder
+    category: collaboration
+    tier: T1
+    status: ready
+    permissions: [read:tasks, write:tasks]
+    redact: [api_key]
+  - name: Team / HR
+    category: collaboration
+    tier: T1
+    status: ready
+    permissions: [read:users, read:roles]
+    redact: [api_key, admin_token]
+  - name: Doc / Note
+    category: collaboration
+    tier: T1
+    status: ready
+    permissions: [read:docs, write:docs]
+    redact: [api_key]
+
+  # ---------- AI Core ----------
+  - name: AgentMcp
+    category: ai-core
+    tier: T2
+    status: ready
+    permissions: [read:agents, execute:workflows]
+    redact: [api_key, agent_token]
+  - name: AgentMesh
+    category: ai-core
+    tier: T2
+    status: ready
+    permissions: [read:agents, execute:workflows, write:topology]
+    redact: [api_key, mesh_secret]
+  - name: AgentPrompt
+    category: ai-core
+    tier: T2
+    status: ready
+    permissions: [read:prompts, write:prompts]
+    redact: [api_key, template_secret]
+  - name: AgentNews / Intelligence
+    category: ai-core
+    tier: T2
+    status: ready
+    permissions: [read:news, read:analytics]
+    redact: [api_key]
+  - name: LangChain / LLM Core
+    category: ai-core
+    tier: T2
+    status: ready
+    permissions: [read:chains, execute:models, read:memory]
+    redact: [api_key, model_token]
+  - name: MCP Gateway / Auth
+    category: ai-core
+    tier: T4
+    status: ready
+    permissions: [read:auth, write:auth, read:scopes, write:scopes]
+    redact: [gateway_secret, signing_key, client_secret]
+  - name: Model / Embedding
+    category: ai-core
+    tier: T2
+    status: ready
+    permissions: [read:models, execute:embeddings]
+    redact: [api_key, model_token]
+  - name: Context / Memory
+    category: ai-core
+    tier: T2
+    status: ready
+    permissions: [read:memory, write:memory]
+    redact: [api_key, storage_token]
