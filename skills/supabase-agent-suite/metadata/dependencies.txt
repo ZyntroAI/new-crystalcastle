@@ -1,0 +1,5 @@
+# Runtime dependencies for tools/ (the suite itself is stdlib-only).
+# Install only what you need.
+psycopg[binary]>=3.1        # Postgres driver for schema_inventory / task_queue
+# Optional: supabase CLI / MCP for the connect sub-skill
+#   npm i -g supabase
