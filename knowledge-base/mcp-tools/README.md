@@ -46,10 +46,25 @@
 ## 🗂️ โครงสร้างไฟล์
 ```
 knowledge-base/mcp-tools/
-├─ README.md                # 🔗 ดัชนีรวม + ค้นหาด่วน
-├─ category-marketing.md    # 📢 การตลาด & เนื้อหา
-├─ category-development.md  # 🧩 พัฒนา & โค้ด & ระบบ
-├─ category-data.md         # 📊 ข้อมูล & ฐานข้อมูล & วิเคราะห์
-├─ category-collaboration.md# 🔗 การทำงานร่วมกัน & ประสิทธิภาพ
-└─ category-ai-core.md      # 🤖 แกนกลาง AI & การประสานงาน
+├─ README.md                      # 🔗 ดัชนีรวม + ค้นหาด่วน
+├─ category-marketing.md          # 📢 การตลาด & เนื้อหา
+├─ category-development.md        # 🧩 พัฒนา & โค้ด & ระบบ
+├─ category-data.md               # 📊 ข้อมูล & ฐานข้อมูล & วิเคราะห์
+├─ category-collaboration.md      # 🔗 การทำงานร่วมกัน & ประสิทธิภาพ
+├─ category-ai-core.md            # 🤖 แกนกลาง AI & การประสานงาน
+├─ registry.yaml                  # 🗂️ แหล่งข้อมูลจริง (name/tier/permissions/redact)
+├─ dashboard.html                 # 📊 Dashboard ค้นหา/กรอง (สร้างจาก registry.yaml)
+├─ diagram-mcp-architecture.md    # 🗺️ คำอธิบายแผนภาพสถาปัตยกรรม MCP
+└─ diagram-mcp-architecture.svg   # 🖼️ แผนภาพ Gateway → MCP Servers
 ```
+
+---
+
+## 🧰 เครื่องมือประกอบชุดนี้
+
+| ไฟล์ | ใช้ทำอะไร |
+|---|---|
+| [`registry.yaml`](./registry.yaml) | แหล่งข้อมูลจริงของเครื่องมือทั้งหมด — `name` · `tier` (T1–T4) · `permissions` · `redact` ป้อน dashboard และใช้ enforce scope ที่ gateway |
+| [`dashboard.html`](./dashboard.html) | หน้าเดียวจบ ค้นหา + กรองตามหมวด/Tier พร้อมแสดงสิทธิ์และฟิลด์ที่ต้องปิดบัง (เปิดในเบราว์เซอร์ได้เลย) |
+| [`diagram-mcp-architecture.md`](./diagram-mcp-architecture.md) | อธิบายเส้นทาง 4 ชั้น: AI Clients → MCP Gateway → MCP Servers → External |
+| [`diagram-mcp-architecture.svg`](./diagram-mcp-architecture.svg) | แผนภาพสถาปัตยกรรม (ธีม terracotta-orange) |
