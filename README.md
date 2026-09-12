@@ -22,7 +22,11 @@ Full-stack platform by ZyntroAI for documentation, tickets, and AI-assisted rese
 - Vite React template content (`main.tsx`, `App.tsx`) that was merged in and is **not wired to a runnable build**; `index.html` at root is a static snapshot rather than the app entry. Being reconciled.
 
 ### `docs/`
-- Working documentation and knowledge-base material (see `docs/` and `docs/kb/`).
+- Working documentation (guidelines, runbooks, agreements).
+
+### `knowledge-base/`
+- Reference material and catalogs that have settled — see **[knowledge-base/README.md](knowledge-base/README.md)** for the index.
+- Currently: the MCP & AI tools catalog (`knowledge-base/mcp-tools/`) and the Steam Web API infographic set (`knowledge-base/steam-web-api/`).
 
 ### `.github/workflows/`
 - Many workflow files, several copied from a FastAPI boilerplate and **mismatched to this Node/Express + React stack**. The active set for CI on this repo is being corrected; until then, workflow checks on PRs are **not reliable signals**.
