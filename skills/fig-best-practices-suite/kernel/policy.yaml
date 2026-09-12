@@ -1,0 +1,194 @@
+# FIG-BEST-PRACTICES — canonical policy
+# Single source of truth. BEST-PRACTICES.md is rendered from this file;
+# the quality gate in figbp/ reads it directly. Do not edit one without the other.
+
+version: "1.2.0"
+owner: ZyntroAI
+applies_to: "web projects, agent skills, and automation built on Fig / hellofig.ai"
+
+layers:
+  - id: "01-structure"
+    name: "Structure"
+    principles:
+      - "Organize projects by category."
+      - "Reuse templates and components."
+      - "Use semantic naming."
+      - "Create a version before major changes."
+      - "Keep shared components centralized."
+    required_paths:
+      - "README.md"
+      - "BEST-PRACTICES.md"
+
+  - id: "02-design"
+    name: "Design"
+    principles:
+      - "Use centralized design tokens."
+      - "Keep typography consistent."
+      - "Reuse components."
+      - "Design mobile-first."
+      - "Validate accessibility."
+      - "Test multiple viewport sizes."
+    required_paths:
+      - "design/design-tokens.json"
+
+  - id: "03-security"
+    name: "Security"
+    principles:
+      - "Never place credentials in prompts or source code."
+      - "Secrets live in environment variables or a secret manager."
+      - "Apply least privilege."
+      - "HTTPS only, trusted domains only."
+      - "Validate all input."
+      - "Back up regularly."
+      - "Build queries from parameters, never from string interpolation."
+      - "Pin dependencies and audit them for known vulnerabilities."
+    forbidden_patterns:
+      - pattern: "AKIA[0-9A-Z]{16}"
+        severity: CRITICAL
+        reason: "AWS access key id"
+      - pattern: "sk-[A-Za-z0-9]{20,}"
+        severity: CRITICAL
+        reason: "OpenAI-style secret key"
+      - pattern: "ghp_[A-Za-z0-9]{36}"
+        severity: CRITICAL
+        reason: "GitHub personal access token"
+      - pattern: "-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----"
+        severity: CRITICAL
+        reason: "private key material"
+      - pattern: "(?i)(api[_-]?key|secret|password|token)\\s*[:=]\\s*[\"'][^\"']{8,}[\"']"
+        severity: HIGH
+        reason: "hard-coded credential assignment"
+
+    # SQL injection. A query assembled by interpolation is injectable no matter
+    # how trusted the source looks — parameterise it.
+    injection_patterns:
+      - name: fstring_sql
+        pattern: "(?i)(execute|executemany|raw|query|text)\\s*\\(\\s*f[\"']"
+        severity: CRITICAL
+        reason: "f-string interpolation inside a SQL call — use bound parameters"
+      - name: concat_sql
+        pattern: "(?i)[\"']\\s*(SELECT|INSERT|UPDATE|DELETE)\\b[^\"']*[\"']?\\s*\\+\\s*[A-Za-z_]"
+        severity: CRITICAL
+        reason: "string-concatenated SQL statement — use bound parameters"
+      - name: format_sql
+        pattern: "(?i)(execute|executemany|raw|query|text)\\s*\\([^)]*\\.format\\s*\\("
+        severity: HIGH
+        reason: ".format() interpolation inside a SQL call — use bound parameters"
+      - name: percent_sql
+        pattern: "(?i)[\"']\\s*(SELECT|INSERT|UPDATE|DELETE)\\b[^\"']*%[sd][^\"']*[\"']\\s*%\\s*[A-Za-z_(]"
+        severity: HIGH
+        reason: "%-formatting used to build a SQL statement — use bound parameters"
+
+    # Dependency audit. Unpinned dependencies make every build a different
+    # build, and a lockfile is what makes an audit meaningful.
+    dependency_policy:
+      manifest_files:
+        - "requirements.txt"
+        - "package.json"
+        - "pyproject.toml"
+      lock_files:
+        - "requirements.lock"
+        - "poetry.lock"
+        - "uv.lock"
+        - "package-lock.json"
+        - "pnpm-lock.yaml"
+        - "yarn.lock"
+      require_pinned: true
+      require_lockfile: true
+      allow_ranges: false
+      audit_command: "pip-audit"
+
+  - id: "04-performance"
+    name: "Performance"
+    principles:
+      - "Optimize images, CSS, JavaScript, API calls, database queries, AI requests."
+      - "Serve WebP/AVIF with lazy loading and caching."
+      - "Compress, split code, batch requests."
+      - "Route simple tasks to a lite model; escalate only after validation."
+    budgets:
+      image_formats: ["webp", "avif", "svg"]
+      max_uncompressed_image_kb: 300
+      require_lazy_loading: true
+      batch_ai_requests: true
+
+  - id: "05-team"
+    name: "Team"
+    principles:
+      - "Every change flows issue -> branch -> implement -> test -> review -> merge -> deploy -> monitor."
+      - "Reviews are a gate, not a courtesy."
+      - "The audit log is append-only."
+      - "Pin every CI action to a full commit SHA — a tag can be moved under you."
+    roles:
+      - id: admin
+        permission: "full control"
+      - id: developer
+        permission: "read + write"
+      - id: reviewer
+        permission: "review + comment"
+      - id: viewer
+        permission: "read only"
+      - id: agent
+        permission: "scoped automation"
+
+    # Supply-chain pinning. Org policy: action refs must be full 40-char SHAs.
+    pinning_policy:
+      workflow_globs:
+        - ".github/workflows/*.yml"
+        - ".github/workflows/*.yaml"
+      require_full_sha: true
+      sha_length: 40
+
+  - id: "06-deployment"
+    name: "Deployment"
+    principles:
+      - "Promote dev -> testing -> staging -> approval -> production -> monitoring."
+      - "Production requires HTTPS, backup, health check, monitoring, alerting, rollback."
+    stages: ["development", "testing", "staging", "approval", "production", "monitoring"]
+    production_requirements:
+      - https
+      - backup
+      - health_check
+      - monitoring
+      - alerting
+      - rollback_strategy
+
+quality_gate:
+  # A project is ready when every criterion reports PASS.
+  criteria:
+    - id: STRUCTURE
+      layer: "01-structure"
+      checks: ["required files present", "no duplicate implementations", "semantic naming"]
+    - id: DESIGN
+      layer: "02-design"
+      checks: ["tokens centralized", "typography consistent", "accessibility validated", "responsive tested"]
+    - id: SECURITY
+      layer: "03-security"
+      checks: ["no secrets in source", "no forbidden patterns", "permissions verified"]
+    - id: SQL_INJECTION
+      layer: "03-security"
+      checks: ["no dynamic SQL construction", "parameterised queries only"]
+    - id: DEPENDENCY_AUDIT
+      layer: "03-security"
+      checks: ["dependencies pinned", "lockfile present", "no known vulnerabilities"]
+    - id: PERFORMANCE
+      layer: "04-performance"
+      checks: ["assets optimized", "lazy loading enabled", "AI requests batched"]
+    - id: TESTING
+      layer: "05-team"
+      checks: ["tests exist", "tests pass", "review completed"]
+    - id: PERMISSIONS
+      layer: "05-team"
+      checks: ["roles assignment valid", "scoped automation only"]
+    - id: SHA_PINNING
+      layer: "05-team"
+      checks: ["every workflow action pinned to a full commit SHA"]
+    - id: BACKUP
+      layer: "06-deployment"
+      checks: ["backup created", "rollback available"]
+    - id: DEPLOYMENT
+      layer: "06-deployment"
+      checks: ["production requirements met"]
+  on_pass: "deploy"
+  on_fail: "auto-fix -> test -> review"
+
+final_rule: "Plan -> Build -> Validate -> Secure -> Optimize -> Review -> Backup -> Deploy"

@@ -1,0 +1,30 @@
+{
+  "id": "fig-best-practices-suite-v1.2.0",
+  "name": "Fig Best Practices Suite",
+  "skills": [
+    {
+      "id": "figbp-developer",
+      "path": "skills/developer"
+    },
+    {
+      "id": "figbp-designer",
+      "path": "skills/designer"
+    },
+    {
+      "id": "figbp-security",
+      "path": "skills/security"
+    },
+    {
+      "id": "figbp-performance",
+      "path": "skills/performance"
+    },
+    {
+      "id": "figbp-reviewer",
+      "path": "skills/reviewer"
+    },
+    {
+      "id": "figbp-deployment",
+      "path": "skills/deployment"
+    }
+  ]
+}
