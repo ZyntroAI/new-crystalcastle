@@ -1,0 +1,7 @@
+model User {
+  # ... existing fields ...
+  emailVerified      DateTime?
+  verificationToken  String?   @unique
+  resetToken         String?   @unique
+  resetTokenExpires  DateTime?
+}
