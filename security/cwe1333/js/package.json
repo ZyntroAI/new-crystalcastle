@@ -3,11 +3,23 @@
   "version": "2.0.0",
   "description": "ESLint rule that detects ReDoS-prone regular expressions (CWE-1333) using regexpp AST analysis",
   "main": "index.js",
-  "files": ["index.js", "lib", "README.md"],
+  "files": [
+    "index.js",
+    "lib",
+    "README.md"
+  ],
   "scripts": {
     "test": "node test/detect-redos.test.js"
   },
-  "keywords": ["eslint", "eslintplugin", "eslint-plugin", "security", "redos", "cwe-1333", "regexpp"],
+  "keywords": [
+    "eslint",
+    "eslintplugin",
+    "eslint-plugin",
+    "security",
+    "redos",
+    "cwe-1333",
+    "regexpp"
+  ],
   "peerDependencies": {
     "eslint": ">=8.0.0"
   },
@@ -17,5 +29,9 @@
   "devDependencies": {
     "eslint": "^9.0.0"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./index.js"
+  }
 }

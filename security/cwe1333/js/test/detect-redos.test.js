@@ -1,5 +1,3 @@
-"use strict";
-
 /**
  * Test suite — eslint-plugin-redos-detector (v2.0.0)
  *
@@ -10,11 +8,9 @@
  * Run: node test/detect-redos.test.js
  */
 
-const assert = require("assert");
-const { RuleTester } = require("eslint");
-const rule = require("../lib/rules/detect-redos");
-
-const { analyze, analyzeMultiplier } = rule;
+import assert from "node:assert";
+import { RuleTester } from "eslint";
+import rule, { analyze, analyzeMultiplier } from "../lib/rules/detect-redos.js";
 
 let passed = 0;
 let failed = 0;

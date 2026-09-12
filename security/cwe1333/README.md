@@ -83,7 +83,7 @@ export default [
 วิเคราะห์ pattern คืน array ของ finding (pure function ไม่มี side effect) รองรับ `flags` เป็น `"u"` / `"v"`
 
 ```js
-const { analyze } = require("eslint-plugin-redos-detector").rules["detect-redos"];
+import { analyze, analyzeMultiplier } from "./lib/rules/detect-redos.js";
 
 analyze("(a+)+");
 // => [RD-001, RD-006, RD-007]

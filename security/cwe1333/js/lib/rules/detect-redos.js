@@ -1,5 +1,3 @@
-"use strict";
-
 /**
  * ReDoS Detection Rules — detect-redos (regexpp AST edition)
  * CWE-1333: Inefficient Regular Expression Complexity
@@ -24,7 +22,7 @@
  *   - B7: RuleTester used parserOptions (ESLint 8 style) and `.*+` (invalid JS regex).
  */
 
-const { RegExpParser, visitRegExpAST } = require("@eslint-community/regexpp");
+import { RegExpParser, visitRegExpAST } from "@eslint-community/regexpp";
 
 const parser = new RegExpParser();
 
@@ -342,7 +340,5 @@ const rule = {
   },
 };
 
-module.exports = rule;
-module.exports.analyze = analyze;
-module.exports.analyzeMultiplier = analyzeMultiplier;
-module.exports.REDOS_DEFS = REDOS_DEFS;
+export default rule;
+export { analyze, analyzeMultiplier, REDOS_DEFS };

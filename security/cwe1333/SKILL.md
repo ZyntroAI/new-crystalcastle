@@ -79,8 +79,7 @@ export default [
 ### Programmatic
 
 ```js
-const rule = require("./security/cwe1333/js/lib/rules/detect-redos");
-const { analyze, analyzeMultiplier } = rule;
+import { analyze, analyzeMultiplier } from "./security/cwe1333/js/lib/rules/detect-redos.js";
 
 analyze("(a+)+");                 // => [RD-001, RD-006, RD-007]
 analyze("^[a-z]+@[a-z]+$");       // => []  (no false positive)
