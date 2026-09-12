@@ -1,0 +1,18 @@
+{
+  "id": "cwe1333-redos-detector-v2.0.0",
+  "name": "CWE-1333 ReDoS Detection Suite",
+  "version": "2.0.0",
+  "type": "security-module",
+  "description": "ESLint rule + pure AST analysis core that detects ReDoS-prone regular expressions (CWE-1333) using regexpp AST parsing. Fixes 7 defects in the original hand-rolled walker.",
+  "cwe": ["CWE-1333"],
+  "tags": ["cwe-1333", "redos", "regex", "security", "eslint", "regexpp", "ast"],
+  "severity": "P1",
+  "format": "skill-md-v1",
+  "importable": true,
+  "visibility": "public",
+  "compatibility": ["dola", "claude-code", "github-skill"],
+  "security": "verified",
+  "rules": ["RD-001", "RD-002", "RD-003", "RD-004", "RD-005", "RD-006", "RD-007"],
+  "integrates": ["cwe1321-protection-suite"],
+  "verified": { "javascript_tests": 18, "status": "passing" }
+}
