@@ -1,0 +1,42 @@
+{
+  "id": "fig-best-practices-suite-v1.2.0",
+  "name": "Fig Best Practices Suite",
+  "version": "1.2.0",
+  "description": "Six-layer production standard (structure, design, security, performance, team, deployment) with an executable quality gate",
+  "tags": ["best-practices", "security", "accessibility", "performance", "quality-gate", "ci-cd", "deployment", "supply-chain"],
+  "skill_count": 6,
+  "format": "skill-md-v1",
+  "importable": true,
+  "visibility": "public",
+  "compatibility": ["dola", "claude-code", "github-skill"],
+  "security": "verified",
+  "entrypoint": "loader.py",
+  "policy_version": "1.2.0",
+  "layers": [
+    "01-structure",
+    "02-design",
+    "03-security",
+    "04-performance",
+    "05-team",
+    "06-deployment"
+  ],
+  "gate_criteria": [
+    "STRUCTURE",
+    "DESIGN",
+    "SECURITY",
+    "SQL_INJECTION",
+    "DEPENDENCY_AUDIT",
+    "PERFORMANCE",
+    "TESTING",
+    "PERMISSIONS",
+    "SHA_PINNING",
+    "BACKUP",
+    "DEPLOYMENT"
+  ],
+  "requires": {
+    "python": ">=3.10",
+    "dependencies": ["pyyaml>=6.0"],
+    "network": false,
+    "credentials": false
+  }
+}

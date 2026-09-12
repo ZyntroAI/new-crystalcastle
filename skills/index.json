@@ -54,5 +54,23 @@
       "supabase-postgres-best-practices"
     ],
     "priority": 1
+  },
+  "fig-best-practices-suite": {
+    "path": "skills/fig-best-practices-suite",
+    "depends": [
+      "pyyaml"
+    ],
+    "provides": [
+      "fig-best-practices",
+      "six-layer-standard",
+      "quality-gate",
+      "design-token-validation",
+      "secret-scanning",
+      "sql-injection-detection",
+      "dependency-audit",
+      "sha-pinning-check",
+      "deployment-readiness"
+    ],
+    "priority": 1
   }
 }
