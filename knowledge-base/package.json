@@ -5,8 +5,8 @@
     "dev:pages": "vite serve --config vite.pages.config.ts"
   },
   "devDependencies": {
-    "vite": "^5.0.0",
-    "vitest": "^2.0.0",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.0",
     "@vitejs/plugin-react": "^4.2.0",
     "jsdom": "^24.0.0"
   }
