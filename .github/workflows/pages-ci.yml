@@ -1,0 +1,42 @@
+name: Vite Pages CI
+run-name: 🧪 Test & Build Pages
+
+on:
+  push: { branches: [main, dev], paths: ["pages/**", "vite.*", "vitest.*"] }
+  pull_request: { branches: [main] }
+  workflow_dispatch: {}
+
+env:
+  NODE: "20"
+  PNPM: "^9"
+  CI: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4; with: {version: ${{env.PNPM}}}
+      - uses: actions/setup-node@v4; with: {node-version: ${{env.NODE}}}
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec vitest run --config vitest.config.pages.ts
+      - uses: codecov/codecov-action@v4; with: {file: ./coverage/pages/coverage-final.json}
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+      - run: pnpm install
+      - run: pnpm exec vite build --config vite.pages.config.ts
+      - uses: actions/upload-pages-artifact@v3; with: {path: ./dist/pages}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions: {pages: write, id-token: write}
+    environment: {name: github-pages}
+    steps:
+      - uses: actions/deploy-pages@v4
