@@ -1,0 +1,14 @@
+{
+  "claims": [
+    {
+      "claim": "The design system ships 42 components.",
+      "source": "design-tokens.json",
+      "kind": "file"
+    },
+    {
+      "claim": "The site must pass WCAG 2.1 AA.",
+      "source": "internal standard",
+      "kind": "file"
+    }
+  ]
+}

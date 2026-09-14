@@ -72,5 +72,24 @@
       "deployment-readiness"
     ],
     "priority": 1
+  },
+  "fig-suite": {
+    "path": "skills/fig-suite",
+    "depends": [
+      "pyyaml"
+    ],
+    "provides": [
+      "fig-platform",
+      "fig-artifacts",
+      "fig-connectors",
+      "fig-research",
+      "fig-automation",
+      "fig-safety",
+      "answer-vs-build-routing",
+      "external-write-approval",
+      "citation-integrity",
+      "handoff-verification"
+    ],
+    "priority": 1
   }
 }
