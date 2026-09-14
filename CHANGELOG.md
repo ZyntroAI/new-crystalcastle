@@ -6,6 +6,11 @@ Entries are generated from merged pull requests on `main`, newest first, and gro
 
 Repo layout notes live in [`README.md`](./README.md); architecture in [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 
+## [2026-09-14]
+
+### Added
+- **PR #164** — feat(skills): add fig-suite — platform operating standard with executable gate
+
 ## [2026-09-11]
 
 ### Added
