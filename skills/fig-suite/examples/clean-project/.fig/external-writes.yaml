@@ -1,0 +1,4 @@
+writes:
+  - target: gmail
+    action: send draft to the docs reviewer
+    approved: true

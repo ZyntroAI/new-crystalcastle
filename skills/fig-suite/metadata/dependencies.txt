@@ -1,0 +1,2 @@
+pyyaml>=6.0  (optional — loader falls back to JSON parsing of the policy file)
+pytest>=7.0  (dev only, for the test suite)
