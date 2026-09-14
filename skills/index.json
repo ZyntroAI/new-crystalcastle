@@ -26,6 +26,16 @@
     ],
     "priority": 1
   },
+  "cwe1333-redos-detector": {
+    "path": "security/cwe1333",
+    "depends": [],
+    "provides": [
+      "cwe-1333-detection",
+      "redos-detection",
+      "regex-safety-analysis"
+    ],
+    "priority": 1
+  },
   "python-dev": {
     "path": "skills/python-dev",
     "depends": [

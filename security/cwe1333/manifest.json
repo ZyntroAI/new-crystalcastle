@@ -1,0 +1,36 @@
+{
+  "id": "cwe1333-redos-detector-v2.0.0",
+  "name": "CWE-1333 ReDoS Detection Suite",
+  "version": "2.0.0",
+  "type": "security-module",
+  "description": "Pure AST analysis that detects ReDoS-prone regular expressions (CWE-1333) in JavaScript and Python. JS uses regexpp via an ESLint rule; Python uses the stdlib re._parser. Fixes 7 defects in the original hand-rolled JS walker and 3 in the Python string-matching version.",
+  "cwe": ["CWE-1333"],
+  "tags": ["cwe-1333", "redos", "regex", "security", "eslint", "regexpp", "ast", "python"],
+  "severity": "P1",
+  "format": "skill-md-v1",
+  "importable": true,
+  "visibility": "public",
+  "compatibility": ["dola", "claude-code", "github-skill"],
+  "security": "verified",
+  "rules": ["RD-001", "RD-002", "RD-003", "RD-004", "RD-005", "RD-006", "RD-007"],
+  "runtimes": {
+    "javascript": {
+      "entry": "js/index.js",
+      "core": "js/lib/rules/detect-redos.js",
+      "analyzer": "@eslint-community/regexpp",
+      "requires": "node >= 18"
+    },
+    "python": {
+      "entry": "python/redos_detector.py",
+      "analyzer": "stdlib re._parser",
+      "requires": "python >= 3.11",
+      "dependencies": []
+    }
+  },
+  "integrates": ["cwe1321-protection-suite"],
+  "verified": {
+    "javascript_tests": 18,
+    "python_tests": 27,
+    "status": "passing"
+  }
+}
