@@ -1,0 +1,19 @@
+name: Bug Report
+description: รายงาน bug
+labels: ["bug", "triage"]
+body:
+    - type: markdown
+    attributes: { value: "ขอบคุณที่รายงาน Bug 🙏" }
+    - type: textarea
+    id: steps
+    attributes: { label: "Steps to Reproduce", placeholder: "1. ไปที่หน้า /products\n2. กดปุ่ม Delete" }
+    validations: { required: true }
+    - type: textarea
+    id: expected
+    attributes: { label: "Expected behavior" }
+    - type: input
+    id: version
+    attributes: { label: "React Version", placeholder: "18.3.1" }
+    - type: textarea
+    id: logs
+    attributes: { label: "Error Logs / Screenshot", render: shell }

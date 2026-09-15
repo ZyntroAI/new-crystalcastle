@@ -1,0 +1,9 @@
+stage: production
+approval: zyntro
+production:
+  - https
+  - backup
+  - health_check
+  - monitoring
+  - alerting
+  - rollback_strategy

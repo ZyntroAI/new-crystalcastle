@@ -1,0 +1,10 @@
+"extensions.allowed": {
+    "microsoft": true,
+    "github": true, 
+  "rainbowcsv" : true, 
+  "python" : true, 
+  "npm" : true, 
+  "yaml" :true, 
+  "pytorch" :true, 
+  "pylance" :true
+}

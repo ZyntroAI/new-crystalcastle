@@ -1,0 +1,42 @@
+# =====================================================
+# ⚙️ Supabase Configuration — OnSpace.AI
+# =====================================================
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+max_rows = 1000
+
+[db]
+port = 5432
+major_version = "15"
+password = "postgres"  # เปลี่ยนใน Production!
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = [
+  "http://localhost:3000/**",
+  "http://localhost:8000/**"
+]
+
+[auth.email]
+enabled = true
+[auth.sms]
+enabled = false
+
+[auth.external.email]
+enabled = true
+
+[storage]
+enabled = true
+file_size_limit = 52428800  # 50MB
+
+[storage.buckets]
+[storage.buckets.public]
+public = true
+file_size_limit = 10485760  # 10MB
+
+[functions]
+# Edge Functions จะถูก Deploy อัตโนมัติเมื่อตรงนี้เปลี่ยน

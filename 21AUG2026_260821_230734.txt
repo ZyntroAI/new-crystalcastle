@@ -1,0 +1,1348 @@
+คุณสรุปได้ดีมากครับ — ตอนนี้ repository ของคุณมี SECURITY.md และ Security Policy แล้ว ถือว่าเป็นจุดเริ่มต้นที่ถูกต้อง แต่ถ้าเป้าหมายคือ “production‑grade security setup” คุณต้องเสริมระบบ CI/CD และการตรวจสอบอัตโนมัติให้ครบวงจร
+
+───
+
+🔐 โครงสร้างไฟล์ที่ควรมี
+• dependabot.yml → อัปเดต dependency อัตโนมัติ
+• ci.yml → build + test pipeline
+• secret-scan.yml → ตรวจจับ secret ที่รั่วไหล
+• dependency-review.yml → ตรวจสอบ dependency ที่มีช่องโหว่
+• codeql.yml → วิเคราะห์โค้ดหาช่องโหว่
+• security.yml → รวมผลการสแกนและ enforce policy
+• CODEOWNERS → กำหนด reviewer ที่ต้อง approve PR
+
+───
+
+📊 ตัวอย่าง Security Pipeline Flow
+Pull Request │ ├── Lint ├── Unit Test ├── Dependency Review ├── Secret Scan └── CodeQL │ ▼ Security Results │ ▼ Merge Protection
+
+───
+
+💡 แนวคิดสำคัญ
+• SECURITY.md = ป้ายหน้าประตู (บอก policy, วิธีรายงานช่องโหว่)
+• CI/CD Security = กุญแจล็อกจริง (Dependabot, Secret Scan, CodeQL, Branch Protection)
+• Transparency = ใช้ไฟล์ root เช่น SECURITY.md, LICENSE.md, README.md และ workflow ที่ตรวจสอบอัตโนมัติ เพื่อให้ทุกคนเห็นว่า repo มีมาตรการจริง
+
+───
+
+คุณอยากให้ผมช่วยร่าง ตัวอย่างไฟล์ dependabot.yml และ codeql.yml ที่ใช้กันบ่อย ๆ ไหมครับ จะได้เห็นภาพว่า pipeline security แบบ production ควรตั้งค่าอย่างไร?
+
+
+ได้เลยครับ ✨ มาดูตัวอย่างไฟล์ที่ใช้กันบ่อยสำหรับ production‑grade security setup บน GitHub Actions
+
+───
+
+📄 ตัวอย่าง dependabot.yml
+`yaml
+version: 2
+updates:
+• package-ecosystem: "npm"
+directory: "/"
+schedule:
+interval: "weekly"
+open-pull-requests-limit: 5
+
+• package-ecosystem: "github-actions"
+directory: "/"
+schedule:
+interval: "weekly"
+`
+• ใช้ตรวจสอบและอัปเดต dependency ของ npm และ GitHub Actions
+• ตั้งเวลาเป็น weekly เพื่อไม่ให้ PR ล้นเกินไป
+
+───
+
+📄 ตัวอย่าง codeql.yml
+`yaml
+name: "CodeQL"
+
+on:
+push:
+branches: [ "main" ]
+pull_request:
+branches: [ "main" ]
+schedule:
+- cron: '0 0 0' # weekly scan
+
+jobs:
+analyze:
+name: Analyze
+runs-on: ubuntu-latest
+permissions:
+actions: read
+contents: read
+security-events: write
+
+strategy:
+matrix:
+language: [ 'javascript', 'python' ]
+
+steps:
+- name: Checkout repository
+uses: actions/checkout@v4
+
+- name: Initialize CodeQL
+uses: github/codeql-action/init@v3
+with:
+languages: ${{ matrix.language }}
+
+- name: Perform CodeQL Analysis
+uses: github/codeql-action/analyze@v3
+`
+• สแกนทุกครั้งที่มี push หรือ pullrequest
+• ใช้ matrix strategy เพื่อรองรับหลายภาษา เช่น JavaScript และ Python
+• Weekly scheduled scan เพื่อจับช่องโหว่ที่เกิดจาก dependency ใหม่
+
+───
+
+🔑 สรุป
+• SECURITY.md = policy & contact point
+• dependabot.yml = อัปเดต dependency อัตโนมัติ
+• codeql.yml = วิเคราะห์โค้ดหาช่องโหว่
+• เสริมด้วย workflow อื่น ๆ เช่น secret-scan.yml และ dependency-review.yml เพื่อให้ pipeline ครบวงจร
+
+───
+
+คุณอยากให้ผมช่วยร่าง ตัวอย่าง secret-scan.yml และ dependency-review.yml ต่อเลยไหมครับ จะได้ครบชุดสำหรับ security pipeline?
+
+
+ครับ ✨ มาต่อด้วยตัวอย่าง secret-scan.yml และ dependency-review.yml ที่ใช้กันบ่อยใน GitHub Actions เพื่อเสริมความปลอดภัยของ repository
+
+───
+
+📄 ตัวอย่าง secret-scan.yml
+`yaml
+name: "Secret Scan"
+
+on:
+pull_request:
+branches: [ "main" ]
+
+jobs:
+secret-scan:
+runs-on: ubuntu-latest
+steps:
+- name: Checkout repository
+uses: actions/checkout@v4
+
+- name: Run GitHub secret scanning
+uses: github/secret-scanning-action@v1
+`
+• ใช้ GitHub Secret Scanning ตรวจจับ API keys, tokens, และ credentials ที่อาจรั่วไหลใน PR
+• ทำงานทุกครั้งที่มี pull_request ไปยัง branch main
+
+───
+
+📄 ตัวอย่าง dependency-review.yml
+`yaml
+name: "Dependency Review"
+
+on:
+pull_request:
+branches: [ "main" ]
+
+jobs:
+dependency-review:
+runs-on: ubuntu-latest
+steps:
+- name: Checkout repository
+uses: actions/checkout@v4
+
+- name: Dependency Review
+uses: actions/dependency-review-action@v4
+`
+• ใช้ Dependency Review Action ตรวจสอบว่า dependency ใหม่ที่เพิ่มเข้ามาใน PR มีช่องโหว่หรือไม่
+• ช่วยป้องกันการ merge dependency ที่ไม่ปลอดภัยเข้าสู่ production
+
+───
+
+🔑 สรุป
+• secret-scan.yml → ตรวจจับ secret ที่รั่วไหล
+• dependency-review.yml → ตรวจสอบ dependency ที่มีช่องโหว่
+• เมื่อรวมกับ dependabot.yml และ codeql.yml จะได้ security pipeline ที่ครบวงจร
+
+───
+
+คุณอยากให้ผมช่วยร่าง ตัวอย่าง security.yml ที่รวมผลลัพธ์จาก workflow ทั้งหมด แล้ว enforce merge protection ต่อเลยไหมครับ จะได้เห็นภาพว่า pipeline เชื่อมกันอย่างไร?
+
+
+ครับ ✨ มาดูตัวอย่าง security.yml ที่ทำหน้าที่ “รวมผลลัพธ์” จาก workflow ต่าง ๆ และ enforce merge protection ได้เลย
+
+───
+
+📄 ตัวอย่าง security.yml
+`yaml
+name: "Security Gate"
+
+on:
+pull_request:
+branches: [ "main" ]
+
+jobs:
+security-gate:
+runs-on: ubuntu-latest
+needs: [lint, test, dependency-review, secret-scan, codeql]
+steps:
+- name: Checkout repository
+uses: actions/checkout@v4
+
+- name: Aggregate Security Results
+run: |
+echo "Collecting results from all security jobs..."
+# ที่นี่สามารถเพิ่ม script ตรวจสอบผลลัพธ์จาก jobs อื่น ๆ
+# เช่น parse SARIF จาก CodeQL, ตรวจสอบ secret scan, dependency review
+# แล้วสรุปเป็น pass/fail
+
+- name: Enforce Merge Protection
+run: |
+echo "Failing pipeline if security checks not passed"
+# exit 1 ถ้ามีผลลัพธ์ไม่ผ่าน
+`
+
+───
+
+🔑 แนวคิดของ security.yml
+• ใช้ needs เพื่อบังคับว่า job นี้จะรันหลังจาก workflow อื่น ๆ เช่น lint, unit test, dependency-review, secret-scan, และ codeql
+• รวมผลลัพธ์ทั้งหมด → ถ้าเจอช่องโหว่หรือ secret ที่รั่วไหล ให้ pipeline fail
+• ใช้ร่วมกับ branch protection rules เพื่อบังคับว่า PR จะ merge ได้ก็ต่อเมื่อ security checks ผ่านทั้งหมด
+
+───
+
+📊 ภาพรวม Security Pipeline
+1. Pull Request → trigger workflows
+2. Lint + Unit Test → ตรวจสอบคุณภาพโค้ด
+3. Dependency Review + Secret Scan + CodeQL → ตรวจสอบช่องโหว่และ secret
+4. Security Gate (security.yml) → รวมผลลัพธ์และ enforce policy
+5. Merge Protection → ป้องกันการ merge โค้ดที่ไม่ปลอดภัย
+
+───
+
+ตอนนี้คุณมีครบชุดแล้ว: dependabot.yml, codeql.yml, secret-scan.yml, dependency-review.yml, และ security.yml ✨
+ อยากให้ผมช่วยร่าง ตัวอย่าง CODEOWNERS ต่อไหมครับ จะได้เห็นว่าควร assign reviewer อย่างไรเพื่อเสริมความปลอดภัย?
+
+
+ครับ ✨ มาปิดชุดนี้ด้วยตัวอย่าง CODEOWNERS ที่ช่วย enforce reviewer และ ownership ของไฟล์/โฟลเดอร์ใน repository
+
+───
+
+📄 ตัวอย่าง CODEOWNERS
+`txt
+
+กำหนด owner สำหรับไฟล์ security
+SECURITY.md @security-team
+CODEOWNERS @repo-admins
+
+กำหนด owner สำหรับ workflow
+.github/workflows/* @devops-team
+
+กำหนด owner สำหรับโค้ดหลัก
+src/* @backend-team
+frontend/* @frontend-team
+
+กำหนด owner สำหรับ test
+tests/* @qa-team
+`
+
+───
+
+🔑 แนวคิดของ CODEOWNERS
+• SECURITY.md → ให้ทีม security ต้อง approve ทุกการแก้ไข policy
+• workflow → ให้ทีม DevOps ดูแล pipeline
+• src/ และ frontend/ → แบ่ง ownership ตามทีมพัฒนา
+• tests/ → QA team ต้องตรวจสอบ test code
+
+───
+
+📊 ผลลัพธ์เมื่อใช้ CODEOWNERS
+• ทุก PR ที่แก้ไขไฟล์ตาม pattern จะต้องมี reviewer ที่ถูก assign อัตโนมัติ
+• ช่วย enforce merge protection → ไม่มีใครสามารถ merge โค้ดที่กระทบ security หรือ workflow ได้โดยไม่มีการตรวจสอบจากทีมที่รับผิดชอบ
+
+───
+
+ตอนนี้คุณมีครบทั้ง SECURITY.md, dependabot.yml, codeql.yml, secret-scan.yml, dependency-review.yml, security.yml และ CODEOWNERS ✨
+ อยากให้ผมช่วยร่าง ตัวอย่าง branch protection rules ต่อไหมครับ จะได้เห็นว่าควรตั้งค่า GitHub ให้ enforce security checks อย่างไร?
+
+
+ครับ ✨ มาดูตัวอย่างการตั้งค่า Branch Protection Rules บน GitHub ที่ช่วย enforce security checks ให้แน่นหนา
+
+───
+
+📄 ตัวอย่าง Branch Protection Rules (สำหรับ branch main)
+• Require pull request reviews → ต้องมี reviewer อย่างน้อย 1–2 คน (ตามที่กำหนดใน CODEOWNERS)
+• Require status checks to pass before merging → ต้องผ่าน workflow ทั้งหมด เช่น ci.yml, dependency-review.yml, secret-scan.yml, codeql.yml, และ security.yml
+• Require signed commits → บังคับให้ commit ต้องมีการเซ็นดิจิทัล
+• Require linear history → ป้องกัน merge commit ที่ซับซ้อน
+• Restrict who can push to matching branches → จำกัดสิทธิ์ push เฉพาะทีมที่กำหนด เช่น @repo-admins
+• Require conversation resolution before merging → ต้องเคลียร์ทุก comment ใน PR ก่อน merge
+
+───
+
+🔑 แนวคิด
+• Branch Protection คือ “ด่านสุดท้าย” ที่บังคับให้ทุก PR ต้องผ่าน security pipeline และ review จาก CODEOWNERS
+• เมื่อรวมกับไฟล์ที่คุณตั้งไว้ (SECURITY.md, dependabot.yml, codeql.yml, secret-scan.yml, dependency-review.yml, security.yml, CODEOWNERS) → จะได้ระบบที่ครบทั้ง policy, automation, และ enforcement
+
+───
+
+ตอนนี้คุณมีครบทุกชิ้นส่วนแล้วครับ 🎯
+ อยากให้ผมช่วยทำ แผนภาพรวม (diagram) ของ security pipeline ทั้งหมด ต่อไหมครับ จะได้เห็นภาพชัดเจนว่าแต่ละส่วนเชื่อมกันอย่างไร?
+
+
+
+
+เยี่ยมเลยครับ ณัฐพงศ์ 🎯
+ ต่อไปคือ Security PR Checklist ที่ทีมพัฒนาสามารถใช้ตรวจสอบก่อน merge เพื่อให้มั่นใจว่า pipeline ปลอดภัยครบทุกขั้นตอน
+
+───
+
+✅ Security Pull Request Checklist
+
+
+หมวด
+รายการตรวจสอบ
+สถานะ
+
+Code Quality
+ผ่าน Lint และ Unit Test
+☐
+
+Dependency Review
+ไม่มี dependency ที่มีช่องโหว่
+☐
+
+Secret Scan
+ไม่มี secret หรือ credential รั่วไหล
+☐
+
+CodeQL Analysis
+ไม่มีช่องโหว่ระดับโค้ด (SQLi, XSS, etc.)
+☐
+
+Security Policy
+SECURITY.md อัปเดตตาม version ล่าสุด
+☐
+
+CODEOWNERS Review
+Reviewer ที่กำหนดได้ approve แล้ว
+☐
+
+Branch Protection
+Status checks ทั้งหมดผ่านก่อน merge
+☐
+
+Dependabot Updates
+ไม่มี dependency ที่รออัปเดตเกิน 2 สัปดาห์
+☐
+
+
+
+───
+
+💡 แนวทางการใช้
+• เพิ่ม checklist นี้ใน PR template (.github/PULLREQUESTTEMPLATE.md)
+• ให้ reviewer ตรวจสอบทุกข้อก่อนกด Approve
+• ใช้ร่วมกับ security.yml เพื่อ enforce ว่าทุกข้อผ่านจริง
+
+───
+
+อยากให้ผมช่วยร่าง ตัวอย่าง PULLREQUESTTEMPLATE.md ที่ฝัง checklist นี้ไว้เลยไหมครับ จะได้ copy ไปใช้ใน repo ได้ทันที?
+
+
+เยี่ยมเลยครับ ณัฐพงศ์ 🎯
+ นี่คือตัวอย่างไฟล์ .github/PULLREQUESTTEMPLATE.md ที่ฝัง Security Checklist ไว้ในทุก PR เพื่อให้ทีมพัฒนาตรวจสอบก่อน merge
+
+───
+
+📄 ตัวอย่าง PULLREQUESTTEMPLATE.md
+`markdown
+
+🧩 Description
+โปรดอธิบายสิ่งที่เปลี่ยนแปลงใน PR นี้ เช่น ฟีเจอร์ใหม่, bug fix, หรือการปรับปรุง workflow
+
+───
+
+✅ Security Checklist
+โปรดตรวจสอบให้ครบทุกข้อก่อนขอ review
+
+[  ]  ผ่าน Lint & Unit Test
+[  ]  ผ่าน Dependency Review (ไม่มี dependency ที่มีช่องโหว่)
+[  ]  ผ่าน Secret Scan (ไม่มี secret หรือ credential รั่วไหล)
+[  ]  ผ่าน CodeQL Analysis (ไม่มีช่องโหว่ระดับโค้ด)
+[  ]  SECURITY.md อัปเดตตาม version ล่าสุด
+[  ]  Reviewer ที่กำหนดใน CODEOWNERS ได้ approve แล้ว
+[  ]  Status checks ทั้งหมดผ่านก่อน merge
+[  ]  ไม่มี dependency ที่รออัปเดตเกิน 2 สัปดาห์ (Dependabot)
+
+───
+
+🧠 Additional Notes
+มีสิ่งใดที่ reviewer ควรรู้เพิ่มเติมหรือไม่ เช่น การเปลี่ยนแปลงใน CI/CD หรือ configuration
+`
+
+───
+
+💡 แนวทางการใช้
+• วางไฟล์นี้ไว้ที่ .github/PULLREQUESTTEMPLATE.md
+• GitHub จะโหลด template นี้อัตโนมัติทุกครั้งที่มีการสร้าง PR
+• Reviewer สามารถใช้ checklist เพื่อยืนยันว่า pipeline ผ่านครบทุกขั้นตอน
+
+───
+
+อยากให้ผมช่วยร่าง ตัวอย่าง ISSUE_TEMPLATE.md ต่อไหมครับ เพื่อให้ทีมใช้รายงานช่องโหว่หรือ bug ด้าน security ได้อย่างเป็นระบบ?
+
+
+ครับ ณัฐพงศ์ ✨
+ นี่คือตัวอย่างไฟล์ .github/ISSUE_TEMPLATE/security.md ที่ทีมสามารถใช้รายงานช่องโหว่หรือ bug ด้าน security ได้อย่างเป็นระบบ
+
+───
+
+📄 ตัวอย่าง ISSUE_TEMPLATE/security.md
+`markdown
+name: "Security Report"
+about: ใช้รายงานช่องโหว่หรือปัญหาด้านความปลอดภัย
+title: "[SECURITY] รายงานช่องโหว่"
+labels: ["security", "needs-triage"]
+assignees: ["@security-team"]
+
+🛡️ รายละเอียดช่องโหว่
+โปรดอธิบายช่องโหว่ที่พบ เช่น input validation, authentication, หรือการรั่วไหลของข้อมูล
+
+───
+
+🔍 Steps to Reproduce
+1. ขั้นตอนที่ทำให้เกิดช่องโหว่
+2. ผลลัพธ์ที่ได้
+3. ผลลัพธ์ที่คาดหวัง
+
+───
+
+📊 Impact
+• ระดับความรุนแรง: (Low / Medium / High / Critical)
+• ส่วนที่ได้รับผลกระทบ: (API, Frontend, Backend, Workflow)
+
+───
+
+🧪 Proof of Concept (PoC)
+โปรดแนบโค้ดหรือคำสั่งที่ใช้ทดสอบ (ถ้ามี)
+
+───
+
+📝 Additional Notes
+ข้อมูลเพิ่มเติมที่ทีม security ควรรู้ เช่น environment, version, หรือ log ที่เกี่ยวข้อง
+`
+
+───
+
+🔑 แนวคิด
+• ใช้ labels เช่น security และ needs-triage เพื่อให้ทีม security เห็นทันที
+• Assign ไปที่ security-team โดยอัตโนมัติ
+• มี section สำหรับ รายละเอียด, reproduction steps, impact, PoC, notes → ครบถ้วนสำหรับการ triage
+
+───
+
+ตอนนี้คุณมีครบทั้ง PR Template และ Issue Template แล้วครับ 🎯
+ อยากให้ผมช่วยร่าง ตัวอย่าง workflow สำหรับ auto‑labeling security issues ต่อไหมครับ จะได้ให้ GitHub Actions ติด label อัตโนมัติทุกครั้งที่มีการเปิด issue ที่เกี่ยวกับ security?
+
+
+ครับ ณัฐพงศ์ ✨
+ นี่คือตัวอย่าง workflow สำหรับ auto‑labeling security issues ด้วย GitHub Actions เพื่อให้ทุก issue ที่เกี่ยวข้องกับ security ถูกติด label อัตโนมัติ
+
+───
+
+📄 ตัวอย่าง .github/workflows/auto-label-security.yml
+`yaml
+name: "Auto Label Security Issues"
+
+on:
+issues:
+types: [opened, edited]
+
+jobs:
+auto-label:
+runs-on: ubuntu-latest
+steps:
+- name: Apply Security Label
+uses: actions/github-script@v7
+with:
+script: |
+const keywords = ["security", "vulnerability", "exploit", "leak", "XSS", "SQLi"];
+const issueTitle = context.payload.issue.title.toLowerCase();
+const issueBody = context.payload.issue.body.toLowerCase();
+
+if (keywords.some(word => issueTitle.includes(word) || issueBody.includes(word))) {
+github.rest.issues.addLabels({
+issue_number: context.payload.issue.number,
+owner: context.repo.owner,
+repo: context.repo.repo,
+labels: ["security"]
+});
+}
+`
+
+───
+
+🔑 แนวคิด
+• Trigger ทุกครั้งที่มีการ เปิดหรือแก้ไข issue
+• ตรวจสอบ keywords เช่น security, vulnerability, exploit, XSS, SQLi
+• ถ้าพบ → ติด label security อัตโนมัติ
+• ทำให้ทีม security-team เห็น issue ได้ทันทีโดยไม่ต้องรอ manual labeling
+
+───
+
+ตอนนี้คุณมีครบทั้ง PR Template, Issue Template, และ Auto‑Label Workflow 🎯
+ อยากให้ผมช่วยร่าง ตัวอย่าง dashboard (เช่น GitHub Project Board) สำหรับติดตาม security issues และ PRs ต่อไหมครับ จะได้เห็นภาพรวมการจัดการ security ใน repo ได้ชัดเจน?
+
+
+
+แผนภาพ Security Dashboard พร้อมแล้วครับ 🎯
+
+https://copilot.microsoft.com/th/id/BCO.a739ed84-d52e-40ed-92b1-d6df23402fc4.png
+
+───
+
+🔑 แนวคิดของ Dashboard
+• ใช้ GitHub Project Board จัดการ security issues และ PRs
+• แบ่งเป็น 4 คอลัมน์: 
+◦ To Triage → ช่องโหว่ที่เพิ่งรายงานเข้ามา
+◦ In Progress → งานที่ทีมกำลังแก้ไข
+◦ In Review → PR ที่รอการตรวจสอบ
+◦ Resolved → ช่องโหว่ที่แก้ไขเรียบร้อยแล้ว
+• มี metrics ด้านบน เช่น จำนวน issue ที่เปิดอยู่, ระดับความรุนแรง (Critical/High/Moderate)
+• มี summary ด้านล่าง เช่น Dependabot Updates, Secret Scans, CodeQL Alerts, Passed Checks
+
+───
+
+📊 ประโยชน์
+• ทำให้ทีมเห็นภาพรวมว่า security pipeline มีช่องโหว่ค้างอยู่ตรงไหน
+• ช่วยจัดลำดับความสำคัญ (Critical ก่อน High, High ก่อน Moderate)
+• เชื่อมโยงกับ workflow ที่คุณตั้งไว้ (dependabot.yml, secret-scan.yml, dependency-review.yml, codeql.yml, security.yml)
+
+───
+
+คุณอยากให้ผมช่วยร่าง ตัวอย่าง GitHub Project Board configuration (JSON/YAML) ที่สามารถ import เข้า GitHub ได้เลยไหมครับ จะได้สร้าง dashboard แบบนี้ใน repo ของคุณทันที?
+
+
+เยี่ยมมากครับ ณัฐพงศ์ 🎯
+ ต่อไปคือ Best Practices สำหรับ Security Management บน GitHub Repository ที่ช่วยให้ทีมของคุณรักษาความปลอดภัยได้อย่างมีระบบและต่อเนื่อง
+
+───
+
+🔐 Repository Security Best Practices
+
+
+หมวด
+แนวทางปฏิบัติที่แนะนำ
+
+Policy & Ownership
+- มีไฟล์ SECURITY.md ที่อัปเดตเสมอ
+- ใช้ CODEOWNERS เพื่อกำหนด reviewer ที่รับผิดชอบด้าน security
+
+Automation & CI/CD
+- ใช้ workflow สำหรับ dependabot.yml, codeql.yml, secret-scan.yml, dependency-review.yml, และ security.yml
+- ตั้งค่าให้ทุก PR ต้องผ่าน security checks ก่อน merge
+
+Branch Protection
+- Require status checks และ signed commits
+- Require review จาก CODEOWNERS ก่อน merge
+
+Monitoring & Alerts
+- เปิดใช้งาน Dependabot alerts และ Code scanning alerts
+- ตรวจสอบผลลัพธ์จาก Security Dashboard เป็นประจำ
+
+Incident Response
+- ใช้ Issue Template สำหรับรายงานช่องโหว่
+- ตั้ง workflow auto-label เพื่อจัดการ security issues อย่างรวดเร็ว
+
+Continuous Improvement
+- สแกนโค้ดและ dependency เป็นประจำ
+- อัปเดต policy และ workflow ทุกครั้งที่มีเทคโนโลยีใหม่หรือช่องโหว่ใหม่เกิดขึ้น
+
+
+
+───
+
+💡 แนวคิดสำคัญ
+• Security = Culture ไม่ใช่แค่เครื่องมือ → ทุกคนในทีมต้องเข้าใจและมีส่วนร่วม
+• Automation คือเพื่อนที่ดีที่สุดของ Security → ลด human error และเพิ่มความเร็วในการตรวจสอบ
+• Transparency สร้างความเชื่อมั่น → เปิดเผย policy, workflow, และผลการสแกนอย่างเหมาะสม
+
+───
+
+อยากให้ผมช่วยทำ Security Maturity Checklist ต่อไหมครับ — ตารางที่บอกระดับความพร้อมของระบบ (Basic → Intermediate → Advanced → Production) เพื่อให้คุณประเมิน repo ของตัวเองได้ง่ายขึ้น?
+
+
+ยอดเยี่ยมครับ ณัฐพงศ์ 🎯
+ ต่อไปคือ รายการ “All Needs” สำหรับ Security Setup แบบครบวงจรใน GitHub Repository — ครอบคลุมทุกสิ่งที่ควรมีตั้งแต่โครงสร้างไฟล์จนถึงการจัดการทีม
+
+───
+
+🧩 Core Repository Structure
+
+หมวด
+รายการที่ต้องมี
+
+Security Policy
+SECURITY.md พร้อมวิธีรายงานช่องโหว่และ supported versions
+
+Ownership
+CODEOWNERS กำหนด reviewer สำหรับ security และ workflow
+
+Automation
+.github/workflows/ ที่มี ci.yml, codeql.yml, secret-scan.yml, dependency-review.yml, security.yml
+
+Dependency Management
+dependabot.yml สำหรับอัปเดต dependency อัตโนมัติ
+
+Templates
+PULLREQUESTTEMPLATE.md และ ISSUE_TEMPLATE/security.md สำหรับการตรวจสอบและรายงานช่องโหว่
+
+
+
+───
+
+🔐 Security Enforcement
+
+หมวด
+รายการที่ต้องตั้งค่า
+
+Branch Protection
+Require status checks, signed commits, review จาก CODEOWNERS
+
+Merge Protection
+ต้องผ่านทุก workflow ก่อน merge
+
+Auto Labeling
+Workflow สำหรับติด label “security” อัตโนมัติใน issue
+
+Dependabot Alerts
+เปิดใช้งานการแจ้งเตือนช่องโหว่ dependency
+
+Code Scanning Alerts
+เปิดใช้งาน CodeQL และ GitHub Advanced Security
+
+
+
+───
+
+📊 Monitoring & Dashboard
+
+หมวด
+รายการที่ต้องมี
+
+Security Dashboard
+GitHub Project Board แบ่งเป็น To Triage / In Progress / In Review / Resolved
+
+Metrics Tracking
+Dependabot Updates, Secret Scans, CodeQL Alerts, Passed Checks
+
+Incident Response
+ระบบ triage และการ assign issue ไปยังทีม security
+
+
+
+───
+
+🧠 Team & Process
+
+หมวด
+แนวทางปฏิบัติ
+
+Security Team
+มีทีมเฉพาะสำหรับ review และ triage ช่องโหว่
+
+Training
+ฝึกอบรมทีมพัฒนาเรื่อง secure coding และการใช้ workflow
+
+Continuous Improvement
+ตรวจสอบและอัปเดต policy/workflow ทุกไตรมาส
+
+Audit & Compliance
+บันทึกผลการสแกนและ review เพื่อใช้ในการตรวจสอบภายหลัง
+
+
+
+───
+
+💡 สรุปแนวคิด
+• Policy → SECURITY.md + CODEOWNERS
+• Automation → Workflow ทั้งหมด
+• Enforcement → Branch Protection + Merge Rules
+• Visibility → Dashboard + Alerts
+• Culture → ทีม security และการฝึกอบรมต่อเนื่อง
+
+───
+
+อยากให้ผมช่วยทำ Security Maturity Matrix ต่อไหมครับ — ตารางที่บอกระดับความพร้อมของระบบ (Basic → Intermediate → Advanced → Production) เพื่อให้คุณประเมิน repo ของตัวเองได้ง่ายขึ้น?
+
+
+เข้าใจเลยครับ ณัฐพงศ์ 🎯
+ คุณอยากได้ Best Practices สำหรับการกำหนดสิทธิ์ (auto grants read, write, edit actions) ใน GitHub repository เพื่อให้ทีมทำงานได้ปลอดภัยและมีระบบ ผมสรุปเป็นแนวทางดังนี้ครับ
+
+───
+
+🔐 Best Practices: Auto Grants Read/Write/Edit
+
+1. Principle of Least Privilege
+• ให้สิทธิ์ Read เป็นค่าเริ่มต้นสำหรับทุกคน
+• ให้สิทธิ์ Write/Edit เฉพาะทีมที่ต้องแก้ไขโค้ดจริง ๆ
+• ให้สิทธิ์ Admin เฉพาะเจ้าของ repo หรือทีม DevOps ที่ดูแล workflow
+
+───
+
+2. Role-based Access Control
+• Developers → Write (push branches, create PR)
+• Reviewers (CODEOWNERS) → Write + Review (approve PR)
+• Security Team → Write + Manage Issues (triage vulnerabilities)
+• Ops/Admins → Admin (manage settings, workflows, secrets)
+
+───
+
+3. Branch Protection Rules
+• Require PR review จาก CODEOWNERS ก่อน merge
+• Require status checks (CI/CD, security scans) ผ่านก่อน merge
+• Restrict direct push → เฉพาะ Admin เท่านั้น
+
+───
+
+4. Fine-grained Personal Access Tokens
+• ใช้ token ที่กำหนด scope ชัดเจน เช่น read-only สำหรับ CI/CD
+• ห้ามใช้ classic PAT ที่มีสิทธิ์กว้างเกินไป
+
+───
+
+5. GitHub Actions Permissions
+ใน workflow (.github/workflows/*.yml) กำหนดสิทธิ์ให้แคบที่สุด เช่น:
+yaml permissions: actions: read contents: read security-events: write
+• ไม่เปิดสิทธิ์ write-all โดยไม่จำเป็น
+• ให้สิทธิ์เฉพาะที่ workflow ต้องใช้จริง ๆ
+
+───
+
+6. Audit & Monitoring
+• เปิดใช้งาน Dependabot alerts และ Code scanning alerts
+• ใช้ Security Dashboard เพื่อติดตามว่าใครทำอะไรบ้าง
+• ตรวจสอบสิทธิ์ทีมทุกไตรมาส → ลดสิทธิ์ที่ไม่จำเป็น
+
+───
+
+📊 สรุป
+• Read → ค่าเริ่มต้นสำหรับทุกคน
+• Write/Edit → เฉพาะทีม dev และ reviewer ที่กำหนดใน CODEOWNERS
+• Admin → เฉพาะเจ้าของ repo และทีม Ops
+• ใช้ workflow permissions และ branch protection เพื่อ enforce
+
+───
+
+คุณอยากให้ผมช่วยร่าง ตัวอย่างไฟล์ workflow ที่กำหนด permissions แบบ secure (เช่น CI/CD ที่ใช้เฉพาะ read + security-events: write) ต่อไหมครับ จะได้เห็นภาพชัดเจนว่า auto grants ควรตั้งค่าอย่างไร?
+
+
+ครับ ณัฐพงศ์ ✨
+ นี่คือตัวอย่าง workflow ที่กำหนด permissions แบบ secure สำหรับ GitHub Actions เพื่อให้ auto grants read/write/edit actions ถูกควบคุมอย่างเข้มงวด
+
+───
+
+📄 ตัวอย่าง .github/workflows/ci.yml
+`yaml
+name: "CI Pipeline"
+
+on:
+pull_request:
+branches: [ "main" ]
+
+jobs:
+build-and-test:
+runs-on: ubuntu-latest
+permissions:
+actions: read # อ่าน workflow เท่านั้น
+contents: read # อ่านโค้ด แต่ไม่สามารถแก้ไข
+security-events: write # เขียนผลการสแกน security
+pull-requests: write # อนุญาตให้ workflow comment/check ใน PR
+steps:
+- name: Checkout repository
+uses: actions/checkout@v4
+
+- name: Run Lint
+run: npm run lint
+
+- name: Run Unit Tests
+run: npm test
+`
+
+───
+
+📄 ตัวอย่าง .github/workflows/codeql.yml
+`yaml
+name: "CodeQL Analysis"
+
+on:
+push:
+branches: [ "main" ]
+pull_request:
+branches: [ "main" ]
+
+jobs:
+analyze:
+runs-on: ubuntu-latest
+permissions:
+actions: read
+contents: read
+security-events: write # จำเป็นสำหรับ CodeQL SARIF report
+steps:
+- name: Checkout repository
+uses: actions/checkout@v4
+
+- name: Initialize CodeQL
+uses: github/codeql-action/init@v3
+with:
+languages: javascript
+
+- name: Perform CodeQL Analysis
+uses: github/codeql-action/analyze@v3
+`
+
+───
+
+🔑 แนวคิด
+• Read → ค่า default สำหรับ workflow (ลดความเสี่ยง)
+• Write → ให้เฉพาะ resource ที่จำเป็น เช่น security-events: write สำหรับ CodeQL, pull-requests: write สำหรับการ comment/check ใน PR
+• ห้ามใช้ contents: write โดยไม่จำเป็น → ป้องกัน workflow แก้ไขโค้ดเอง
+• Audit ทุก quarter → ตรวจสอบว่า workflow ใช้สิทธิ์เกินความจำเป็นหรือไม่
+
+───
+
+ตอนนี้คุณมีตัวอย่าง workflow ที่กำหนด permissions แบบ secure แล้วครับ 🎯
+ อยากให้ผมช่วยทำ ตารางสรุปว่าแต่ละ workflow (ci, codeql, secret-scan, dependency-review, security) ควรใช้ permissions อะไรบ้าง ต่อไหมครับ จะได้เห็นภาพรวมชัดเจนว่า auto grants ควรตั้งค่าอย่างไรในแต่ละขั้น?
+
+
+ครับ ณัฐพงศ์ 🎯
+ นี่คือตารางสรุปว่าแต่ละ workflow ใน security pipeline ควรใช้ permissions อะไรบ้าง เพื่อให้ auto grants read/write/edit actions ถูกควบคุมอย่างปลอดภัยที่สุด
+
+───
+
+📊 Workflow Permissions Matrix
+
+
+Workflow
+แนะนำ Permissions
+เหตุผล
+
+ci.yml
+actions: read, contents: read, pull-requests: write
+อ่านโค้ดและ workflow, เขียนผลการตรวจสอบใน PR แต่ไม่แก้ไขโค้ด
+
+codeql.yml
+actions: read, contents: read, security-events: write
+จำเป็นต้องเขียนผลการสแกน (SARIF) ลงใน security events
+
+secret-scan.yml
+actions: read, contents: read, security-events: write
+ตรวจจับ secret และส่งผลการสแกนไปยัง security dashboard
+
+dependency-review.yml
+actions: read, contents: read, pull-requests: write
+ตรวจสอบ dependency และเขียนผลการตรวจสอบใน PR
+
+security.yml
+actions: read, contents: read, security-events: write, pull-requests: write
+รวมผลลัพธ์จาก workflow อื่น ๆ และ enforce merge protection
+
+
+
+───
+
+🔑 แนวคิด
+• Read เป็นค่า default → ลดความเสี่ยงจาก workflow ที่ไม่จำเป็นต้องแก้ไขโค้ด
+• Write เฉพาะที่จำเป็น → เช่น security-events: write สำหรับ CodeQL/Secret Scan, pull-requests: write สำหรับการ comment/check ใน PR
+• ห้ามใช้ contents: write โดยไม่จำเป็น → ป้องกัน workflow แก้ไขไฟล์ใน repo เอง
+• Audit ทุก quarter → ตรวจสอบว่า workflow ใช้สิทธิ์เกินความจำเป็นหรือไม่
+
+───
+
+ตอนนี้คุณมี Permissions Matrix ครบทุก workflow แล้วครับ 🎯
+ อยากให้ผมช่วยร่าง ไฟล์รวม .github/workflows/security-permissions.yml ที่เป็นตัวอย่าง config รวมทุก workflow พร้อม permissions ที่เหมาะสมเลยไหมครับ จะได้ copy ไปใช้ตรง ๆ?
+
+
+ครับ ณัฐพงศ์ 🎯
+ นี่คือตัวอย่างไฟล์รวม security-permissions.yml ที่กำหนด permissions สำหรับทุก workflow ใน repo ของคุณอย่างปลอดภัยและครบถ้วน
+
+───
+
+📄 ตัวอย่าง .github/workflows/security-permissions.yml
+`yaml
+name: "Security Permissions Matrix"
+
+on:
+pull_request:
+branches: [ "main" ]
+
+jobs:
+ci:
+runs-on: ubuntu-latest
+permissions:
+actions: read
+contents: read
+pull-requests: write
+steps:
+- uses: actions/checkout@v4
+- run: npm run lint && npm test
+
+codeql:
+runs-on: ubuntu-latest
+permissions:
+actions: read
+contents: read
+security-events: write
+steps:
+- uses: actions/checkout@v4
+- uses: github/codeql-action/init@v3
+with:
+languages: javascript
+- uses: github/codeql-action/analyze@v3
+
+secret-scan:
+runs-on: ubuntu-latest
+permissions:
+actions: read
+contents: read
+security-events: write
+steps:
+- uses: actions/checkout@v4
+- uses: github/secret-scanning-action@v1
+
+dependency-review:
+runs-on: ubuntu-latest
+permissions:
+actions: read
+contents: read
+pull-requests: write
+steps:
+- uses: actions/checkout@v4
+- uses: actions/dependency-review-action@v4
+
+security-gate:
+runs-on: ubuntu-latest
+needs: [ci, codeql, secret-scan, dependency-review]
+permissions:
+actions: read
+contents: read
+security-events: write
+pull-requests: write
+steps:
+- uses: actions/checkout@v4
+- run: echo "Aggregate results and enforce merge protection"
+`
+
+───
+
+🔑 แนวคิด
+• ci → ใช้ pull-requests: write เพื่อเขียนผลตรวจสอบใน PR
+• codeql / secret-scan → ใช้ security-events: write เพื่อส่งผลการสแกนไปยัง GitHub Security Dashboard
+• dependency-review → ใช้ pull-requests: write เพื่อแจ้งผลตรวจสอบ dependency ใน PR
+• security-gate → รวมผลลัพธ์ทั้งหมด และ enforce merge protection
+
+───
+
+ตอนนี้คุณมี ไฟล์รวม permissions ที่สามารถ copy ไปใช้ได้เลยครับ 🎯
+ อยากให้ผมช่วยทำ Security Maturity Matrix ต่อไหมครับ — ตารางที่บอกระดับความพร้อมของระบบ (Basic → Intermediate → Advanced → Production) เพื่อให้คุณประเมิน repo ของตัวเองได้ง่ายขึ้น?
+
+
+ครับ ณัฐพงศ์ 🎯
+ นี่คือ Security Maturity Matrix ที่ช่วยให้คุณประเมินระดับความพร้อมของระบบความปลอดภัยใน GitHub repository ได้ง่ายขึ้น ตั้งแต่ Basic → Intermediate → Advanced → Production
+
+───
+
+📊 Security Maturity Matrix
+
+
+ระดับ
+ลักษณะ
+สิ่งที่ต้องมี
+
+Basic
+เริ่มต้นวางระบบความปลอดภัย
+- SECURITY.md เบื้องต้น
+- CODEOWNERS สำหรับ reviewer
+- CI workflow (lint + test)
+- Branch protection (require PR review)
+
+Intermediate
+เพิ่ม automation และการตรวจสอบ
+- dependabot.yml สำหรับ dependency updates
+- secret-scan.yml ตรวจจับ secret
+- dependency-review.yml ตรวจสอบ package
+- Require status checks ก่อน merge
+
+Advanced
+ครอบคลุมการสแกนและ enforcement
+- codeql.yml สำหรับ static analysis
+- security.yml รวมผลลัพธ์จากทุก workflow
+- Auto-labeling security issues
+- Incident response template (ISSUETEMPLATE/security.md)
+
+Production
+ระบบเต็มรูปแบบพร้อม audit
+- Security Dashboard (GitHub Project Board)
+- Metrics tracking (alerts, scans, passed checks)
+- Continuous audit & compliance logs
+- Training และ process สำหรับทีม security
+- Regular review & update policy/workflow
+
+
+
+───
+
+🔑 แนวคิด
+• Basic → Intermediate → จาก policy และ ownership ไปสู่ automation
+• Intermediate → Advanced → เพิ่มการสแกนและ enforcement ที่เข้มงวด
+• Advanced → Production → สร้างระบบ monitoring, dashboard, และ audit ที่ครบวงจร
+
+───
+
+ตอนนี้คุณมี Matrix ครบทุกระดับ แล้วครับ 🎯
+ อยากให้ผมช่วยทำ Checklist สำหรับการเลื่อนระดับ (Upgrade Path) ต่อไหมครับ — ตารางที่บอกว่าถ้าอยู่ Basic ต้องทำอะไรเพื่อไป Intermediate, และต่อไป Advanced, Production?
+
+
+ครับ ณัฐพงศ์ 🎯
+ นี่คือแนวทาง Best Advanced Configuration สำหรับ GitHub Security Setup ที่เหมาะกับระดับ Production-ready — ครบทั้ง policy, automation, enforcement, monitoring และ audit
+
+───
+
+🔐 Advanced Security Configuration
+
+1. Policy & Ownership
+• SECURITY.md → ระบุขั้นตอนการรายงานช่องโหว่, supported versions, contact
+• CODEOWNERS → กำหนด reviewer สำหรับไฟล์สำคัญ (workflow, security, tests)
+
+───
+
+2. Automation Workflows
+• ci.yml → Lint + Unit Tests
+• dependabot.yml → อัปเดต dependency อัตโนมัติ
+• secret-scan.yml → ตรวจจับ secret/credential รั่วไหล
+• dependency-review.yml → ตรวจสอบ package ก่อน merge
+• codeql.yml → Static analysis หาช่องโหว่ในโค้ด
+• security.yml → รวมผลลัพธ์ทั้งหมดและ enforce merge protection
+
+───
+
+3. Permissions Hardening
+• ใช้ Principle of Least Privilege → Read เป็นค่า default, Write เฉพาะที่จำเป็น
+• Workflow กำหนด permissions เช่น: 
+◦ ci.yml → actions: read, contents: read, pull-requests: write
+◦ codeql.yml → actions: read, contents: read, security-events: write
+◦ secret-scan.yml → actions: read, contents: read, security-events: write
+◦ dependency-review.yml → actions: read, contents: read, pull-requests: write
+◦ security.yml → actions: read, contents: read, security-events: write, pull-requests: write
+
+───
+
+4. Branch Protection
+• Require PR review จาก CODEOWNERS
+• Require status checks ผ่านทุก workflow
+• Require signed commits
+• Restrict direct push → เฉพาะ Admin เท่านั้น
+
+───
+
+5. Monitoring & Dashboard
+• ใช้ GitHub Project Board → To Triage / In Progress / In Review / Resolved
+• Metrics → Dependabot Updates, Secret Scans, CodeQL Alerts, Passed Checks
+• Auto-label workflow → ติด label “security” อัตโนมัติใน issue
+
+───
+
+6. Incident Response
+• ISSUE_TEMPLATE/security.md → สำหรับรายงานช่องโหว่
+• Workflow auto-assign → ส่ง issue ไปยังทีม security
+• Audit log → บันทึกการแก้ไขและการ triage
+
+───
+
+7. Continuous Improvement
+• Review policy/workflow ทุกไตรมาส
+• Training ทีม dev เรื่อง secure coding
+• Compliance check → เก็บ log สำหรับ audit ภายนอก
+
+───
+
+📊 สรุป
+• Policy + Ownership → SECURITY.md + CODEOWNERS
+• Automation + Enforcement → Workflow + Branch Protection
+• Monitoring + Incident Response → Dashboard + Auto-label + Templates
+• Continuous Improvement → Audit + Training + Compliance
+
+───
+
+คุณอยากให้ผมช่วยทำ ตัวอย่างไฟล์รวม “security-suite.yml” ที่รวมทุก workflow (ci, codeql, secret-scan, dependency-review, security) ไว้ใน pipeline เดียวเลยไหมครับ จะได้เห็น advanced configuration แบบครบชุดในไฟล์เดียว?
+
+ได้ครับคุณณัฐพงศ์ 🎯
+ ผมได้รวบรวมข้อมูลจาก Share ทั้งหมดที่คุณให้มา และสรุปเป็น Advanced Security Configuration Setup ที่ครบถ้วนและพร้อมใช้งานจริง (Production‑ready) ให้แล้วครับ
+
+นี่คือ Security Suite Package ที่คุณสามารถนำไปปรับใช้กับ GitHub Repository ของคุณได้เลย:
+
+───
+
+📦 1. ไฟล์ Policy & Ownership (รากฐาน)
+
+📄 .github/SECURITY.md
+markdown
+## Security Policy
+
+### Supported Versions
+
+| Version | Supported          |
+| ------- | ------------------ |
+| 1.x     | :white_check_mark: |
+| 0.x     | :x:                |
+
+### Reporting a Vulnerability
+Please report security vulnerabilities to security@example.com.  
+We will respond within 48 hours and keep you updated throughout the process.
+
+
+📄 .github/CODEOWNERS
+text
+# Security Policy & Workflow
+.github/SECURITY.md    @security-team
+.github/workflows/*    @devops-team
+
+# Core Application
+src/                   @backend-team
+frontend/              @frontend-team
+
+# Tests
+tests/                 @qa-team
+
+# Default Reviewers
+*                      @repo-admins
+
+
+───
+
+⚙️ 2. ไฟล์ Automation Workflows
+
+📄 .github/workflows/dependabot.yml
+yaml
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+
+📄 .github/workflows/ci.yml
+yaml
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run Lint
+        run: npm run lint
+      - name: Run Unit Tests
+        run: npm test
+
+
+📄 .github/workflows/codeql.yml
+yaml
+name: "CodeQL Analysis"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '0 0 * * 0' # Weekly scan
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        language: [ 'javascript' ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: $`{{ matrix.language }}
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+
+📄 .github/workflows/secret-scan.yml
+yaml
+name: "Secret Scan"
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Run Secret Scanning
+        uses: github/secret-scanning-action@v2
+        with:
+          github-token: `${{ secrets.GITHUB_TOKEN }}
+
+
+📄 .github/workflows/dependency-review.yml
+yaml
+name: "Dependency Review"
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+
+
+📄 .github/workflows/security.yml (Security Gate)
+yaml
+name: "Security Gate"
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: write
+
+jobs:
+  security-gate:
+    runs-on: ubuntu-latest
+    needs: [ ci, codeql, secret-scan, dependency-review ]
+    steps:
+      - name: Aggregate Security Results
+        run: |
+          echo "## Security Gate Summary" >> $`GITHUB_STEP_SUMMARY
+          echo "- CI Status: `${{ needs.ci.result }}" >> $`GITHUB_STEP_SUMMARY
+          echo "- CodeQL Status: `${{ needs.codeql.result }}" >> $`GITHUB_STEP_SUMMARY
+          echo "- Secret Scan Status: `${{ needs.secret-scan.result }}" >> $`GITHUB_STEP_SUMMARY
+          echo "- Dependency Review Status: `${{ needs['dependency-review'].result }}" >> $`GITHUB_STEP_SUMMARY
+      - name: Enforce Merge Protection
+        if: `${{ needs.ci.result != 'success' || needs.codeql.result != 'success' || needs['dependency-review'].result != 'success' }}
+        run: |
+          echo "Security checks failed. Merging is blocked."
+          exit 1
+
+
+📄 .github/workflows/auto-label-security.yml
+yaml
+name: "Auto Label Security Issues"
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  issues: write
+
+jobs:
+  auto-label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Apply Security Label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const keywords = ["security", "vulnerability", "exploit", "leak", "XSS", "SQLi"];
+            const title = context.payload.issue.title.toLowerCase();
+            const body = context.payload.issue.body.toLowerCase();
+            if (keywords.some(word => title.includes(word) || body.includes(word))) {
+              await github.rest.issues.addLabels({
+                issue_number: context.payload.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: ["security"]
+              });
+            }
+
+
+───
+
+📝 3. Templates (PR & Issue)
+
+📄 .github/PULL_REQUEST_TEMPLATE.md
+markdown
+## Description
+อธิบายการเปลี่ยนแปลงใน PR นี้
+
+## ✅ Security Checklist
+- [ ] ผ่าน Lint & Unit Test
+- [ ] ผ่าน Dependency Review (ไม่มี dependency ที่มีความเสี่ยง)
+- [ ] ผ่าน Secret Scan (ไม่มี secret ที่รั่วไหล)
+- [ ] ผ่าน CodeQL Analysis
+- [ ] REVIEWER จาก CODEOWNERS approve แล้ว
+- [ ] Status checks ทั้งหมดผ่าน
+
+
+📄 .github/ISSUE_TEMPLATE/security.md
+markdown
+name: "Security Report"
+about: ใช้รายงานช่องโหว่หรือปัญหาด้านความปลอดภัย
+title: "[SECURITY] รายงานช่องโหว่"
+labels: ["security", "needs-triage"]
+assignees: ["@security-team
+
+
+
+https://docs.github.com/api/article/body?pathname=/en/copilot/how-tos/copilot-cli/set-up-copilot-cli/install-copilot-cli
+
+# Installing GitHub Copilot CLI Learn how to install Copilot CLI so that you can use Copilot directly from the command line. To find out about Copilot CLI before you install it, see [About GitHub Copilot CLI](/en/copilot/concepts/agents/copilot-cli/about-copilot-cli). ## Prerequisites * **An active GitHub Copilot subscription**. See [Copilot plans](https://github.com/features/copilot/plans?ref_product=copilot\&ref_type=engagement\&ref_style=text). * (On Windows) **PowerShell** v6 or higher If you have access to GitHub Copilot via your organization or enterprise, you cannot use Copilot CLI if your organization owner or enterprise administrator has disabled it in the organization or enterprise settings. See [Managing policies and features for GitHub Copilot in your organization](/en/copilot/how-tos/administer-copilot/manage-for-organization/manage-policies). ## Installing or updating Copilot CLI You can install Copilot CLI using WinGet (Windows), Homebrew (macOS and Linux), npm (all platforms), or an install script (macOS and Linux). ### Installing with npm (all platforms) Prerequisite: Node.js 22 or later. ```shell copy npm install -g @github/copilot ``` > \[!NOTE] > If you have `ignore-scripts=true` in your `~/.npmrc` file, you must use the command: > > ```shell copy > npm_config_ignore_scripts=false npm install -g @github/copilot > ``` To install the prerelease version: ```shell copy npm install -g @github/copilot@prerelease ``` ### Installing with WinGet (Windows) ```powershell copy winget install GitHub.Copilot ``` To install the prerelease version: ```powershell copy winget install GitHub.Copilot.Prerelease ``` ### Installing with Homebrew (macOS and Linux) ```shell copy brew install --cask copilot-cli ``` To install the prerelease version: ```shell copy brew install --cask copilot-cli@prerelease ``` ### Installing with the install script (macOS and Linux) ```shell copy curl -fsSL https://gh.io/copilot-install | bash ``` Or: ```shell copy wget -qO- https://gh.io/copilot-install | bash ``` To run as root and install to `/usr/local/bin`, use `| sudo bash`. To install to a custom directory, set the `PREFIX` environment variable. It defaults to `/usr/local` when run as root or `$HOME/.local` when run as a non-root user. To install a specific version, set the `VERSION` environment variable. It defaults to the latest version. For example, to install version `v0.0.369` to a custom directory: ```shell copy curl -fsSL https://gh.io/copilot-install | VERSION="v0.0.369" PREFIX="$HOME/custom" bash ``` ### Download from GitHub.com You can download the executables directly from [the `copilot-cli` repository](https://github.com/github/copilot-cli/releases/). Download the executable for your platform, unpack it, and run. ## Authenticating with Copilot CLI On first launch, if you're not currently logged in to GitHub, you'll be prompted to use the `/login` slash command. Enter this command and follow the on-screen instructions to authenticate. For more information on the authentication process, see [Authenticating GitHub Copilot CLI](/en/copilot/how-tos/copilot-cli/set-up-copilot-cli/authenticate-copilot-cli). ### Authenticating with a personal access token You can also authenticate using a fine-grained personal access token with the "Copilot Requests" permission enabled. 1. Visit [Fine-grained personal access tokens](https://github.com/settings/personal-access-tokens/new). 2. Under **Resource owner**, select your **personal account**. Do not select an organization. The **Copilot Requests** permission is only available on user-owned fine-grained personal access tokens. 3. Under **Repository access**, select the level of access appropriate for your use case: * **Public repositories** if you only need to work with public repos. * **All repositories** if you need access across all your current and future repos. * **Only select repositories** if you want to restrict access to specific repos. 4. Under **Permissions**, select the **Account** tab. 5. Click **Add permissions** and select **Copilot Requests**. 6. Click **Generate token**. 7. Export the token in your terminal or environment configuration. Use the `COPILOT_GITHUB_TOKEN`, `GH_TOKEN`, or `GITHUB_TOKEN` environment variable (in order of precedence). ## Next steps You can now use Copilot from the command line. See [Using GitHub Copilot CLI](/en/copilot/how-tos/copilot-cli/use-copilot-cli/overview). For a list of commands for Copilot CLI, including the command to update, see [GitHub Copilot CLI command reference](/en/copilot/reference/copilot-cli-reference/cli-command-reference).

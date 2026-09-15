@@ -1,0 +1,161 @@
+# Fig Suite — SINGLE SOURCE OF TRUTH
+#
+# Every domain, rule, and gate criterion lives here. SKILL.md, the sub-skills,
+# and the executable gate in loader.py all derive from this file, so the prose
+# standard and the enforcement code cannot drift apart.
+#
+# To add a criterion: add it under `criteria:` with a `check:` key naming a
+# function registered in loader.py's CHECKS map. A criterion with no matching
+# check is reported as an explicit failure, never a silent pass.
+
+version: "1.0.0"
+suite: fig-suite-v1.0.0
+updated: "2026-09-14"
+
+principle:
+  id: answer-first
+  statement: >-
+    A question gets an answer. An artifact is produced only when the user asks
+    for something to keep or send. Never bill a question as a build.
+
+domains:
+  - id: platform
+    name: Platform & Workspaces
+    summary: >-
+      How work is scoped, where files live, and what a well-formed workspace
+      looks like before anything is produced.
+    criteria: [CONTEXT, NAMING]
+  - id: artifacts
+    name: Artifacts & Deliverables
+    summary: >-
+      Choosing the right deliverable shape, naming it so it can be re-found,
+      and handing it back in the form the user can actually open.
+    criteria: [ROUTING, HANDOFF]
+  - id: connectors
+    name: Connectors & External Writes
+    summary: >-
+      Acting on connected services: reads are free, writes are gated, and a
+      refusal is the user's decision, not a bug to work around.
+    criteria: [APPROVAL]
+  - id: research
+    name: Research & Sourcing
+    summary: >-
+      Grounding claims in retrieved evidence and citing sources at the point
+      of the claim, with citation numbers that never renumber.
+    criteria: [EVIDENCE, SOURCES]
+  - id: automation
+    name: Automation & Verification
+    summary: >-
+      Background and scheduled work must verify its own output before it
+      reports success.
+    criteria: [VERIFY]
+  - id: safety
+    name: Safety & Confidentiality
+    summary: >-
+      Credentials never enter chat or artifacts, and platform internals are
+      described in product terms only.
+    criteria: [SECRETS]
+
+criteria:
+  - id: CONTEXT
+    name: Mission context declared
+    domain: platform
+    weight: 1
+    evidence: .fig/context.yaml
+    check: context
+    rule: >-
+      Every piece of work declares its mission (what this workspace is for)
+      before producing output.
+    fail: Declare a non-empty `mission` in .fig/context.yaml.
+
+  - id: ROUTING
+    name: Right deliverable shape chosen
+    domain: artifacts
+    weight: 1
+    evidence: .fig/routing.yaml
+    check: routing
+    rule: >-
+      Mode must be `answer` for a question, or a named artifact kind for a
+      build. An artifact kind with no `type` is underspecified.
+    fail: Set `mode` to answer, or to a named kind with a non-empty `type`.
+
+  - id: EVIDENCE
+    name: Claims backed by evidence
+    domain: research
+    weight: 1
+    evidence: .fig/evidence.json
+    check: evidence
+    rule: >-
+      A non-empty claim table ties every factual claim to a source (a tool
+      result, a file, or a URL).
+    fail: Add at least one {claim, source} entry to .fig/evidence.json.
+
+  - id: SECRETS
+    name: No credentials in the workspace
+    domain: safety
+    weight: 1
+    evidence: file scan
+    check: secrets
+    rule: >-
+      No API keys, passwords, bearer tokens, or private keys in tracked text.
+      Example files (.env.example / .sample / .template) are ignored.
+    fail: Remove the credential and reference it from the environment.
+
+  - id: APPROVAL
+    name: External writes are approved
+    domain: connectors
+    weight: 1
+    evidence: .fig/external-writes.yaml
+    check: approval
+    rule: >-
+      Every write to an outside system carries approved: true. Absent file
+      means no external writes, which passes.
+    fail: "Get explicit approval, or set approved: true once the user confirms."
+
+  - id: VERIFY
+    name: Output verified before handoff
+    domain: automation
+    weight: 1
+    evidence: .fig/verify.json
+    check: verify
+    rule: >-
+      Deliverables carry a verification record: verified: true and a
+      non-empty list of checks that actually ran.
+    fail: Run at least one check and record it in .fig/verify.json.
+
+  - id: NAMING
+    name: Semantic, collision-resistant names
+    domain: platform
+    weight: 1
+    evidence: file scan
+    check: naming
+    rule: >-
+      No generic filenames (output, result, file, data, doc, report, chart,
+      analysis, temp). Entity ids beat counters.
+    fail: Rename using <scope>_<descriptor>[_<discriminator>].<ext>.
+
+  - id: SOURCES
+    name: Web claims are cited
+    domain: research
+    weight: 1
+    evidence: .fig/evidence.json
+    check: sources
+    rule: >-
+      Any claim marked kind: web carries a url. Non-web claims are exempt.
+    fail: Add the url to every web claim in .fig/evidence.json.
+
+  - id: HANDOFF
+    name: Deliverable handed back correctly
+    domain: artifacts
+    weight: 1
+    evidence: .fig/handoff.yaml
+    check: handoff
+    rule: >-
+      A build ends with a rendered card, at least one follow-up suggestion,
+      and a completion notification.
+    fail: "Set card, a non-empty follow_ups list, and notify: true."
+
+thresholds:
+  pass: 9        # all criteria
+  warn: 7
+  fail: 0

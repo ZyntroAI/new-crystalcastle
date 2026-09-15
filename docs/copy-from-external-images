@@ -1,0 +1,27 @@
+### Copying from External Images
+
+You can copy from any image, not just prior build stages. Docker's `COPY --from=` accepts either a build-stage name (e.g., `builder`) or an external image reference (e.g., `nginx:latest` or `nginx@sha256:...`).
+
+Examples:
+
+```dockerfile
+# copy a single file from the official nginx image
+COPY --from=nginx:latest /etc/nginx/nginx.conf /nginx.conf
+
+# copy a directory from a specific image digest (reproducible)
+COPY --from=nginx:1.25.2@sha256:<digest> /usr/share/nginx/html /usr/share/nginx/html
+
+# copy from a named build stage
+FROM golang:1.21 AS builder
+# ... build steps that produce /app/bin/myapp ...
+FROM alpine:3.18
+COPY --from=builder /app/bin/myapp /usr/local/bin/myapp
+```
+
+Notes and best practices:
+
+- The external image must be accessible to the Docker daemon (it will be pulled from the registry at build time).
+- Using image digests (`@sha256:...`) makes builds reproducible and avoids unexpected changes from image tags.
+- For private registries, ensure build-time access (e.g., `docker login`, BuildKit secret/credential forwarding, or registry credentials configured for your CI).
+- This feature is supported by modern Docker and BuildKit; older Docker engines may not support copying from arbitrary external images.
+- Consider security and size implications: copying files from large or untrusted images can increase image size or introduce unexpected configuration. Inspect the source image and copy only the files you need.

@@ -1,0 +1,148 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 820" width="1100" height="820" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Thai', sans-serif" role="img" aria-labelledby="title desc">
+  <title id="title">สถาปัตยกรรม MCP Gateway → MCP Servers</title>
+  <desc id="desc">แผนภาพแสดงเส้นทางจาก AI Clients ผ่าน MCP Gateway ที่ทำหน้าที่ Auth/Scope/Redaction/Audit ไปยัง MCP Servers 5 หมวด แล้วออกไปยังระบบภายนอก</desc>
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFF7F1"/>
+      <stop offset="1" stop-color="#FDECE3"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#C1502E"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1100" height="820" fill="url(#bg)"/>
+
+  <!-- header -->
+  <text x="550" y="46" text-anchor="middle" font-size="26" font-weight="700" fill="#8C3B22">MCP Gateway → MCP Servers</text>
+  <text x="550" y="72" text-anchor="middle" font-size="14" fill="#A85C3B">สถาปัตยกรรมการประสานงาน · อ้างอิง OWASP LLM Top 10 &amp; AST Tiering (T1–T4)</text>
+  <line x1="80" y1="90" x2="1020" y2="90" stroke="#E8B79C" stroke-width="1.5"/>
+
+  <!-- layer 1: clients -->
+  <text x="80" y="128" font-size="13" font-weight="700" fill="#A85C3B">1 · AI CLIENTS</text>
+  <g>
+    <rect x="80"  y="140" width="290" height="60" rx="12" fill="#FFFFFF" stroke="#E2725B" stroke-width="1.6"/>
+    <text x="225" y="167" text-anchor="middle" font-size="15" font-weight="600" fill="#8C3B22">Claude Desktop / IDE Agent</text>
+    <text x="225" y="187" text-anchor="middle" font-size="12" fill="#A85C3B">ผู้ใช้ทั่วไป · T1–T2</text>
+
+    <rect x="405" y="140" width="290" height="60" rx="12" fill="#FFFFFF" stroke="#E2725B" stroke-width="1.6"/>
+    <text x="550" y="167" text-anchor="middle" font-size="15" font-weight="600" fill="#8C3B22">CrystalCastleX Agent</text>
+    <text x="550" y="187" text-anchor="middle" font-size="12" fill="#A85C3B">ออร์เคสเตรเตอร์ · T2–T3</text>
+
+    <rect x="730" y="140" width="290" height="60" rx="12" fill="#FFFFFF" stroke="#E2725B" stroke-width="1.6"/>
+    <text x="875" y="167" text-anchor="middle" font-size="15" font-weight="600" fill="#8C3B22">Automation / Cron</text>
+    <text x="875" y="187" text-anchor="middle" font-size="12" fill="#A85C3B">งานอัตโนมัติ · T3</text>
+  </g>
+
+  <line x1="225" y1="200" x2="225" y2="268" stroke="#C1502E" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <line x1="550" y1="200" x2="550" y2="268" stroke="#C1502E" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <line x1="875" y1="200" x2="875" y2="268" stroke="#C1502E" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <!-- layer 2: gateway -->
+  <text x="80" y="252" font-size="13" font-weight="700" fill="#A85C3B">2 · MCP GATEWAY / AUTH (T4)</text>
+  <rect x="80" y="268" width="940" height="118" rx="16" fill="#FBDFD3" stroke="#C1502E" stroke-width="2.2"/>
+  <text x="550" y="298" text-anchor="middle" font-size="17" font-weight="700" fill="#8C3B22">MCP Gateway — จุดควบคุมความปลอดภัยจุดเดียว</text>
+
+  <g>
+    <rect x="108" y="316" width="204" height="52" rx="10" fill="#FFFFFF" stroke="#E2725B" stroke-width="1.4"/>
+    <text x="210" y="340" text-anchor="middle" font-size="14" font-weight="600" fill="#8C3B22">Auth</text>
+    <text x="210" y="357" text-anchor="middle" font-size="11" fill="#A85C3B">ยืนยันตัวตน / token</text>
+
+    <rect x="328" y="316" width="204" height="52" rx="10" fill="#FFFFFF" stroke="#E2725B" stroke-width="1.4"/>
+    <text x="430" y="340" text-anchor="middle" font-size="14" font-weight="600" fill="#8C3B22">Scope</text>
+    <text x="430" y="357" text-anchor="middle" font-size="11" fill="#A85C3B">จำกัดสิทธิ์ตาม Tier</text>
+
+    <rect x="548" y="316" width="204" height="52" rx="10" fill="#FFFFFF" stroke="#E2725B" stroke-width="1.4"/>
+    <text x="650" y="340" text-anchor="middle" font-size="14" font-weight="600" fill="#8C3B22">Redaction</text>
+    <text x="650" y="357" text-anchor="middle" font-size="11" fill="#A85C3B">ปิดบังคีย์/ข้อมูลลับ</text>
+
+    <rect x="768" y="316" width="224" height="52" rx="10" fill="#FFFFFF" stroke="#E2725B" stroke-width="1.4"/>
+    <text x="880" y="340" text-anchor="middle" font-size="14" font-weight="600" fill="#8C3B22">Audit / Rate-limit</text>
+    <text x="880" y="357" text-anchor="middle" font-size="11" fill="#A85C3B">บันทึก + จำกัดอัตรา</text>
+  </g>
+
+  <line x1="550" y1="386" x2="550" y2="452" stroke="#C1502E" stroke-width="2.2" marker-end="url(#arrow)"/>
+
+  <!-- layer 3: servers -->
+  <text x="80" y="438" font-size="13" font-weight="700" fill="#A85C3B">3 · MCP SERVERS (ตามหมวด)</text>
+  <g>
+    <!-- marketing -->
+    <rect x="80" y="452" width="176" height="180" rx="12" fill="#FFFFFF" stroke="#E2725B" stroke-width="1.6"/>
+    <text x="168" y="478" text-anchor="middle" font-size="14" font-weight="700" fill="#8C3B22">📢 การตลาด</text>
+    <text x="168" y="497" text-anchor="middle" font-size="11" fill="#A85C3B">T2–T3 · 8 tools</text>
+    <text x="96" y="522" font-size="11.5" fill="#5B3A2E">AdCreative AI</text>
+    <text x="96" y="542" font-size="11.5" fill="#5B3A2E">Google / Meta Ads</text>
+    <text x="96" y="562" font-size="11.5" fill="#5B3A2E">Adpliot</text>
+    <text x="96" y="582" font-size="11.5" fill="#5B3A2E">A/B Testing</text>
+    <text x="96" y="602" font-size="11.5" fill="#5B3A2E">Adlogy</text>
+
+    <!-- development -->
+    <rect x="268" y="452" width="176" height="180" rx="12" fill="#FFFFFF" stroke="#E2725B" stroke-width="1.6"/>
+    <text x="356" y="478" text-anchor="middle" font-size="14" font-weight="700" fill="#8C3B22">🧩 พัฒนา</text>
+    <text x="356" y="497" text-anchor="middle" font-size="11" fill="#A85C3B">T3 · 8 tools</text>
+    <text x="284" y="522" font-size="11.5" fill="#5B3A2E">GitHub / GitLab</text>
+    <text x="284" y="542" font-size="11.5" fill="#5B3A2E">API / GraphQL</text>
+    <text x="284" y="562" font-size="11.5" fill="#5B3A2E">Docker / K8s</text>
+    <text x="284" y="582" font-size="11.5" fill="#5B3A2E">Security / Scan</text>
+    <text x="284" y="602" font-size="11.5" fill="#5B3A2E">Terminal / Shell</text>
+
+    <!-- data -->
+    <rect x="456" y="452" width="176" height="180" rx="12" fill="#FFFFFF" stroke="#E2725B" stroke-width="1.6"/>
+    <text x="544" y="478" text-anchor="middle" font-size="14" font-weight="700" fill="#8C3B22">📊 ข้อมูล</text>
+    <text x="544" y="497" text-anchor="middle" font-size="11" fill="#A85C3B">T2–T3 · 7 tools</text>
+    <text x="472" y="522" font-size="11.5" fill="#5B3A2E">Airtable</text>
+    <text x="472" y="542" font-size="11.5" fill="#5B3A2E">Postgres / Redis</text>
+    <text x="472" y="562" font-size="11.5" fill="#5B3A2E">S3 / Storage</text>
+    <text x="472" y="582" font-size="11.5" fill="#5B3A2E">Search / RAG</text>
+    <text x="472" y="602" font-size="11.5" fill="#5B3A2E">Alerts</text>
+
+    <!-- collaboration -->
+    <rect x="644" y="452" width="176" height="180" rx="12" fill="#FFFFFF" stroke="#E2725B" stroke-width="1.6"/>
+    <text x="732" y="478" text-anchor="middle" font-size="14" font-weight="700" fill="#8C3B22">🔗 ทำงานร่วม</text>
+    <text x="732" y="497" text-anchor="middle" font-size="11" fill="#A85C3B">T1–T2 · 8 tools</text>
+    <text x="660" y="522" font-size="11.5" fill="#5B3A2E">Notion</text>
+    <text x="660" y="542" font-size="11.5" fill="#5B3A2E">Slack / Discord</text>
+    <text x="660" y="562" font-size="11.5" fill="#5B3A2E">Calendar / Task</text>
+    <text x="660" y="582" font-size="11.5" fill="#5B3A2E">Email / Drive</text>
+    <text x="660" y="602" font-size="11.5" fill="#5B3A2E">Team / HR</text>
+
+    <!-- ai core -->
+    <rect x="832" y="452" width="188" height="180" rx="12" fill="#F7CDBB" stroke="#C1502E" stroke-width="1.8"/>
+    <text x="926" y="478" text-anchor="middle" font-size="14" font-weight="700" fill="#8C3B22">🤖 แกนกลาง AI</text>
+    <text x="926" y="497" text-anchor="middle" font-size="11" fill="#A85C3B">T2 · T4 · 8 tools</text>
+    <text x="848" y="522" font-size="11.5" fill="#5B3A2E">AgentMcp / Mesh</text>
+    <text x="848" y="542" font-size="11.5" fill="#5B3A2E">LangChain</text>
+    <text x="848" y="562" font-size="11.5" fill="#5B3A2E">Model / Embedding</text>
+    <text x="848" y="582" font-size="11.5" fill="#5B3A2E">Context / Memory</text>
+    <text x="848" y="602" font-size="11.5" font-weight="700" fill="#8C3B22">MCP Gateway / Auth (T4)</text>
+  </g>
+
+  <line x1="550" y1="632" x2="550" y2="700" stroke="#C1502E" stroke-width="2.2" marker-end="url(#arrow)"/>
+
+  <!-- layer 4: external -->
+  <text x="80" y="686" font-size="13" font-weight="700" fill="#A85C3B">4 · EXTERNAL SYSTEMS</text>
+  <g>
+    <rect x="80"  y="700" width="296" height="62" rx="12" fill="#FFFFFF" stroke="#E2725B" stroke-width="1.5"/>
+    <text x="228" y="727" text-anchor="middle" font-size="14" font-weight="600" fill="#8C3B22">SaaS &amp; APIs</text>
+    <text x="228" y="747" text-anchor="middle" font-size="11.5" fill="#A85C3B">Ads, Notion, Slack, Drive</text>
+
+    <rect x="402" y="700" width="296" height="62" rx="12" fill="#FFFFFF" stroke="#E2725B" stroke-width="1.5"/>
+    <text x="550" y="727" text-anchor="middle" font-size="14" font-weight="600" fill="#8C3B22">Datastores</text>
+    <text x="550" y="747" text-anchor="middle" font-size="11.5" fill="#A85C3B">Postgres, Redis, S3</text>
+
+    <rect x="724" y="700" width="296" height="62" rx="12" fill="#FFFFFF" stroke="#E2725B" stroke-width="1.5"/>
+    <text x="872" y="727" text-anchor="middle" font-size="14" font-weight="600" fill="#8C3B22">Models &amp; Runtimes</text>
+    <text x="872" y="747" text-anchor="middle" font-size="11.5" fill="#A85C3B">LLM, Embedding, K8s</text>
+  </g>
+
+  <!-- legend -->
+  <line x1="80" y1="788" x2="1020" y2="788" stroke="#E8B79C" stroke-width="1.2"/>
+  <g font-size="11.5" fill="#A85C3B">
+    <rect x="80" y="798" width="14" height="14" rx="3" fill="#FFFFFF" stroke="#E2725B"/>
+    <text x="100" y="810">องค์ประกอบ</text>
+    <rect x="200" y="798" width="14" height="14" rx="3" fill="#FBDFD3" stroke="#C1502E"/>
+    <text x="220" y="810">จุดควบคุมความปลอดภัย</text>
+    <text x="430" y="810">T1 อ่านสาธารณะ · T2 อ่านภายใน · T3 เขียน/รัน · T4 จัดการสิทธิ์</text>
+  </g>
+</svg>

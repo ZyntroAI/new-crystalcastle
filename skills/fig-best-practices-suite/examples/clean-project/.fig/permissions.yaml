@@ -1,0 +1,10 @@
+roles:
+  admin: zyntro
+  developer: zyntro
+  reviewer: fig-ai-agent
+  viewer: public
+agents:
+  developer:
+    scope: "01-structure"
+  security:
+    scope: "03-security"

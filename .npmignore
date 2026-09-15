@@ -1,0 +1,6 @@
+**/*
+!README.md
+!LICENSE
+!playwright-cli.js
+!skillCheck.js
+!skills/**

@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>คลังเครื่องมือ MCP & AI — Dashboard</title>
+<style>
+  :root{
+    --bg:#0f172a; --panel:#1e293b; --panel-2:#243348; --line:#334155;
+    --text:#e2e8f0; --muted:#94a3b8; --accent:#818cf8;
+    --t1:#22c55e; --t2:#eab308; --t3:#f97316; --t4:#ef4444;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font:15px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Thai",sans-serif}
+  header{padding:28px 22px 18px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,#111e38,#0f172a)}
+  h1{margin:0 0 6px;font-size:22px}
+  .sub{color:var(--muted);font-size:13px}
+  .wrap{max-width:1180px;margin:0 auto;padding:20px 22px 60px}
+  .stats{display:flex;gap:12px;flex-wrap:wrap;margin:18px 0}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:12px 16px;min-width:120px}
+  .stat b{display:block;font-size:22px}
+  .stat span{color:var(--muted);font-size:12px}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 22px}
+  input[type=search],select{background:var(--panel);color:var(--text);
+    border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px}
+  input[type=search]{flex:1;min-width:220px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .chip{cursor:pointer;user-select:none;background:var(--panel);border:1px solid var(--line);
+    border-radius:999px;padding:6px 13px;font-size:13px;color:var(--muted)}
+  .chip.on{background:#312e81;border-color:var(--accent);color:#e0e7ff}
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;
+    transition:border-color .15s,transform .15s}
+  .card:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .card h3{margin:0 0 8px;font-size:16px;display:flex;align-items:center;gap:8px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+  .badge{border-radius:999px;padding:3px 10px;font-size:11.5px;font-weight:600;
+    border:1px solid transparent}
+  .t1{background:#052e16;color:var(--t1);border-color:#166534}
+  .t2{background:#3b3005;color:var(--t2);border-color:#854d0e}
+  .t3{background:#431407;color:var(--t3);border-color:#9a3412}
+  .t4{background:#450a0a;color:var(--t4);border-color:#991b1b}
+  .ok{background:#052e16;color:#4ade80;border-color:#166534}
+  .cat{background:var(--panel-2);color:var(--muted);border-color:var(--line)}
+  .label{color:var(--muted);font-size:12px;margin:10px 0 5px}
+  .tags{display:flex;gap:6px;flex-wrap:wrap}
+  .tag{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;
+    padding:3px 8px;font-size:11.5px;color:#cbd5e1;font-family:ui-monospace,monospace}
+  .tag.redact{color:#fca5a5;border-color:#7f1d1d}
+  .empty{color:var(--muted);padding:40px 0;text-align:center}
+  footer{color:var(--muted);font-size:12px;border-top:1px solid var(--line);
+    padding:16px 22px;text-align:center}
+  a{color:var(--accent)}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap" style="padding:0">
+    <h1>🧠 คลังเครื่องมือ MCP &amp; AI — Dashboard</h1>
+    <div class="sub">จัดหมวด • ระดับความปลอดภัย T1–T4 • อ้างอิง OWASP LLM Top 10</div>
+  </div>
+</header>
+<div class="wrap">
+  <div class="stats" id="stats"></div>
+  <div class="controls">
+    <input type="search" id="q" placeholder="ค้นหาเครื่องมือ, สิทธิ์, หมวด…" />
+    <select id="tier"><option value="">ทุกระดับ (Tier)</option></select>
+    <select id="cat"><option value="">ทุกหมวด</option></select>
+  </div>
+  <div class="chips" id="chips"></div>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" style="display:none">ไม่พบเครื่องมือที่ตรงกับเงื่อนไข</div>
+</div>
+<footer>แหล่งข้อมูล: <code>registry.yaml</code> • อัปเดต <span id="upd"></span></footer>
+<script>
+const DATA = {
+  "meta": {
+    "version": "1.0",
+    "updated": "2026-09-11",
+    "total": 39,
+    "categories": [
+      {
+        "id": "marketing",
+        "emoji": "📢",
+        "title": "การตลาด & เนื้อหา",
+        "tier": "T2–T3",
+        "security": "🟡 Moderate",
+        "count": 8
+      },
+      {
+        "id": "development",
+        "emoji": "🧩",
+        "title": "พัฒนา & โค้ด & ระบบ",
+        "tier": "T3",
+        "security": "🔴 High",
+        "count": 8
+      },
+      {
+        "id": "data",
+        "emoji": "📊",
+        "title": "ข้อมูล & ฐานข้อมูล & วิเคราะห์",
+        "tier": "T2–T3",
+        "security": "🟡 Moderate",
+        "count": 7
+      },
+      {
+        "id": "collaboration",
+        "emoji": "🔗",
+        "title": "การทำงานร่วมกัน & ประสิทธิภาพ",
+        "tier": "T1–T2",
+        "security": "🟢 Low",
+        "count": 8
+      },
+      {
+        "id": "ai-core",
+        "emoji": "🤖",
+        "title": "แกนกลาง AI & การประสานงาน",
+        "tier": "T2",
+        "security": "🟡 Moderate",
+        "count": 8
+      }
+    ]
+  },
+  "tools": [
+    {
+      "name": "AdCreative AI",
+      "category": "marketing",
+      "categoryTitle": "การตลาด & เนื้อหา",
+      "emoji": "📢",
+      "tier": "T3",
+      "tierClass": "t3",
+      "tierName": "Write / Execute",
+      "status": "ready",
+      "permissions": [
+        "read:campaigns",
+        "write:creative",
+        "generate:media"
+      ],
+      "redact": [
+        "api_key",
+        "oauth_token",
+        "ad_account_id"
+      ]
+    },
+    {
+      "name": "Google Ads MCP",
+      "category": "marketing",
+      "categoryTitle": "การตลาด & เนื้อหา",
+      "emoji": "📢",
+      "tier": "T3",
+      "tierClass": "t3",
+      "tierName": "Write / Execute",
+      "status": "ready",
+      "permissions": [
+        "read:campaigns",
+        "write:campaigns",
+        "read:budget",
+        "write:budget"
+      ],
+      "redact": [
+        "developer_token",
+        "refresh_token",
+        "customer_id"
+      ]
+    },
+    {
+      "name": "Meta Ads MCP",
+      "category": "marketing",
+      "categoryTitle": "การตลาด & เนื้อหา",
+      "emoji": "📢",
+      "tier": "T3",
+      "tierClass": "t3",
+      "tierName": "Write / Execute",
+      "status": "ready",
+      "permissions": [
+        "read:campaigns",
+        "write:campaigns",
+        "read:audience",
+        "write:audience"
+      ],
+      "redact": [
+        "access_token",
+        "ad_account_id",
+        "app_secret"
+      ]
+    },
+    {
+      "name": "AdBuilder Meta Ads",
+      "category": "marketing",
+      "categoryTitle": "การตลาด & เนื้อหา",
+      "emoji": "📢",
+      "tier": "T3",
+      "tierClass": "t3",
+      "tierName": "Write / Execute",
+      "status": "ready",
+      "permissions": [
+        "read:campaigns",
+        "write:creative"
+      ],
+      "redact": [
+        "access_token",
+        "app_secret"
+      ]
+    },
+    {
+      "name": "Advertiser",
+      "category": "marketing",
+      "categoryTitle": "การตลาด & เนื้อหา",
+      "emoji": "📢",
+      "tier": "T3",
+      "tierClass": "t3",
+      "tierName": "Write / Execute",
+      "status": "ready",
+      "permissions": [
+        "read:campaigns",
+        "write:campaigns",
+        "read:analytics"
+      ],
+      "redact": [
+        "api_key",
+        "account_id"
+      ]
+    },
+    {
+      "name": "Adpliot MCP",
+      "category": "marketing",
+      "categoryTitle": "การตลาด & เนื้อหา",
+      "emoji": "📢",
+      "tier": "T2",
+      "tierClass": "t2",
+      "tierName": "Internal read",
+      "status": "ready",
+      "permissions": [
+        "read:revenue",
+        "read:affiliates",
+        "read:analytics"
+      ],
+      "redact": [
+        "api_key",
+        "affiliate_id"
+      ]
+    },
+    {
+      "name": "A/B Testing",
+      "category": "marketing",
+      "categoryTitle": "การตลาด & เนื้อหา",
+      "emoji": "📢",
+      "tier": "T3",
+      "tierClass": "t3",
+      "tierName": "Write / Execute",
+      "status": "ready",
+      "permissions": [
+        "read:experiments",
+        "write:experiments"
+      ],
+      "redact": [
+        "api_key"
+      ]
+    },
+    {
+      "name": "Adlogy MCP Server",
+      "category": "marketing",
+      "categoryTitle": "การตลาด & เนื้อหา",
+      "emoji": "📢",
+      "tier": "T2",
+      "tierClass": "t2",
+      "tierName": "Internal read",
+      "status": "ready",
+      "permissions": [
+        "read:analytics",
+        "read:reports"
+      ],
+      "redact": [
+        "api_key",
+        "workspace_id"
+      ]
+    },
+    {
+      "name": "GitHub MCP",
+      "category": "development",
+      "categoryTitle": "พัฒนา & โค้ด & ระบบ",
+      "emoji": "🧩",
+      "tier": "T3",
+      "tierClass": "t3",
+      "tierName": "Write / Execute",
+      "status": "ready",
+      "permissions": [
+        "read:repos",
+        "write:repos",
+        "read:prs",
+        "write:prs",
+        "read:issues",
+        "write:issues",
+        "read:workflows"
+      ],
+      "redact": [
+        "pat",
+        "oauth_token",
+        "app_private_key"
+      ]
+    },
+    {
+      "name": "GitLab MCP",
+      "category": "development",
+      "categoryTitle": "พัฒนา & โค้ด & ระบบ",
+      "emoji": "🧩",
+      "tier": "T3",
+      "tierClass": "t3",
+      "tierName": "Write / Execute",
+      "status": "ready",
+      "permissions": [
+        "read:repos",
+        "write:repos",
+        "read:pipelines",
+        "write:pipelines",
+        "read:registry"
+      ],
+      "redact": [
+        "personal_access_token",
+        "deploy_token"
+      ]
+    },
+    {
+      "name": "API Connect / GraphQL",
+      "category": "development",
+      "categoryTitle": "พัฒนา & โค้ด & ระบบ",
+      "emoji": "🧩",
+      "tier": "T3",
+      "tierClass": "t3",
+      "tierName": "Write / Execute",
+      "status": "ready",
+      "permissions": [
+        "read:schema",
+        "write:requests",
+        "execute:queries"
+      ],
+      "redact": [
+        "api_key",
+        "bearer_token",
+        "client_secret"
+      ]
+    },
+    {
+      "name": "Activity / Logging",
+      "category": "development",
+      "categoryTitle": "พัฒนา & โค้ด & ระบบ",
+      "emoji": "🧩",
+      "tier": "T2",
+      "tierClass": "t2",
+      "tierName": "Internal read",
+      "status": "ready",
+      "permissions": [
+        "read:logs",
+        "read:audit"
+      ],
+      "redact": [
+        "api_key"
+      ]
+    },
+    {
+      "name": "Workflow / Cron",
+      "category": "development",
+      "categoryTitle": "พัฒนา & โค้ด & ระบบ",
+      "emoji": "🧩",
+      "tier": "T3",
+      "tierClass": "t3",
+      "tierName": "Write / Execute",
+      "status": "ready",
+      "permissions": [
+        "read:schedules",
+        "write:schedules",
+        "execute:triggers"
+      ],
+      "redact": [
+        "api_key",
+        "webhook_secret"
+      ]
+    },
+    {
+      "name": "Docker / Kubernetes",
+      "category": "development",
+      "categoryTitle": "พัฒนา & โค้ด & ระบบ",
+      "emoji": "🧩",
+      "tier": "T3",
+      "tierClass": "t3",
+      "tierName": "Write / Execute",
+      "status": "ready",
+      "permissions": [
+        "read:containers",
+        "write:containers",
+        "read:pods",
+        "execute:deploy"
+      ],
+      "redact": [
+        "kubeconfig",
+        "registry_password",
+        "service_token"
+      ]
+    },
+    {
+      "name": "Security / Scan",
+      "category": "development",
+      "categoryTitle": "พัฒนา & โค้ด & ระบบ",
+      "emoji": "🧩",
+      "tier": "T3",
+      "tierClass": "t3",
+      "tierName": "Write / Execute",
+      "status": "ready",
+      "permissions": [
+        "read:code",
+        "execute:scan",
+        "read:findings"
+      ],
+      "redact": [
+        "api_key",
+        "scan_token"
+      ]
+    },
+    {
+      "name": "Terminal / Shell",
+      "category": "development",
+      "categoryTitle": "พัฒนา & โค้ด & ระบบ",
+      "emoji": "🧩",
+      "tier": "T3",
+      "tierClass": "t3",
+      "tierName": "Write / Execute",
+      "status": "ready",
+      "permissions": [
+        "execute:commands"
+      ],
+      "redact": [
+        "env_secrets",
+        "ssh_key"
+      ]
+    },
+    {
+      "name": "Airtable MCP",
+      "category": "data",
+      "categoryTitle": "ข้อมูล & ฐานข้อมูล & วิเคราะห์",
+      "emoji": "📊",
+      "tier": "T3",
+      "tierClass": "t3",
+      "tierName": "Write / Execute",
+      "status": "ready",
+      "permissions": [
+        "read:bases",
+        "write:bases",
+        "read:records",
+        "write:records"
+      ],
+      "redact": [
+        "personal_access_token",
+        "base_id"
+      ]
+    },
+    {
+      "name": "PostgreSQL / Redis MCP",
+      "category": "data",
+      "categoryTitle": "ข้อมูล & ฐานข้อมูล & วิเคราะห์",
+      "emoji": "📊",
+      "tier": "T3",
+      "tierClass": "t3",
+      "tierName": "Write / Execute",
+      "status": "ready",
+      "permissions": [
+        "read:db",
+        "write:db",
+        "execute:queries"
+      ],
+      "redact": [
+        "db_password",
+        "connection_string",
+        "redis_password"
+      ]
+    },
+    {
+      "name": "S3 / Object Storage",
+      "category": "data",
+      "categoryTitle": "ข้อมูล & ฐานข้อมูล & วิเคราะห์",
+      "emoji": "📊",
+      "tier": "T3",
+      "tierClass": "t3",
+      "tierName": "Write / Execute",
+      "status": "ready",
+      "permissions": [
+        "read:objects",
+        "write:objects",
+        "read:buckets"
+      ],
+      "redact": [
+        "access_key_id",
+        "secret_access_key",
+        "bucket_arn"
+      ]
+    },
+    {
+      "name": "AdMetrics / Dash",
+      "category": "data",
+      "categoryTitle": "ข้อมูล & ฐานข้อมูล & วิเคราะห์",
+      "emoji": "📊",
+      "tier": "T2",
+      "tierClass": "t2",
+      "tierName": "Internal read",
+      "status": "ready",
+      "permissions": [
+        "read:metrics",
+        "read:dashboards"
+      ],
+      "redact": [
+        "api_key",
+        "workspace_id"
+      ]
+    },
+    {
+      "name": "Alerts / Monitoring",
+      "category": "data",
+      "categoryTitle": "ข้อมูล & ฐานข้อมูล & วิเคราะห์",
+      "emoji": "📊",
+      "tier": "T2",
+      "tierClass": "t2",
+      "tierName": "Internal read",
+      "status": "ready",
+      "permissions": [
+        "read:alerts",
+        "write:alerts"
+      ],
+      "redact": [
+        "api_key",
+        "webhook_url"
+      ]
+    },
+    {
+      "name": "Search / Retrieval (RAG)",
+      "category": "data",
+      "categoryTitle": "ข้อมูล & ฐานข้อมูล & วิเคราะห์",
+      "emoji": "📊",
+      "tier": "T2",
+      "tierClass": "t2",
+      "tierName": "Internal read",
+      "status": "ready",
+      "permissions": [
+        "read:index",
+        "execute:search"
+      ],
+      "redact": [
+        "api_key",
+        "index_id"
+      ]
+    },
+    {
+      "name": "Archive / Export",
+      "category": "data",
+      "categoryTitle": "ข้อมูล & ฐานข้อมูล & วิเคราะห์",
+      "emoji": "📊",
+      "tier": "T3",
+      "tierClass": "t3",
+      "tierName": "Write / Execute",
+      "status": "ready",
+      "permissions": [
+        "read:data",
+        "write:exports"
+      ],
+      "redact": [
+        "api_key",
+        "storage_credentials"
+      ]
+    },
+    {
+      "name": "Notion MCP",
+      "category": "collaboration",
+      "categoryTitle": "การทำงานร่วมกัน & ประสิทธิภาพ",
+      "emoji": "🔗",
+      "tier": "T2",
+      "tierClass": "t2",
+      "tierName": "Internal read",
+      "status": "ready",
+      "permissions": [
+        "read:pages",
+        "write:pages",
+        "read:databases",
+        "write:databases"
+      ],
+      "redact": [
+        "integration_token",
+        "database_id"
+      ]
+    },
+    {
+      "name": "Slack / Discord",
+      "category": "collaboration",
+      "categoryTitle": "การทำงานร่วมกัน & ประสิทธิภาพ",
+      "emoji": "🔗",
+      "tier": "T2",
+      "tierClass": "t2",
+      "tierName": "Internal read",
+      "status": "ready",
+      "permissions": [
+        "read:channels",
+        "write:messages",
+        "read:users"
+      ],
+      "redact": [
+        "bot_token",
+        "oauth_token",
+        "webhook_url"
+      ]
+    },
+    {
+      "name": "Calendar / Task",
+      "category": "collaboration",
+      "categoryTitle": "การทำงานร่วมกัน & ประสิทธิภาพ",
+      "emoji": "🔗",
+      "tier": "T2",
+      "tierClass": "t2",
+      "tierName": "Internal read",
+      "status": "ready",
+      "permissions": [
+        "read:events",
+        "write:events",
+        "read:tasks",
+        "write:tasks"
+      ],
+      "redact": [
+        "oauth_token",
+        "refresh_token"
+      ]
+    },
+    {
+      "name": "Email / Inbox",
+      "category": "collaboration",
+      "categoryTitle": "การทำงานร่วมกัน & ประสิทธิภาพ",
+      "emoji": "🔗",
+      "tier": "T2",
+      "tierClass": "t2",
+      "tierName": "Internal read",
+      "status": "ready",
+      "permissions": [
+        "read:mail",
+        "write:mail",
+        "send:mail"
+      ],
+      "redact": [
+        "oauth_token",
+        "refresh_token",
+        "app_password"
+      ]
+    },
+    {
+      "name": "Drive / File",
+      "category": "collaboration",
+      "categoryTitle": "การทำงานร่วมกัน & ประสิทธิภาพ",
+      "emoji": "🔗",
+      "tier": "T2",
+      "tierClass": "t2",
+      "tierName": "Internal read",
+      "status": "ready",
+      "permissions": [
+        "read:files",
+        "write:files",
+        "share:files"
+      ],
+      "redact": [
+        "oauth_token",
+        "refresh_token"
+      ]
+    },
+    {
+      "name": "Todo / Reminder",
+      "category": "collaboration",
+      "categoryTitle": "การทำงานร่วมกัน & ประสิทธิภาพ",
+      "emoji": "🔗",
+      "tier": "T1",
+      "tierClass": "t1",
+      "tierName": "Public read",
+      "status": "ready",
+      "permissions": [
+        "read:tasks",
+        "write:tasks"
+      ],
+      "redact": [
+        "api_key"
+      ]
+    },
+    {
+      "name": "Team / HR",
+      "category": "collaboration",
+      "categoryTitle": "การทำงานร่วมกัน & ประสิทธิภาพ",
+      "emoji": "🔗",
+      "tier": "T1",
+      "tierClass": "t1",
+      "tierName": "Public read",
+      "status": "ready",
+      "permissions": [
+        "read:users",
+        "read:roles"
+      ],
+      "redact": [
+        "api_key",
+        "admin_token"
+      ]
+    },
+    {
+      "name": "Doc / Note",
+      "category": "collaboration",
+      "categoryTitle": "การทำงานร่วมกัน & ประสิทธิภาพ",
+      "emoji": "🔗",
+      "tier": "T1",
+      "tierClass": "t1",
+      "tierName": "Public read",
+      "status": "ready",
+      "permissions": [
+        "read:docs",
+        "write:docs"
+      ],
+      "redact": [
+        "api_key"
+      ]
+    },
+    {
+      "name": "AgentMcp",
+      "category": "ai-core",
+      "categoryTitle": "แกนกลาง AI & การประสานงาน",
+      "emoji": "🤖",
+      "tier": "T2",
+      "tierClass": "t2",
+      "tierName": "Internal read",
+      "status": "ready",
+      "permissions": [
+        "read:agents",
+        "execute:workflows"
+      ],
+      "redact": [
+        "api_key",
+        "agent_token"
+      ]
+    },
+    {
+      "name": "AgentMesh",
+      "category": "ai-core",
+      "categoryTitle": "แกนกลาง AI & การประสานงาน",
+      "emoji": "🤖",
+      "tier": "T2",
+      "tierClass": "t2",
+      "tierName": "Internal read",
+      "status": "ready",
+      "permissions": [
+        "read:agents",
+        "execute:workflows",
+        "write:topology"
+      ],
+      "redact": [
+        "api_key",
+        "mesh_secret"
+      ]
+    },
+    {
+      "name": "AgentPrompt",
+      "category": "ai-core",
+      "categoryTitle": "แกนกลาง AI & การประสานงาน",
+      "emoji": "🤖",
+      "tier": "T2",
+      "tierClass": "t2",
+      "tierName": "Internal read",
+      "status": "ready",
+      "permissions": [
+        "read:prompts",
+        "write:prompts"
+      ],
+      "redact": [
+        "api_key",
+        "template_secret"
+      ]
+    },
+    {
+      "name": "AgentNews / Intelligence",
+      "category": "ai-core",
+      "categoryTitle": "แกนกลาง AI & การประสานงาน",
+      "emoji": "🤖",
+      "tier": "T2",
+      "tierClass": "t2",
+      "tierName": "Internal read",
+      "status": "ready",
+      "permissions": [
+        "read:news",
+        "read:analytics"
+      ],
+      "redact": [
+        "api_key"
+      ]
+    },
+    {
+      "name": "LangChain / LLM Core",
+      "category": "ai-core",
+      "categoryTitle": "แกนกลาง AI & การประสานงาน",
+      "emoji": "🤖",
+      "tier": "T2",
+      "tierClass": "t2",
+      "tierName": "Internal read",
+      "status": "ready",
+      "permissions": [
+        "read:chains",
+        "execute:models",
+        "read:memory"
+      ],
+      "redact": [
+        "api_key",
+        "model_token"
+      ]
+    },
+    {
+      "name": "MCP Gateway / Auth",
+      "category": "ai-core",
+      "categoryTitle": "แกนกลาง AI & การประสานงาน",
+      "emoji": "🤖",
+      "tier": "T4",
+      "tierClass": "t4",
+      "tierName": "Admin / Security",
+      "status": "ready",
+      "permissions": [
+        "read:auth",
+        "write:auth",
+        "read:scopes",
+        "write:scopes"
+      ],
+      "redact": [
+        "gateway_secret",
+        "signing_key",
+        "client_secret"
+      ]
+    },
+    {
+      "name": "Model / Embedding",
+      "category": "ai-core",
+      "categoryTitle": "แกนกลาง AI & การประสานงาน",
+      "emoji": "🤖",
+      "tier": "T2",
+      "tierClass": "t2",
+      "tierName": "Internal read",
+      "status": "ready",
+      "permissions": [
+        "read:models",
+        "execute:embeddings"
+      ],
+      "redact": [
+        "api_key",
+        "model_token"
+      ]
+    },
+    {
+      "name": "Context / Memory",
+      "category": "ai-core",
+      "categoryTitle": "แกนกลาง AI & การประสานงาน",
+      "emoji": "🤖",
+      "tier": "T2",
+      "tierClass": "t2",
+      "tierName": "Internal read",
+      "status": "ready",
+      "permissions": [
+        "read:memory",
+        "write:memory"
+      ],
+      "redact": [
+        "api_key",
+        "storage_token"
+      ]
+    }
+  ]
+};
+const {meta, tools} = DATA;
+const $ = (s)=>document.querySelector(s);
+
+/* stats */
+$('#stats').innerHTML = `
+  <div class="stat"><b>${meta.total}</b><span>เครื่องมือทั้งหมด</span></div>
+  <div class="stat"><b>${meta.categories.length}</b><span>หมวด</span></div>
+  <div class="stat"><b>${tools.filter(t=>t.tier==='T3'||t.tier==='T4').length}</b><span>ความเสี่ยงสูง (T3–T4)</span></div>
+  <div class="stat"><b>${tools.reduce((n,t)=>n+t.redact.length,0)}</b><span>ฟิลด์ที่ต้องปิดบัง</span></div>`;
+$('#upd').textContent = meta.updated;
+
+/* filters */
+$('#tier').insertAdjacentHTML('beforeend',
+  [...new Set(tools.map(t=>t.tier))].sort().map(t=>`<option value="${t}">${t}</option>`).join(''));
+$('#cat').insertAdjacentHTML('beforeend',
+  meta.categories.map(c=>`<option value="${c.id}">${c.emoji} ${c.title}</option>`).join(''));
+
+let activeCat = '';
+$('#chips').innerHTML = `<span class="chip on" data-cat="">ทั้งหมด</span>` +
+  meta.categories.map(c=>`<span class="chip" data-cat="${c.id}">${c.emoji} ${c.title} (${c.count})</span>`).join('');
+$('#chips').addEventListener('click', e=>{
+  const chip = e.target.closest('.chip'); if(!chip) return;
+  activeCat = chip.dataset.cat;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on', c===chip));
+  render();
+});
+$('#q').addEventListener('input', render);
+$('#tier').addEventListener('change', render);
+$('#cat').addEventListener('change', ()=>{ activeCat=''; 
+  document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on', c.dataset.cat==='')); render(); });
+
+function render(){
+  const q = $('#q').value.trim().toLowerCase();
+  const tier = $('#tier').value;
+  const catSel = $('#cat').value;
+  const list = tools.filter(t=>{
+    if(activeCat && t.category!==activeCat) return false;
+    if(catSel && t.category!==catSel) return false;
+    if(tier && t.tier!==tier) return false;
+    if(q){
+      const hay = [t.name,t.categoryTitle,t.tier,...t.permissions,...t.redact].join(' ').toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  $('#grid').innerHTML = list.map(t=>`
+    <div class="card">
+      <h3>${t.emoji} ${t.name}</h3>
+      <div class="row">
+        <span class="badge ${t.tierClass}">${t.tier} · ${t.tierName}</span>
+        <span class="badge ok">✅ ${t.status}</span>
+        <span class="badge cat">${t.categoryTitle}</span>
+      </div>
+      <div class="label">สิทธิ์ (permissions)</div>
+      <div class="tags">${t.permissions.map(p=>`<span class="tag">${p}</span>`).join('')}</div>
+      <div class="label">ปิดบังเมื่อบันทึก (redact)</div>
+      <div class="tags">${t.redact.map(r=>`<span class="tag redact">${r}</span>`).join('')}</div>
+    </div>`).join('');
+  $('#empty').style.display = list.length ? 'none' : 'block';
+}
+render();
+</script>
+</body>
+</html>
