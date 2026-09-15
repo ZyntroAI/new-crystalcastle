@@ -1,0 +1,4 @@
+mission: >-
+  Ship a documentation site for the Acme design system, authored in the
+  workspace and published from this project.
+owner: acme-docs
