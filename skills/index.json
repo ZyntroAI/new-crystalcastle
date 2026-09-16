@@ -91,5 +91,18 @@
       "handoff-verification"
     ],
     "priority": 1
+  },
+  "workflow-permission-check": {
+    "path": "skills/workflow-permission-check",
+    "depends": [],
+    "provides": [
+      "required",
+      "can_write",
+      "missing",
+      "explain",
+      "check_workflow_write",
+      "check_many"
+    ],
+    "priority": 1
   }
 }
