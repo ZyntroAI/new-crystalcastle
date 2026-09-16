@@ -31,8 +31,8 @@ domain — chooses the deliverable shape and governs handoff.
   with a non-empty `type`.
 - Reference context never initiates a build. A recalled or existing artifact is
   never a substitute for a new request — new request means new work now.
-- Hand back through the card the platform renders. Do not paste a storage URL
-  in place of a card the user was going to see anyway.
+- Hand back through the card the platform renders. Do not paste a storage URL in
+  place of a card the user was going to see anyway.
 - End a build with the three beats: what is now true, the one detail that shows
   attention, the next thing held ready.
 - Link what already existed (an issue, a PR, a cited page) normally; anything

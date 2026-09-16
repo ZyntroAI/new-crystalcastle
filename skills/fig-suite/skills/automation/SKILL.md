@@ -30,7 +30,8 @@ domain — governs verification before handoff.
   verified result, not an expectation.
 - Verify in order and stop at the first rung that answers the question:
   deterministic checks (tests, typecheck, a curl against the endpoint), then a
-  screenshot of the running thing, then the user's eyes when only they settle it.
+  screenshot of the running thing, then the user's eyes when only they settle
+  it.
 - A failing gate is a stop, not a line item. The fix becomes step one; never
   sequence past it.
 - Work discarded on the way to an error must never read as success.

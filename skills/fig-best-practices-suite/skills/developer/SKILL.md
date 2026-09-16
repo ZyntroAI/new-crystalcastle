@@ -16,8 +16,8 @@ convention; never invent a new layout when the repository already has one.
 
 ## Scope
 
-Self-contained sub-skill of the Fig Best Practices Suite. Acts only within
-layer `01-structure`.
+Self-contained sub-skill of the Fig Best Practices Suite. Acts only within layer
+`01-structure`.
 
 ## Rules
 
