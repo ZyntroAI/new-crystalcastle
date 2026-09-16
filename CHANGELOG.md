@@ -6,6 +6,11 @@ Entries are generated from merged pull requests on `main`, newest first, and gro
 
 Repo layout notes live in [`README.md`](./README.md); architecture in [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 
+## [2026-09-16]
+
+### Added
+- **PR #172** — test(best-practices): cover the `.env` branch of the `SECURITY` check in `fig-best-practices-suite`. The branch had zero coverage and could not have had any: neither fixture ships a `.env`, the repository root `.gitignore` excludes `.env` and `.env.*`, and the test file never referenced it — so the rule was effectively dead code from the day it shipped. Pinned by two tests that build the file at runtime rather than committing a fixture, since committing a `.env` would contradict the repository's own guidance. Both assert the baseline project passes first, so a fixture change cannot silently make them vacuous. Tests: 31 passed (was 29).
+
 ## [2026-09-14]
 
 ### Added
