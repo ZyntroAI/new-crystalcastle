@@ -1,0 +1,195 @@
+Here's a comprehensive research-backed framework for handling **already completed but failed jobs** — structured from capture → diagnosis → remediation → prevention.
+
+---
+
+# 📋 Framework: Handling Completed Failed Jobs
+
+## I. Definition & Scope
+A **completed failed job** = execution terminated, status = failed, no longer running — distinct from stuck/pending jobs.
+
+| Category | Description |
+|---|---|
+| Transient failure | Network blip, rate limit, temporary unavailability — likely to succeed on retry |
+| Permanent failure | Bad input, invalid config, missing resource, auth error — will fail again unless fixed |
+| Systemic failure | Shared outage, schema change, downstream API shift — affects multiple jobs |
+
+---
+
+## II. Capture & Preservation — Don't Lose Context
+Before anything else: **freeze the evidence** so you can understand *why* it failed.
+
+### What to Preserve
+- Full payload/input parameters
+- Timestamps: started, ended, duration
+- Error stack trace, exit code, logs
+- Attempt number, max retries
+- Worker/node/environment info
+- Partial outputs, checkpoints, side-effects state
+
+### DLQ Pattern (Dead-Letter Queue) — Standard Industry Approach
+```
+┌─────────────┐     retry × N      ┌─────────────┐
+│  Retry Loop │ ────────────────→ │  DLQ / Dead │
+│ (active/failed)                 │  Jobs Store │
+└─────────────┘                   └─────┬───────┘
+                                        │
+                     inspect → diagnose → fix → replay or archive
+```
+- **Never auto-delete** after final failure — move to DLQ instead
+- **Never auto-replay** entire DLQ — fixes get re-broken; only replay after root-cause resolution
+- **Alert on DLQ growth** — rising count = systemic issue
+- **Set retention/TTL** — archive after configurable period (e.g., 30–90 days)
+
+### Schema Example
+```sql
+CREATE TABLE dead_letter_jobs (
+  id UUID PRIMARY KEY,
+  original_type TEXT NOT NULL,
+  payload JSONB,
+  error_summary TEXT,
+  error_stack TEXT,
+  attempt_count INT DEFAULT 1,
+  max_attempts INT,
+  first_failed_at TIMESTAMPTZ,
+  last_failed_at TIMESTAMPTZ,
+  status TEXT DEFAULT 'pending_review', -- pending_review, fixed, replayed, archived
+  replay_job_id UUID,
+  notes TEXT -- for RCA findings
+);
+```
+
+---
+
+## III. Diagnosis Workflow — Step-by-Step
+
+### 1. Triage & Classify
+| Check | Action |
+|---|---|
+| Same error across many jobs? | → Systemic issue — stop individual replays, fix the root cause first |
+| Intermittent / time-related? | → Transient — safe to retry with backoff+jitter |
+| Consistent same failure? | → Permanent — fix data/code/config first |
+| Dependent on already-run succeeded work? | → Idempotency check needed — avoid duplicates |
+
+### 2. Check Idempotency Before Replay
+- **Replay from start** = may duplicate already-completed work → use only when downstream state is corrupted
+- **Resume from failure point** = use checkpoints/partial progress tracking — safer, preserves outputs
+- **Mark as succeeded** (manual override) = when failure is known-harmless or externally resolved — clears from backlog without re-running
+
+### 3. RCA (Root Cause Analysis) — 5-Why for Jobs
+1. What exactly failed? (error message + stack)
+2. What input/state triggered it?
+3. What changed since last success? (code, config, data, upstream API)
+4. What should have happened instead?
+5. What prevents this from being caught earlier?
+
+---
+
+## IV. Remediation Patterns — Operational Playbook
+
+### Pattern A: Retry (Transient Errors)
+- Exponential backoff + jitter — prevents thundering herd
+```python
+# Exponential backoff with jitter
+def next_delay(attempt: int) -> float:
+    base = 2 ** min(attempt, 10)  # cap at ~1024s
+    return base + random.uniform(0, base * 0.2)
+```
+- Retry only HTTP 429/5xx/network — **never** 400/401/403 unless token rotation applied
+- Per-job retry limit = 3–5 typical; then → DLQ
+
+### Pattern B: Fix & Replay (Permanent Errors)
+1. Extract failing input from DLQ
+2. Reproduce locally/staging
+3. Apply fix (code, data migration, config update)
+4. Replay **one** job → verify
+5. Batch-replay remaining matching jobs
+6. Update alerting thresholds
+
+### Pattern C: Resume / Checkpointed Recovery
+- Long-running jobs must write incremental progress/checkpoints
+- On re-run: resume from last confirmed checkpoint
+- Example: ETL → commit offsets; file processing → last-written line; batch → processed ID marker
+
+### Pattern D: Skip & Mark Complete
+- Failure is cosmetic, duplicate, or externally fixed
+- Record rationale in audit trail
+- Do **not** suppress — log + notify for pattern detection
+
+### Pattern E: Bulk / Historical Replay
+- Use filters: `failed AND created_at > X AND error_type = Y`
+- Throttle concurrency to avoid overwhelming downstream
+- Keep replay window separate from peak hours
+- Track replay success rate separately from fresh jobs
+
+---
+
+## V. Platform-Specific Guidance
+
+### Kubernetes Jobs
+- `restartPolicy: OnFailure` → retries within pod
+- `restartPolicy: Never` → job stays failed → manual re-create
+- `ttlSecondsAfterFinished` → auto-clean after retention period
+- Recreate with:
+```bash
+kubectl create job --from=failed-job-name retry-$(date +%s)
+```
+
+### Airflow
+- Clear task instance → re-runs from that node; preserves upstream successes
+- `--dry-run` first to verify scope
+- `depends_on_past` → be careful with historical replays
+- Backfill: `airflow dags backfill --reset-dagruns`
+
+### GitHub Actions CI/CD
+- Re-run failed jobs only: UI → Re-run failed jobs
+- `concurrency` grouping prevents overlapping runs during replays
+- Use `if: failure()` to capture logs/artifacts before exit
+
+### Celery / Sidekiq / BullMQ
+- Built-in retry → exhausted → dead-letter
+- Explicit DLQ inspection API
+- Bulk replay by queue/tag
+
+---
+
+## VI. Prevention — Stop Them From Recurring
+
+### Defensive Design
+| Principle | Implementation |
+|---|---|
+| **Idempotency** | Replay must not duplicate; use unique request IDs / upsert patterns |
+| **Checkpointing** | Long jobs → persist progress; resume without re-processing everything |
+| **Error Typing** | Distinguish transient vs permanent in code → auto-policy applies |
+| **Circuit Breakers** | 5+ failures to same service → pause queue; prevent cascading |
+| **Dead Man Switch** | Unresolved DLQ entries > threshold → escalate to on-call |
+
+### Observability & Alerting
+- **Rate of new failures** > threshold → alert
+- **DLQ size growth** → alert
+- **Retry success %** dropping → alert
+- **Mean time to resolution (MTTR)** tracking → process improvement
+- Failure reason distribution dashboard → identify hotspots
+
+### Operational Hygiene
+- Periodic DLQ review meetings → turn incidents into tests
+- Add failure scenario to staging test suite
+- Update retry policies as error patterns emerge
+- Document "known failure + fix" runbook entries
+
+---
+
+## VII. Decision Matrix — Quick Reference
+
+| Situation | Recommended Action |
+|---|---|
+| Network/timeout/5xx → succeeded on manual retry | Adjust retry policy; auto-retry transient |
+| Bad data / validation error → same every time | Fix source → replay; add pre-validation |
+| Downstream API changed → all jobs failing | Fix integration → replay all; add contract test |
+| Job partially succeeded → safe to resume | Resume from checkpoint; do not re-run from start |
+| Duplication risk on re-run | Idempotent replay; unique key; manual approval gate |
+| Legacy/unmaintained job → unclear state | Archive; document; accept if business impact low |
+| Critical path → SLA violation | Escalate; manual fix; temporary bypass + follow-up fix |
+
+---
+
+Would you like me to turn this into a ready-to-deploy **DLQ + replay service spec** (SQL schema + Python replay worker + alerting rules) you can drop directly into your stack? I can also adapt this specifically to your platform — Kubernetes, Airflow, or Celery — just let me know.
