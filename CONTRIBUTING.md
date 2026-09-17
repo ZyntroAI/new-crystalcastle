@@ -221,3 +221,31 @@ gh pr create --title "feat: your title" --body-file .github/PULL_REQUEST_TEMPLAT
 Shall I push this directly to `zyntromedia-patch-15` (PR #181) so it's ready to merge alongside the README?
 
 Tap **Fast** then **Pro** and I'll add it as a committed file right now.
+# 🤝 คู่มือการร่วมพัฒนา — ZyntroAI / New CrystalCastle
+
+ยินดีต้อนรับสู่โครงการ! 🚀  
+เอกสารนี้กำหนดมาตรฐานการเขียนโค้ด, สาขา, PR และการรีวิว
+
+---
+
+## 📂 โครงสร้างรีโป
+| โฟลเดอร์ | หน้าที่ |
+|---|---|
+| `frontend/` | UI/UX • React/TS |
+| `backend/` | API • FastAPI • Python |
+| `docs/` | เอกสาร • คู่มือ |
+| `.github/` | เวิร์กโฟลว์ • เทมเพลต PR |
+
+---
+
+## 🌿 มาตรฐานสาขา (Branch Naming)
+- `main` — รุ่นพร้อมใช้
+- `dev` — สาขาพัฒนาหลัก
+- `feat/ชื่อ` — ฟีเจอร์ใหม่
+- `fix/ชื่อ` — แก้ไขบั๊ก
+- `docs/...` — เอกสารเท่านั้น
+- `stack/ชื่อ` — **สำหรับ Stacked PRs**
+
+---
+
+## ✍️ ข้อความคอมมิต (Conventional Commits)
