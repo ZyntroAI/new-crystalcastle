@@ -1,0 +1,3 @@
+ALTER TABLE whatsapp_responses
+ADD COLUMN copilot_summary TEXT,
+ADD COLUMN ai_review JSONB;

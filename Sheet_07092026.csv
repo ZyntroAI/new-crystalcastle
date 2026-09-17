@@ -1,0 +1,9 @@
+﻿Component,Trigger,Purpose
+CodeQL JS/TS,PR · Push main · Weekly,Static security + quality analysis
+CodeQL Python,PR · Push main · Weekly,Full codeql/python-all query pack
+CodeQL Actions,PR · Push main · Weekly,Workflow security scanning
+Dependency Review,Every PR,Block merge on HIGH/CRITICAL vulnerabilities
+License Scan,Every PR,Enforce MIT/BSD/Apache/ISC compliance
+SBOM Generation,Tag v* · Release,SPDX JSON bill of materials
+Dependabot,Every Saturday,Auto-open PRs to update npm/pip/Actions
+Branch Protection,Always,Require all checks pass before merge

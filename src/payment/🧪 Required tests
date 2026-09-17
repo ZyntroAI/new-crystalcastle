@@ -1,0 +1,75 @@
+import { describe, expect, it } from "vitest";
+import { evaluatePayment } from "@/payment/eligibility";
+
+describe("evaluatePayment", () => {
+  it("bypasses zero amount", () => {
+    expect(
+      evaluatePayment({
+        amount: 0,
+      }),
+    ).toMatchObject({
+      required: false,
+      bypass: true,
+      reason: "zero_amount",
+    });
+  });
+
+  it("bypasses trial users", () => {
+    expect(
+      evaluatePayment({
+        amount: 100,
+        isTrial: true,
+      }),
+    ).toMatchObject({
+      bypass: true,
+      reason: "trial",
+    });
+  });
+
+  it("bypasses sponsors", () => {
+    expect(
+      evaluatePayment({
+        amount: 100,
+        isSponsor: true,
+      }),
+    ).toMatchObject({
+      bypass: true,
+      reason: "sponsor",
+    });
+  });
+
+  it("bypasses 100 percent coupon", () => {
+    expect(
+      evaluatePayment({
+        amount: 100,
+        couponPercent: 100,
+      }),
+    ).toMatchObject({
+      bypass: true,
+      reason: "full_coupon",
+    });
+  });
+
+  it("bypasses privileged roles", () => {
+    expect(
+      evaluatePayment({
+        amount: 100,
+        role: "admin",
+      }),
+    ).toMatchObject({
+      bypass: true,
+      reason: "privileged_role",
+    });
+  });
+
+  it("requires payment for normal users", () => {
+    expect(
+      evaluatePayment({
+        amount: 100,
+      }),
+    ).toEqual({
+      required: true,
+      bypass: false,
+    });
+  });
+});

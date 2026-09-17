@@ -1,0 +1,50 @@
+import { useEffect, useState } from "react";
+
+export default function Dashboard() {
+  const [responses, setResponses] = useState([]);
+
+  useEffect(() => {
+    fetch("http://localhost:3000/whatsapp_responses")
+      .then(res => res.json())
+      .then(data => setResponses(data));
+  }, []);
+
+  const triggerAction = async (replyId, prNumber) => {
+    await fetch("/api/trigger", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ replyId, prNumber })
+    });
+  };
+
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">WhatsApp → GitHub Dashboard</h1>
+      <table className="table-auto w-full border">
+        <thead>
+          <tr>
+            <th>User</th><th>Reply</th><th>PR</th><th>Timestamp</th><th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {responses.map(r => (
+            <tr key={r.id}>
+              <td>{r.user_number}</td>
+              <td>{r.reply_id}</td>
+              <td>{r.pr_number}</td>
+              <td>{r.timestamp}</td>
+              <td>
+                <button
+                  className="bg-blue-500 text-white px-2 py-1 rounded"
+                  onClick={() => triggerAction(r.reply_id, r.pr_number)}
+                >
+                  Trigger
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}

@@ -1,0 +1,211 @@
+# 📚 GitHub Actions — Workflow Commands Reference (Complete Guide)
+Based on official GitHub Enterprise Server 3.21 documentation ✅
+
+---
+
+## 📋 General Overview
+
+**Workflow commands** allow workflow steps to communicate with the runner: setting environment variables, defining outputs, logging messages, masking secrets, adding summaries, and more.
+
+> General Bash format:
+> ```bash
+> echo "::command parameter=value::content"
+> ```
+> ⚠️ If using Command Prompt (CMD), **omit the double quotation marks**.
+
+---
+
+## 🛠️ Complete Command Reference
+
+### 🔹 Log Messages / Annotations
+
+| Command | Purpose | Example |
+|---|---|---|
+| `::debug::message` | Debug message (visible only if `ACTIONS_STEP_DEBUG=true`) | `echo "::debug::Variable value: $VAR"` |
+| `::notice::` | Informational message + optional file/line annotation | `echo "::notice file=app.js,line=5::File modified"` |
+| `::warning::` | Warning message + annotation | `echo "::warning file=app.js,line=5::Potential issue"` |
+| `::error::` | Error message + annotation | `echo "::error file=app.js,line=5::Validation failed"` |
+
+> Common parameters for `notice`/`warning`/`error`:
+> - `file`, `line`, `endLine`, `col`, `endColumn` → location reference
+> - `title` → custom display title
+
+---
+
+### 🔹 Grouping Log Output
+
+```bash
+echo "::group::Group Title"
+echo "Line 1 inside the group"
+echo "Line 2 inside the group"
+echo "::endgroup::"
+```
+
+---
+
+### 🔹 Masking Secret Values
+
+```bash
+# Mask a literal string value
+echo "::add-mask::Mona The Octocat"
+# → Appears in logs as ***
+
+# Mask an environment variable value
+MY_SECRET="secret-value-here"
+echo "::add-mask::$MY_SECRET"
+```
+
+> ⚠️ **Important Rule:** Mask the secret **before** generating or using it in any output.
+
+---
+
+### 🔹 Environment Variables — Share Across Steps
+
+```bash
+# Set variable available to ALL subsequent steps in the same job
+echo "MY_VARIABLE=value" >> "$GITHUB_ENV"
+
+# Read the variable later
+echo "The value is $MY_VARIABLE"
+```
+
+> ❌ System-defined variables such as `GITHUB_*`, `RUNNER_*`, `CI` cannot be overwritten.
+
+---
+
+### 🔹 Output Parameters — Share Across Steps Within the Same Job
+
+```bash
+# Define an output value
+echo "SELECTED_COLOR=green" >> "$GITHUB_OUTPUT"
+
+# Read it in subsequent steps
+echo "Color: ${{ steps.step_id.outputs.SELECTED_COLOR }}"
+```
+
+---
+
+### 🔹 State — Share Between Main Steps and Pre/Post Actions
+
+```bash
+# In the main step: store state
+echo "processID=12345" >> "$GITHUB_STATE"
+
+# In the post step: retrieve stored state
+echo "PID: $STATE_processID"
+```
+
+> The `GITHUB_STATE` file is accessible only within the same step and its associated cleanup (`post:`) step.
+
+---
+
+### 🔹 System Path — Add to PATH
+
+```bash
+echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+```
+
+> The directory is prepended to PATH and becomes available for all subsequent steps.
+
+---
+
+### 🔹 Step Summary — Markdown Support ✨
+
+```bash
+# Append content (accumulates across writes)
+echo "### Test Results" >> $GITHUB_STEP_SUMMARY
+echo "- ✅ Test 1" >> $GITHUB_STEP_SUMMARY
+echo "- ❌ Test 2" >> $GITHUB_STEP_SUMMARY
+
+# Overwrite the entire summary
+echo "Brand new summary content" > $GITHUB_STEP_SUMMARY
+
+# Remove summary content entirely
+rm $GITHUB_STEP_SUMMARY
+```
+
+> ✅ Supports full **GitHub Flavored Markdown (GFM)**
+> ⚠️ Limit: **1 MiB** per step • Maximum **20 summaries** per job
+> Secrets added to summaries are automatically masked
+
+---
+
+### 🔹 Pause / Resume Command Processing
+
+```bash
+# Generate a unique token
+STOP_TOKEN=$(uuidgen)
+
+# Pause workflow command interpretation
+echo "::stop-commands::$STOP_TOKEN"
+
+# --- Workflow commands are NO LONGER interpreted ---
+
+# Resume workflow command interpretation
+echo "::$STOP_TOKEN::"
+```
+
+> ⚠️ Always use a **random, unique token** for each workflow run.
+
+---
+
+## 📋 Toolkit Equivalence Table
+
+| `actions/toolkit` Function | Equivalent Workflow Command | Availability Scope |
+|---|---|---|
+| `core.debug()` | `::debug::` | Conditional logging |
+| `core.notice()` | `::notice::` | Annotation + Log |
+| `core.warning()` | `::warning::` | Annotation + Log |
+| `core.error()` | `::error::` | Annotation + Log |
+| `core.startGroup()` | `::group::` | Group log lines |
+| `core.endGroup()` | `::endgroup::` | Close log group |
+| `core.exportVariable()` | `VAR=value >> $GITHUB_ENV` | All steps in job |
+| `core.setOutput()` | `NAME=value >> $GITHUB_OUTPUT` | Subsequent steps |
+| `core.saveState()` | `KEY=value >> $GITHUB_STATE` | Main step → Post step |
+| `core.addMask()` | `::add-mask::value` | Mask secret value |
+| `core.addPath()` | `path >> $GITHUB_PATH` | Modify system PATH |
+
+---
+
+## ⚡ Complete YAML Example
+
+```yaml
+name: Workflow Commands Demonstration
+on: push
+
+jobs:
+  demonstrate-commands:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set variables and outputs
+        id: initial-step
+        run: |
+          echo "APP_NAME=MyApplication" >> "$GITHUB_ENV"
+          echo "VERSION=1.0.0" >> "$GITHUB_OUTPUT"
+          echo "::debug::Variables set successfully"
+
+      - name: Generate Markdown summary
+        run: |
+          echo "## ✅ Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "- **Application:** $APP_NAME" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** ${{ steps.initial-step.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: File-location annotations
+        run: |
+          echo "::notice file=README.md,line=1,title=Documentation::Remember to update documentation"
+          echo "::warning file=src/app.js,line=42::Possible null value"
+```
+
+---
+
+## ⚠️ Important Notes
+
+- **Command names are case-insensitive.**
+- **Summaries:** Once a step completes, `GITHUB_STEP_SUMMARY` content is uploaded and **cannot be modified further**.
+- **Limits:** Maximum 1 MiB per summary, 20 summaries per job.
+- **Secrets:** Masked values are automatically replaced with `***` in all logs and summaries.
+- **System Variables:** `GITHUB_ENV`, `GITHUB_OUTPUT`, `GITHUB_STATE`, `GITHUB_PATH`, `GITHUB_STEP_SUMMARY` are temporary files managed by GitHub.
+
+---
+
+Would you like me to integrate this guide as a **reusable reference file** in your workflows repository, or create **ready-to-copy example templates**? 📄⚙️✅

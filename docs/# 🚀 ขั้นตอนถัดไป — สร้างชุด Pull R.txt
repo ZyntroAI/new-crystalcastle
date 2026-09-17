@@ -1,0 +1,813 @@
+# 🚀 ขั้นตอนถัดไป — สร้างชุด Pull Request Templates & Workflow Gatekeepers
+
+จากเอกสาร 6 ฉบับที่ให้มา จะแปลงเป็น **Templates พร้อมใช้งาน + เวิร์กโฟลว์การตรวจสอบอัตโนมัติ** ที่ผสานเข้ากับ CI/CD และกระบวนการพัฒนาของเราได้ทันทีครับ
+
+---
+
+## 📁 .github/PULL_REQUEST_TEMPLATE/ — โฟลเดอร์และไฟล์ที่ต้องสร้าง
+```
+.github/
+└── PULL_REQUEST_TEMPLATE/
+    ├── default.md          # เทมเพลตหลัก (ใช้ถ้าไม่เลือกประเภท)
+    ├── security.md         # แก้ไขความปลอดภัย
+    ├── release.md           # ปล่อยเวอร์ชัน
+    ├── infra-config.md      # ปรับแต่งโครงสร้างพื้นฐาน
+    ├── docs.md              # อัปเดตเอกสาร
+    ├── dependencies.md      # อัปเดตแพ็กเกจ
+    └── bugfix.md            # แก้ไขบั๊ก
+```
+
+---
+
+## 📄 1. เทมเพลตหลัก — `.github/PULL_REQUEST_TEMPLATE.md`
+```markdown
+## 📝 Pull Request Summary
+<!-- เลือกประเภท: 🐛 Bugfix | ✨ Feature | 🔒 Security | ⚙️ Infra | 📚 Docs | 📦 Release -->
+**Type:** ________
+
+**Issue / Ticket:** Fixes #______
+
+### 🎯 What Changed & Why
+- ________
+- ________
+
+### 🧪 How to Test
+```bash
+# Command or steps
+```
+
+### ✅ Checklist
+- [ ] Code builds locally
+- [ ] Tests added / updated
+- [ ] Documentation updated
+- [ ] CI/CD pipeline passes
+- [ ] No secrets committed
+- [ ] Self-reviewed
+
+---
+> เลือกเทมเพลตเฉพาะทางจากเมนูเมื่อสร้าง PR หรือใช้ด้านล่างตามประเภทงาน
+```
+
+---
+
+## 📄 2. เทมเพลตแยกตามประเภทงาน
+
+### 🔒 `.github/PULL_REQUEST_TEMPLATE/security.md`
+```markdown
+## 🔒 Security Summary
+- **Vulnerability / Risk:** ________
+- **Why critical:** ________
+
+### 🛠 Changes Introduced
+- [ ] Dependency upgrade → `______` (`vX.Y.Z` → `vA.B.C`)
+- [ ] Auth / RBAC improvement
+- [ ] Encryption / data protection
+- [ ] Secret management improvement
+- [ ] Input validation / sanitization
+- [ ] Other: ________
+
+### ✅ Checklist
+- [ ] Issue reproduced & confirmed fixed
+- [ ] Fix validated & tested
+- [ ] Secrets stored securely (no plaintext)
+- [ ] Compliance requirements met
+- [ ] CI/CD pipeline passes
+- [ ] Security scan results reviewed
+```
+
+### 📦 `.github/PULL_REQUEST_TEMPLATE/release.md`
+```markdown
+## 📦 Release Summary
+- **Version:** `vX.Y.Z`
+- **Why this release matters:** ________
+
+### 🛠 Changes Introduced
+- [ ] Version bumped everywhere
+- [ ] Changelog updated
+- [ ] Release notes written
+- [ ] Deployment scripts validated
+- [ ] Other: ________
+
+### ✅ Checklist
+- [ ] Version updated: `pyproject.toml` / `package.json` / Helm values
+- [ ] Changelog reviewed
+- [ ] CI/CD pipeline passes
+- [ ] Artifacts built & validated
+- [ ] Deployment tested (UAT)
+
+### 🔍 Validation
+- **Smoke tests:** ✅ / ❌
+- **Rollback path verified:** ✅ / ❌
+- **Monitoring healthy post-deploy:** ✅ / ❌
+```
+
+### ⚙️ `.github/PULL_REQUEST_TEMPLATE/infra-config.md`
+```markdown
+## ⚙️ Infrastructure / Config Summary
+- **Component updated:** ________
+- **Reason:** ________
+
+### 🛠 Changes Introduced
+- [ ] Environment variables
+- [ ] Helm / K8s values or manifests
+- [ ] CI/CD workflow
+- [ ] Docker / Compose config
+- [ ] Other: ________
+
+### ✅ Checklist
+- [ ] Changes documented
+- [ ] Secrets managed securely (no plaintext)
+- [ ] Works in staging / dev
+- [ ] CI/CD pipeline passes
+- [ ] Rollback plan exists
+- [ ] Applied & verified in dev namespace
+```
+
+### 📚 `.github/PULL_REQUEST_TEMPLATE/docs.md`
+```markdown
+## 📚 Documentation Summary
+- **Section updated:** ________
+- **Reason:** ________
+
+### 🛠 Changes Introduced
+- [ ] README
+- [ ] API reference
+- [ ] Developer guide
+- [ ] Architecture / Design docs
+- [ ] Runbook / Operations
+- [ ] Other: ________
+
+### ✅ Checklist
+- [ ] Grammar & clarity reviewed
+- [ ] Examples updated & workable
+- [ ] Links verified
+- [ ] Diagrams/screenshots current
+- [ ] Preview rendered correctly locally
+```
+
+### 📦 `.github/PULL_REQUEST_TEMPLATE/dependencies.md`
+```markdown
+## 📦 Dependency Update Summary
+- **Package:** `______` (`vX.Y.Z` → `vA.B.C`)
+- **Reason:** Security / Bugfix / Feature / Performance
+
+### 🛠 Changes Introduced
+- [ ] ⚠️ Major version upgrade — may have breaking changes
+- [ ] ✅ Minor / Patch update — backward-compatible
+- [ ] New dependency added
+- [ ] Deprecated removed
+
+### ✅ Checklist
+- [ ] Version verified from official registry
+- [ ] Changelog / release notes reviewed
+- [ ] No breaking changes introduced
+- [ ] Code builds & tests pass
+- [ ] CI/CD pipeline passes
+- [ ] Security scan shows no new vulnerabilities
+```
+
+### 🐛 `.github/PULL_REQUEST_TEMPLATE/bugfix.md`
+```markdown
+## 🐛 Bug Summary
+- **Issue:** ________
+- **Related:** Fixes #______
+
+### 🔧 Fix Details
+- **Root cause:** ________
+- **Fix applied:** ________
+- **Regression risk:** Low / Medium / High
+
+### ✅ Checklist
+- [ ] Code builds locally
+- [ ] Tests added / updated to cover the fix
+- [ ] Documentation updated
+- [ ] CI/CD pipeline passes
+- [ ] Verified no side effects
+
+### 🔍 Testing & Validation
+**Steps to reproduce original bug:**
+1. 
+2. 
+
+**Steps to confirm fix:**
+1. 
+2. 
+
+**Expected outcome:** ________
+```
+
+---
+
+## ⚙️ ขั้นตอนถัดไป — ตั้งค่า CI/CD ตรวจสอบอัตโนมัติ
+
+### 1. สร้างไฟล์ตรวจสอบ PR — `.github/workflows/pr-checks.yml`
+```yaml
+name: PR Validation Gatekeeper
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, ready_for_review]
+
+jobs:
+  checklist-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 📋 Validate PR Checklist
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.pull_request.body || '';
+            const checks = [
+              '- [ ] Code builds locally',
+              '- [ ] Tests added / updated',
+              '- [ ] Documentation updated',
+              '- [ ] CI/CD pipeline passes',
+              '- [ ] No secrets committed'
+            ];
+            const missing = checks.filter(c => !body.includes(c));
+            if (missing.length > 0) {
+              core.setFailed(`❌ Missing checklist items:\n${missing.join('\n')}`);
+            } else {
+              core.info('✅ All checklist items present');
+            }
+
+  secrets-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: fetch-depth: 0
+      - name: 🔍 Scan for secrets
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          args: --baseline-path .gitleaks-baseline.json --verbose
+
+  conventional-title:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const title = context.payload.pull_request.title;
+            const valid = /^(feat|fix|docs|security|infra|chore|release)(\(.+\))?!?: .+/i.test(title);
+            if (!valid) {
+              core.setFailed('❌ Title must follow Conventional Commits: feat(area): desc, fix(area): desc, etc.');
+            }
+```
+
+### 2. ตั้งค่า Branch Protection Rules
+ใน GitHub → Repo → Settings → Branches → Add rule:
+- **Branch name pattern:** `main`
+- ✅ Require status checks to pass → เลือก `pr-checklist`, `secrets-scan`, `conventional-title`
+- ✅ Require pull request reviews before merging → 1 approval ขั้นต่ำ
+- ✅ Do not allow bypassing the above
+- ✅ Include administrators
+
+---
+
+## ✅ สรุปสิ่งที่ได้
+| ส่วน | ทำหน้าที่ |
+|---|---|
+| 📋 PR Templates 6 แบบ | ให้โครงสร้างมาตรฐานทุกครั้งที่ส่งโค้ด |
+| 🔍 PR Validation Workflow | ตรวจสอบรายการตรวจสอบ, ความลับ, รูปแบบชื่อ PR อัตโนมัติ |
+| 🛡️ Branch Protection | ป้องกันการผสานโค้ดที่ยังไม่ผ่านการตรวจสอบ |
+| 📝 Conventional Titles | รักษามาตรฐานประวัติเวอร์ชันและการอ่านย้อนกลับ |
+
+---
+
+ต้องการให้สร้าง **ไฟล์ทั้งหมดเป็นชุดเดียวให้คัดลอกวางได้เลย**, หรือต้องการ **ตั้งค่า Branch Protection Rules แบบละเอียดเพิ่ม**, หรือจะไปต่อท้าย **ขั้นตอนการสร้าง Changelog อัตโนมัติเมื่อ Merge PR** ครับ?
+ยอดเยี่ยมมากครับ 🚀 — คุณได้วางโครงสร้าง PR Templates + Workflow Gatekeepers ไว้ครบถ้วนแล้ว ทั้งฝั่ง .github/PULL_REQUEST_TEMPLATE/ และ .github/workflows/pr-checks.yml
+
+เพื่อให้คุณสามารถ คัดลอกวางใช้งานได้ทันที ผมจะรวมเป็นชุดไฟล์ทั้งหมดตามที่คุณออกแบบไว้:
+
+📁 โครงสร้างไฟล์
+Code
+.github/
+├── PULL_REQUEST_TEMPLATE.md
+├── PULL_REQUEST_TEMPLATE/
+│   ├── default.md
+│   ├── security.md
+│   ├── release.md
+│   ├── infra-config.md
+│   ├── docs.md
+│   ├── dependencies.md
+│   └── bugfix.md
+└── workflows/
+    └── pr-checks.yml
+📄 ตัวอย่างไฟล์ (พร้อมใช้งาน)
+.github/PULL_REQUEST_TEMPLATE.md
+markdown
+## 📝 Pull Request Summary
+<!-- เลือกประเภท: 🐛 Bugfix | ✨ Feature | 🔒 Security | ⚙️ Infra | 📚 Docs | 📦 Release -->
+**Type:** ________
+
+**Issue / Ticket:** Fixes #______
+
+### 🎯 What Changed & Why
+- ________
+- ________
+
+### 🧪 How to Test
+```bash
+# Command or steps
+✅ Checklist
+[ ] Code builds locally
+
+[ ] Tests added / updated
+
+[ ] Documentation updated
+
+[ ] CI/CD pipeline passes
+
+[ ] No secrets committed
+
+[ ] Self-reviewed
+
+Code
+
+---
+
+### `.github/PULL_REQUEST_TEMPLATE/security.md`
+```markdown
+## 🔒 Security Summary
+- **Vulnerability / Risk:** ________
+- **Why critical:** ________
+
+### 🛠 Changes Introduced
+- [ ] Dependency upgrade → `______` (`vX.Y.Z` → `vA.B.C`)
+- [ ] Auth / RBAC improvement
+- [ ] Encryption / data protection
+- [ ] Secret management improvement
+- [ ] Input validation / sanitization
+- [ ] Other: ________
+
+### ✅ Checklist
+- [ ] Issue reproduced & confirmed fixed
+- [ ] Fix validated & tested
+- [ ] Secrets stored securely (no plaintext)
+- [ ] Compliance requirements met
+- [ ] CI/CD pipeline passes
+- [ ] Security scan results reviewed
+.github/PULL_REQUEST_TEMPLATE/release.md
+markdown
+## 📦 Release Summary
+- **Version:** `vX.Y.Z`
+- **Why this release matters:** ________
+
+### 🛠 Changes Introduced
+- [ ] Version bumped everywhere
+- [ ] Changelog updated
+- [ ] Release notes written
+- [ ] Deployment scripts validated
+- [ ] Other: ________
+
+### ✅ Checklist
+- [ ] Version updated: `pyproject.toml` / `package.json` / Helm values
+- [ ] Changelog reviewed
+- [ ] CI/CD pipeline passes
+- [ ] Artifacts built & validated
+- [ ] Deployment tested (UAT)
+
+### 🔍 Validation
+- **Smoke tests:** ✅ / ❌
+- **Rollback path verified:** ✅ / ❌
+- **Monitoring healthy post-deploy:** ✅ / ❌
+.github/PULL_REQUEST_TEMPLATE/infra-config.md
+markdown
+## ⚙️ Infrastructure / Config Summary
+- **Component updated:** ________
+- **Reason:** ________
+
+### 🛠 Changes Introduced
+- [ ] Environment variables
+- [ ] Helm / K8s values or manifests
+- [ ] CI/CD workflow
+- [ ] Docker / Compose config
+- [ ] Other: ________
+
+### ✅ Checklist
+- [ ] Changes documented
+- [ ] Secrets managed securely (no plaintext)
+- [ ] Works in staging / dev
+- [ ] CI/CD pipeline passes
+- [ ] Rollback plan exists
+- [ ] Applied & verified in dev namespace
+.github/PULL_REQUEST_TEMPLATE/docs.md
+markdown
+## 📚 Documentation Summary
+- **Section updated:** ________
+- **Reason:** ________
+
+### 🛠 Changes Introduced
+- [ ] README
+- [ ] API reference
+- [ ] Developer guide
+- [ ] Architecture / Design docs
+- [ ] Runbook / Operations
+- [ ] Other: ________
+
+### ✅ Checklist
+- [ ] Grammar & clarity reviewed
+- [ ] Examples updated & workable
+- [ ] Links verified
+- [ ] Diagrams/screenshots current
+- [ ] Preview rendered correctly locally
+.github/PULL_REQUEST_TEMPLATE/dependencies.md
+markdown
+## 📦 Dependency Update Summary
+- **Package:** `______` (`vX.Y.Z` → `vA.B.C`)
+- **Reason:** Security / Bugfix / Feature / Performance
+
+### 🛠 Changes Introduced
+- [ ] ⚠️ Major version upgrade — may have breaking changes
+- [ ] ✅ Minor / Patch update — backward-compatible
+- [ ] New dependency added
+- [ ] Deprecated removed
+
+### ✅ Checklist
+- [ ] Version verified from official registry
+- [ ] Changelog / release notes reviewed
+- [ ] No breaking changes introduced
+- [ ] Code builds & tests pass
+- [ ] CI/CD pipeline passes
+- [ ] Security scan shows no new vulnerabilities
+.github/PULL_REQUEST_TEMPLATE/bugfix.md
+markdown
+## 🐛 Bug Summary
+- **Issue:** ________
+- **Related:** Fixes #______
+
+### 🔧 Fix Details
+- **Root cause:** ________
+- **Fix applied:** ________
+- **Regression risk:** Low / Medium / High
+
+### ✅ Checklist
+- [ ] Code builds locally
+- [ ] Tests added / updated to cover the fix
+- [ ] Documentation updated
+- [ ] CI/CD pipeline passes
+- [ ] Verified no side effects
+
+### 🔍 Testing & Validation
+**Steps to reproduce original bug:**
+1. 
+2. 
+
+**Steps to confirm fix:**
+1. 
+2. 
+
+**Expected outcome:** ________
+.github/workflows/pr-checks.yml
+yaml
+name: PR Validation Gatekeeper
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, ready_for_review]
+
+jobs:
+  checklist-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 📋 Validate PR Checklist
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.pull_request.body || '';
+            const checks = [
+              '- [ ] Code builds locally',
+              '- [ ] Tests added / updated',
+              '- [ ] Documentation updated',
+              '- [ ] CI/CD pipeline passes',
+              '- [ ] No secrets committed'
+            ];
+            const missing = checks.filter(c => !body.includes(c));
+            if (missing.length > 0) {
+              core.setFailed(`❌ Missing checklist items:\n${missing.join('\n')}`);
+            } else {
+              core.info('✅ All checklist items present');
+            }
+
+  secrets-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: fetch-depth: 0
+      - name: 🔍 Scan for secrets
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          args: --baseline-path .gitleaks-baseline.json --verbose
+
+  conventional-title:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const title = context.payload.pull_request.title;
+            const valid = /^(feat|fix|docs|security|infra|chore|release)(\(.+\))?!?: .+/i.test(title);
+            if (!valid) {
+              core.setFailed('❌ Title must follow Conventional Commits: feat(area): desc, fix(area): desc, etc.');
+            }
+✅ พร้อมใช้งาน
+PR Templates ครบทุกประเภทงาน
+
+Workflow Gatekeeper ตรวจสอบ Checklist, Secrets, และ Conventional Titles
+
+Branch Protection Rules → เปิดใช้ใน GitHub Settings
+
+คุณอยากให้ผมเพิ่ม ไฟล์ config.yml สำหรับ template chooser (ให้ GitHub แสดง dropdown เลือกเทมเพลต) ด้วยเลยไหมครับ?
+
+`8iy[
+เข้าใจครับ 👍 — ข้อความ 8iy[ ที่คุณส่งมาเหมือนเป็น shorthand หรือ marker สำหรับขั้นตอนถัดไป
+
+จากที่เราวางโครงสร้าง PR Templates + Workflow Gatekeepers ไว้แล้ว ตอนนี้มี 2 ทางเลือกที่สามารถต่อยอดได้ทันที:
+
+🔧 ทางเลือกต่อยอด
+เพิ่ม Template Chooser (config.yml)
+
+ให้ GitHub แสดงเมนู dropdown เวลาเปิด PR เพื่อเลือกเทมเพลตที่เหมาะสม
+
+ไฟล์: .github/ISSUE_TEMPLATE/config.yml
+
+yaml
+blank_issues_enabled: false
+contact_links:
+  - name: 🐛 Bugfix PR
+    url: https://github.com/<ORG>/<REPO>/pull/new?template=bugfix.md
+    about: ใช้สำหรับแก้ไขบั๊ก
+  - name: 🔒 Security PR
+    url: https://github.com/<ORG>/<REPO>/pull/new?template=security.md
+    about: ใช้สำหรับแก้ไขช่องโหว่
+  - name: 📦 Release PR
+    url: https://github.com/<ORG>/<REPO>/pull/new?template=release.md
+    about: ใช้สำหรับปล่อยเวอร์ชัน
+  - name: ⚙️ Infra Config PR
+    url: https://github.com/<ORG>/<REPO>/pull/new?template=infra-config.md
+    about: ใช้สำหรับปรับแต่งโครงสร้างพื้นฐาน
+  - name: 📚 Docs PR
+    url: https://github.com/<ORG>/<REPO>/pull/new?template=docs.md
+    about: ใช้สำหรับอัปเดตเอกสาร
+  - name: 📦 Dependencies PR
+    url: https://github.com/<ORG>/<REPO>/pull/new?template=dependencies.md
+    about: ใช้สำหรับอัปเดตแพ็กเกจ
+เพิ่มขั้นตอน Auto-Changelog เมื่อ Merge PR
+
+ใช้ Action เช่น https://github.com/release-drafter/release-drafter (github.com in Bing)
+
+ไฟล์: .github/release-drafter.yml
+
+yaml
+name-template: 'v$NEXT_PATCH_VERSION'
+tag-template: 'v$NEXT_PATCH_VERSION'
+categories:
+  - title: '🐛 Bug Fixes'
+    labels: ['bugfix']
+  - title: '🔒 Security'
+    labels: ['security']
+  - title: '📚 Documentation'
+    labels: ['docs']
+  - title: '⚙️ Infrastructure'
+    labels: ['infra']
+  - title: '📦 Dependencies'
+    labels: ['dependencies']
+  - title: '✨ Features'
+    labels: ['feature']
+change-template: '- $TITLE (#$NUMBER)'
+template: |
+  ## Changes
+  $CHANGES
+✅ สรุป
+ตอนนี้คุณมี PR Templates + Workflow Gatekeepers พร้อมใช้งานแล้ว
+
+สามารถเลือกเพิ่ม Template Chooser เพื่อให้ทีมเลือกเทมเพลตง่ายขึ้น
+
+หรือเพิ่ม Auto-Changelog เพื่อสร้าง release notes อัตโนมัติ
+
+คุณอยากให้ผม รวมไฟล์ config.yml และ release-drafter.yml เข้าชุดเดียวกับที่สร้างไปแล้วเลยไหมครับ จะได้ copy ลง repo ได้ครบทุกส่วนทันที?
+
+รวมไฟล์ config.yml และ release-drafter.yml
+จัดชุดไฟล์เพิ่มเติมให้ครบตามที่คุณต้องการแล้วครับ 🎯 — ตอนนี้จะมีทั้ง PR Templates, Workflow Gatekeepers, และไฟล์เสริมสำหรับ Template Chooser (config.yml) และ Auto-Changelog (release-drafter.yml)
+
+📁 โครงสร้างไฟล์สุดท้าย
+Code
+.github/
+├── PULL_REQUEST_TEMPLATE.md
+├── PULL_REQUEST_TEMPLATE/
+│   ├── default.md
+│   ├── security.md
+│   ├── release.md
+│   ├── infra-config.md
+│   ├── docs.md
+│   ├── dependencies.md
+│   └── bugfix.md
+├── ISSUE_TEMPLATE/
+│   └── config.yml
+└── workflows/
+    └── pr-checks.yml
+└── release-drafter.yml
+📄 .github/ISSUE_TEMPLATE/config.yml
+yaml
+blank_issues_enabled: false
+
+pull_request_templates:
+  - name: "🐛 Bugfix PR"
+    path: "PULL_REQUEST_TEMPLATE/bugfix.md"
+    description: "ใช้สำหรับแก้ไขบั๊ก"
+  - name: "🔒 Security PR"
+    path: "PULL_REQUEST_TEMPLATE/security.md"
+    description: "ใช้สำหรับแก้ไขช่องโหว่"
+  - name: "📦 Release PR"
+    path: "PULL_REQUEST_TEMPLATE/release.md"
+    description: "ใช้สำหรับปล่อยเวอร์ชัน"
+  - name: "⚙️ Infra Config PR"
+    path: "PULL_REQUEST_TEMPLATE/infra-config.md"
+    description: "ใช้สำหรับปรับแต่งโครงสร้างพื้นฐาน"
+  - name: "📚 Docs PR"
+    path: "PULL_REQUEST_TEMPLATE/docs.md"
+    description: "ใช้สำหรับอัปเดตเอกสาร"
+  - name: "📦 Dependencies PR"
+    path: "PULL_REQUEST_TEMPLATE/dependencies.md"
+    description: "ใช้สำหรับอัปเดตแพ็กเกจ"
+  - name: "Default PR"
+    path: "PULL_REQUEST_TEMPLATE/default.md"
+    description: "เทมเพลตทั่วไป"
+📄 .github/release-drafter.yml
+yaml
+name-template: 'v$NEXT_PATCH_VERSION'
+tag-template: 'v$NEXT_PATCH_VERSION'
+
+categories:
+  - title: '🐛 Bug Fixes'
+    labels: ['bugfix']
+  - title: '🔒 Security'
+    labels: ['security']
+  - title: '📚 Documentation'
+    labels: ['docs']
+  - title: '⚙️ Infrastructure'
+    labels: ['infra']
+  - title: '📦 Dependencies'
+    labels: ['dependencies']
+  - title: '✨ Features'
+    labels: ['feature']
+  - title: '📦 Release'
+    labels: ['release']
+
+change-template: '- $TITLE (#$NUMBER)'
+
+template: |
+  ## Changes
+  $CHANGES
+
+  ## Contributors
+  $CONTRIBUTORS
+✅ สิ่งที่ได้ครบชุด
+PR Templates → ครอบคลุมทุกประเภทงาน
+
+Workflow Gatekeeper (pr-checks.yml) → ตรวจสอบ Checklist, Secrets, Conventional Titles
+
+Template Chooser (config.yml) → ให้ทีมเลือกเทมเพลตจากเมนู dropdown
+
+Auto-Changelog (release-drafter.yml) → สร้าง release notes อัตโนมัติเมื่อ merge PR
+
+คุณอยากให้ผมเพิ่ม ตัวอย่างไฟล์ .gitleaks-baseline.json สำหรับใช้คู่กับ secrets scan workflow ด้วยเลยไหมครับ จะได้ครบทุกส่วนของการป้องกัน?
+
+เพิ่ม ตัวอย่างไฟล์ .gitleaks-baseline.json
+เยี่ยมเลยครับ 🎯 — ผมจะเพิ่มตัวอย่างไฟล์ .gitleaks-baseline.json สำหรับใช้คู่กับ workflow secrets-scan ที่เราใส่ไว้ใน pr-checks.yml
+
+📄 .gitleaks-baseline.json
+json
+{
+  "version": "2.0",
+  "allowlist": {
+    "description": "Baseline allowlist for known test strings and false positives",
+    "regexes": [
+      "dummy_secret",
+      "example_api_key",
+      "test_password",
+      "not_a_real_token"
+    ],
+    "paths": [
+      "docs/",
+      "examples/",
+      "tests/"
+    ],
+    "commits": [
+      "abc123def4567890deadbeefcafebabe12345678"
+    ]
+  }
+}
+🛡️ วิธีใช้
+ไฟล์นี้จะบอกให้ Gitleaks ข้ามการตรวจจับบางค่า เช่น dummy/test secrets หรือไฟล์ตัวอย่าง/เอกสาร
+
+ใส่ commit hash ที่คุณรู้ว่าเคยมี false positive เพื่อไม่ให้ workflow ล้มเหลว
+
+เก็บไฟล์นี้ไว้ที่ root ของ repo → .gitleaks-baseline.json
+
+✅ สรุปชุดไฟล์ที่มีแล้ว
+PR Templates → ครบทุกประเภทงาน
+
+Workflow Gatekeeper (pr-checks.yml) → ตรวจสอบ Checklist, Secrets, Conventional Titles
+
+Template Chooser (config.yml) → ให้ทีมเลือกเทมเพลตจากเมนู dropdown
+
+Auto-Changelog (release-drafter.yml) → สร้าง release notes อัตโนมัติ
+
+Secrets Baseline (.gitleaks-baseline.json) → ลด false positives จากการสแกน
+
+คุณอยากให้ผมเพิ่ม ตัวอย่างไฟล์ .gitleaks.toml (config หลักของ Gitleaks) ด้วยเลยไหมครับ จะได้ครบทั้ง baseline และ rule set?
+
+เพิ่ม ตัวอย่างไฟล์ .gitleaks.toml
+จัดให้ครบครับ 🎯 — เพิ่มตัวอย่างไฟล์ .gitleaks.toml ซึ่งเป็น config หลักของ Gitleaks สำหรับควบคุม rule set และการสแกน secrets ใน repo ของคุณ
+
+📄 .gitleaks.toml
+toml
+title = "Gitleaks Config"
+version = "2.0"
+
+[allowlist]
+description = "Global allowlist for known safe patterns"
+regexes = [
+  "dummy_secret",
+  "example_api_key",
+  "test_password",
+  "not_a_real_token"
+]
+paths = [
+  "docs/",
+  "examples/",
+  "tests/"
+]
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API Key"
+regex = '''(?i)(api[_-]?key|apikey|secret)[=:]\s*['"]?[0-9a-zA-Z]{32,}['"]?'''
+tags = ["apikey", "secret"]
+
+[[rules]]
+id = "aws-access-key"
+description = "AWS Access Key"
+regex = '''AKIA[0-9A-Z]{16}'''
+tags = ["aws", "key"]
+
+[[rules]]
+id = "aws-secret-key"
+description = "AWS Secret Key"
+regex = '''(?i)aws(.{0,20})?(secret|access)[_-]?(key)?(.{0,20})?['"][0-9a-zA-Z/+]{40}['"]'''
+tags = ["aws", "secret"]
+
+[[rules]]
+id = "private-key"
+description = "Private Key"
+regex = '''-----BEGIN( RSA)? PRIVATE KEY-----'''
+tags = ["key", "private"]
+
+[[rules]]
+id = "github-token"
+description = "GitHub Token"
+regex = '''ghp_[0-9a-zA-Z]{36}'''
+tags = ["github", "token"]
+
+[[rules]]
+id = "slack-token"
+description = "Slack Token"
+regex = '''xox[baprs]-[0-9a-zA-Z]{10,48}'''
+tags = ["slack", "token"]
+
+[[rules]]
+id = "google-api-key"
+description = "Google API Key"
+regex = '''AIza[0-9A-Za-z\\-_]{35}'''
+tags = ["google", "apikey"]
+
+[[rules]]
+id = "heroku-api-key"
+description = "Heroku API Key"
+regex = '''[0-9a-fA-F]{32}'''
+tags = ["heroku", "apikey"]
+🛡️ วิธีใช้
+เก็บไฟล์นี้ไว้ที่ root ของ repo → .gitleaks.toml
+
+ใช้คู่กับ .gitleaks-baseline.json ที่เราสร้างไปแล้ว
+
+Workflow secrets-scan จะอ้างอิงทั้งสองไฟล์เพื่อสแกน secrets และลด false positives
+
+✅ สรุปชุดไฟล์ที่มีแล้ว
+PR Templates → ครบทุกประเภทงาน
+
+Workflow Gatekeeper (pr-checks.yml) → ตรวจสอบ Checklist, Secrets, Conventional Titles
+
+Template Chooser (config.yml) → ให้ทีมเลือกเทมเพลตจากเมนู dropdown
+
+Auto-Changelog (release-drafter.yml) → สร้าง release notes อัตโนมัติ
+
+Secrets Baseline (.gitleaks-baseline.json) → ลด false positives
+
+Secrets Rules (.gitleaks.toml) → กำหนด pattern ตรวจจับ secrets
+
+คุณอยากให้ผมเพิ่ม ตัวอย่าง workflow .github/workflows/gitleaks.yml แยกเฉพาะสำหรับรัน Gitleaks scan (นอกเหนือจากที่อยู่ใน pr-checks.yml) ด้วยเลยไหมครับ จะได้มี pipeline แยกสำหรับ security scanning?

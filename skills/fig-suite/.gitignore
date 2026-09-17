@@ -1,0 +1,5 @@
+# The repository root .gitignore excludes *token* patterns. This suite ships
+# no secrets; nothing here needs re-including, only the gate's own scratch.
+__pycache__/
+.pytest_cache/
+*.pyc

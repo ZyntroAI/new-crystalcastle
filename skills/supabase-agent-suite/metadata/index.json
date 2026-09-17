@@ -1,0 +1,30 @@
+{
+  "id": "supabase-agent-suite-v1.0.0",
+  "name": "Supabase Agent Skill Suite",
+  "skills": [
+    {
+      "id": "connect",
+      "path": "skills/connect"
+    },
+    {
+      "id": "schema-inventory",
+      "path": "skills/schema-inventory"
+    },
+    {
+      "id": "migrations",
+      "path": "skills/migrations"
+    },
+    {
+      "id": "concurrency",
+      "path": "skills/concurrency"
+    },
+    {
+      "id": "security",
+      "path": "skills/security"
+    },
+    {
+      "id": "postgres-best-practices",
+      "path": "skills/postgres-best-practices"
+    }
+  ]
+}

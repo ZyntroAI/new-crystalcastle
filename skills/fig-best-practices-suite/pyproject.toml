@@ -1,0 +1,17 @@
+[project]
+name = "figbp-suite"
+version = "1.2.0"
+description = "Six-layer Fig/hellofig.ai best-practices standard with an executable quality gate"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+yaml = ["pyyaml>=6.0"]
+dev = ["pytest>=7.0", "pyyaml>=6.0"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

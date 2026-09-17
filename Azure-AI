@@ -1,0 +1,6 @@
+export FOUNDRY_ACCESS_TOKEN="YOUR_ACCESS_TOKEN"
+
+curl "https://YOUR_ENDPOINT/api/projects/YOUR_PROJECT_NAME/agents?api-version=2025-05-01" \
+  -H "Authorization: Bearer ${FOUNDRY_ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json"

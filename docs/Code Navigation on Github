@@ -1,0 +1,31 @@
+# Code Navigation on GitHub
+
+Code navigation on GitHub helps developers read, navigate, and understand code by linking definitions and references of named entities directly within the platform. This feature is powered by the open-source [`tree-sitter`](https://github.com/tree-sitter/tree-sitter) library and works automatically for supported languages without any repository configuration.
+
+## Supported Languages
+Code navigation is available for the following languages:
+- Bash, C, C#, C++, CodeQL, Elixir, Go, JSX, Java, JavaScript, Lua, PHP, Protocol Buffers, Python, R, Ruby, Rust, Scala, Starlark, Swift, and TypeScript.
+
+## Key Features
+
+### Symbols Pane
+- **Access**: Click the code square icon above a file or click a highlighted symbol in the code.
+- **Search Scope**: Find symbols within the current file, the entire repository, or all public GitHub repositories.
+- **Navigation**: Use chevron icons to jump between references of a selected symbol.
+
+### Jump to Definition
+- Click on a function or method call to instantly view its definition within the same repository.
+
+### Find All References
+- Click on a function or method to see a list of all locations where it is referenced within the repository.
+
+### Keyboard Shortcuts
+- Additional navigation can be performed using keyboard shortcuts designed for code files.
+
+## Troubleshooting
+Code navigation may not appear if:
+- The branch is not active (push changes to activate it).
+- The repository contains more than 100,000 files (the feature is limited to smaller repositories).
+
+## Further Reading
+For more details on search capabilities, see [About GitHub Code Search](/en/search-github/github-code-search/about-github-code-search).

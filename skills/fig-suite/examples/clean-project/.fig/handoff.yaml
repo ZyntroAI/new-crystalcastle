@@ -1,0 +1,5 @@
+card: true
+follow_ups:
+  - Add a changelog page
+  - Wire the publish workflow
+notify: true

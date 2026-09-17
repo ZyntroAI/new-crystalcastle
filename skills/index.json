@@ -1,0 +1,95 @@
+{
+  "crystalcastlex-skill-suite": {
+    "path": "skills/crystalcastlex-skill-suite",
+    "depends": [],
+    "provides": [
+      "github-workflow-repair",
+      "monorepo-turborepo",
+      "git-repair",
+      "semantic-release",
+      "graphql-federation-gateway",
+      "vercel-deployment",
+      "package-lockfile-management",
+      "fastapi-research",
+      "langchain-research",
+      "auto-debugging"
+    ],
+    "priority": 1
+  },
+  "cwe1321-protection-suite": {
+    "path": "security/cwe1321",
+    "depends": [],
+    "provides": [
+      "cwe-1321-protection",
+      "prototype-pollution-detection",
+      "prototype-pollution-sanitization"
+    ],
+    "priority": 1
+  },
+  "python-dev": {
+    "path": "skills/python-dev",
+    "depends": [
+      "pyflakes",
+      "ipython"
+    ],
+    "provides": [
+      "static-analysis",
+      "lint",
+      "execute",
+      "debug",
+      "inspect",
+      "reproduce"
+    ],
+    "priority": 1
+  },
+  "supabase-agent-suite": {
+    "path": "skills/supabase-agent-suite",
+    "depends": [],
+    "provides": [
+      "supabase-connect",
+      "supabase-schema-inventory",
+      "supabase-migrations",
+      "supabase-concurrency",
+      "supabase-security",
+      "supabase-postgres-best-practices"
+    ],
+    "priority": 1
+  },
+  "fig-best-practices-suite": {
+    "path": "skills/fig-best-practices-suite",
+    "depends": [
+      "pyyaml"
+    ],
+    "provides": [
+      "fig-best-practices",
+      "six-layer-standard",
+      "quality-gate",
+      "design-token-validation",
+      "secret-scanning",
+      "sql-injection-detection",
+      "dependency-audit",
+      "sha-pinning-check",
+      "deployment-readiness"
+    ],
+    "priority": 1
+  },
+  "fig-suite": {
+    "path": "skills/fig-suite",
+    "depends": [
+      "pyyaml"
+    ],
+    "provides": [
+      "fig-platform",
+      "fig-artifacts",
+      "fig-connectors",
+      "fig-research",
+      "fig-automation",
+      "fig-safety",
+      "answer-vs-build-routing",
+      "external-write-approval",
+      "citation-integrity",
+      "handoff-verification"
+    ],
+    "priority": 1
+  }
+}

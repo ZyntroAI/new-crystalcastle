@@ -1,0 +1,4 @@
+# The repository root .gitignore excludes *token* to keep credentials out of
+# commits. That pattern also matches the design-token fixtures this suite
+# ships — documentation examples, not secrets. Re-include them explicitly.
+!**/design-tokens.json

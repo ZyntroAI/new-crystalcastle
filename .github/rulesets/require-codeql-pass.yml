@@ -1,0 +1,17 @@
+---
+name: Require CodeQL Analysis Pass
+description: "Prevent merging unless all CodeQL checks pass — ZyntroAI/new-crystalcastle"
+target: branch
+enforcement: active
+conditions:
+  ref_name:
+    - pattern: ^main$
+      behavior: include
+rules:
+  - type: required_status_checks
+    parameters:
+      required_status_checks:
+        - context: Analyze (actions)
+        - context: Analyze (javascript-typescript)
+        - context: Analyze (python)
+      strict_required_status_checks: true
