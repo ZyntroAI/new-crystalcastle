@@ -147,6 +147,29 @@ def test_gate_reports_every_policy_criterion(tmp_path):
     assert list(report["results"]) == CRITERIA
 
 
+def test_gate_fails_on_present_env_file(tmp_path):
+    """The '.env present' branch had no coverage: no fixture shipped one and the
+    repository .gitignore blocks '.env' from ever being committed."""
+    project = _project(tmp_path)
+    assert run_gate(project)["passed"], "baseline project must satisfy every criterion"
+
+    (project / ".env").write_text("SAFE=1\n", encoding="utf-8")
+    report = run_gate(project)
+    assert report["results"]["SECURITY"] == "FAIL"
+    assert any(".env" in finding["detail"] for finding in report["findings"])
+    assert not report["passed"]
+
+
+def test_env_example_is_not_flagged(tmp_path):
+    """SAFE_ENV_NAMES exists so templates pass; assert that, not just the name."""
+    project = _project(tmp_path)
+    for name in (".env.example", ".env.sample", ".env.template"):
+        (project / name).write_text("SAFE=1\n", encoding="utf-8")
+    report = run_gate(project)
+    assert report["results"]["SECURITY"] == "PASS", report["findings"]
+    assert report["passed"]
+
+
 def test_gate_fails_on_committed_secret(tmp_path):
     project = _project(tmp_path)
     (project / "leak.py").write_text('TOKEN = "ghp_' + "a" * 36 + '"\n', encoding="utf-8")
