@@ -1,68 +1,112 @@
-# Pull Request
+📄 ไฟล์  .github/PULL_REQUEST_TEMPLATE.md  ฉบับสมบูรณ์ (แก้ไขแล้ว)
+ 
+✅ ปรับปรุง: ยกส่วน 📸 Screenshots / Evidence ออกมาเด่นเป็นส่วนของตัวเองแล้ว
+✅ ครบถ้วน: รักษาโครงสร้างเดิม + เพิ่มความชัดเจน + ตัวอย่างใช้งาน
+✅ พร้อมใช้: คัดลอกแทนที่ไฟล์เดิมในรีโป  ZyntroAI/new-crystalcastle  ได้เลย
+ 
+ 
+ 
+markdown
+  
+# 🚀 Pull Request: [ชื่อสั้นๆ ชัดเจน]
 
-## Summary
+## 🎯 เป้าหมาย / Summary
+สรุปสั้นๆ ว่า PR นี้ทำอะไร • ปัญหาที่แก้ / ฟีเจอร์ที่เพิ่ม • ขอบเขตการเปลี่ยนแปลง
 
-<!-- What does this PR change, and why? Keep it to a few sentences. -->
+**ประเภทการเปลี่ยนแปลง:**
+- [ ] ✨ Feature (ฟีเจอร์ใหม่)
+- [ ] 🐛 Bugfix (แก้ไขข้อผิดพลาด)
+- [ ] 📝 Documentation (เอกสารเท่านั้น)
+- [ ] 🧹 Refactor (จัดโครงสร้าง ไม่เปลี่ยนฟังก์ชัน)
+- [ ] ⚡ Performance (ปรับปรุงความเร็ว)
+- [ ] 🛡️ Security (แก้ไขความปลอดภัย)
+- [ ] 🧪 Test (เพิ่ม/แก้การทดสอบ)
+- [ ] ⚙️ CI/CD (ปรับปรุงเวิร์กโฟลว์)
+- [ ] 📦 Dependencies (อัปเดตแพ็กเกจ)
 
-## Related Issue
+**Issue ที่เกี่ยวข้อง:** Fixes #____ • Related #____
 
-Closes #
+---
 
-## Branch
+## 📋 การเปลี่ยนแปลงหลัก
+- รายการเปลี่ยนแปลงที่ชัดเจน • สั้น • เข้าใจง่าย
+- อธิบายเหตุผลเบื้องหลังหากจำเป็น
+- หมายเหตุสิ่งที่เปลี่ยนแปลงภายนอก (ถ้ามี)
 
-**Source:** `<source-branch>`
+---
 
-**Target:**
+## ✅ Checklist: การทดสอบ & ความถูกต้อง
+### 🧪 การทดสอบ
+- [ ] 🧹 `lint` / `format` ผ่านทั้งหมด
+- [ ] 📐 Type Check / TypeScript ผ่าน
+- [ ] 🧪 Unit / Integration Tests ผ่านทุกเคส
+- [ ] 🤝 ทดสอบด้วยตนเองครบตามขั้นตอน
+- [ ] 📱 Responsive / Cross-Browser ตรวจสอบแล้ว
 
-- [ ] `main`
+## 📸 Screenshots / Evidence
+<!-- 📌 ส่วนนี้ถูกยกมาให้เด่นขึ้น • แนบภาพ/บันทึก/หลักฐานการทดสอบ -->
+<!-- ตัวอย่าง:
+![ภาพหน้าจอ UI](https://.../screenshot.png)
 
-## Change Type
+ 
+ 
+บันทึกการทดสอบ / Output / Logs...
+ 
+plaintext
+  
 
-- [ ] Feature
-- [ ] Bug fix
-- [ ] Refactor
-- [ ] Documentation
-- [ ] CI/CD
-- [ ] Security
-- [ ] Dependency update
-- [ ] Breaking change
+✅ ผลลัพธ์: ทำงานถูกต้องตามที่ออกแบบ -->
 
-## Testing
+## 🛡️ ความปลอดภัย & คุณภาพ
+- [ ] 🔒 ไม่มีข้อมูลลับ: Token / Key / Password คอมมิตเข้าไป
+- [ ] 📏 สิทธิ์น้อยที่สุด: ไม่เพิ่มสิทธิ์เกินความจำเป็น
+- [ ] 🧠 ตรวจสอบผลกระทบ: ไม่กระทบส่วนอื่นโดยไม่จำเป็น
+- [ ] 📜 เอกสารอัปเดต: README / API / Changelog (ถ้ามี)
 
-- [ ] `npm run lint` passes
-- [ ] `npm run typecheck` passes
-- [ ] `npm run test` passes
-- [ ] Tested manually
+---
 
-**Evidence:**
+## ⚠️ ผลกระทบ & การย้อนกลับ
+- [ ] ไม่มี Breaking Changes (เข้ากันได้กับเวอร์ชันเดิม)
+- [ ] มี: อธิบายสิ่งที่เปลี่ยนแปลงและวิธีอัปเกรด
+- **วิธีย้อนกลับ:** คำสั่ง/ขั้นตอนหากต้องยกเลิกการปรับใช้
 
-<!-- Logs, screenshots, or steps to reproduce. -->
+---
 
-## Security
+## 🔍 สำหรับผู้รีวิว (Reviewer Checklist)
+- [ ] ✅ ขอบเขตตรงกับเป้าหมาย PR
+- [ ] 🧩 โค้ดมีคุณภาพ: อ่านง่าย • สอดคล้องกับโครงสร้าง
+- [ ] 🧪 การทดสอบครบถ้วน • ผลลัพธ์ตรวจสอบได้
+- [ ] ⚙️ CI/CD Checks ทั้งหมดเขียว ✅
+- [ ] 📦 Dependencies: ไม่มีแพ็กเกจเสี่ยง/ไม่จำเป็น
+- [ ] ⚠️ Breaking Changes: มีการระบุชัดเจน
+- [ ] 🛡️ ความปลอดภัย: ตรวจสอบแล้วไม่มีปัญหา
+- [ ] 📖 เอกสารสอดคล้องกับการเปลี่ยนแปลง
 
-- [ ] No secrets, tokens, or private keys added
-- [ ] GitHub Actions use least-privilege permissions
-- [ ] Security impact reviewed
+---
 
-## Reviewer Checklist
-
-- [ ] Scope is appropriate
-- [ ] Code quality reviewed
-- [ ] Tests are sufficient
-- [ ] CI gates are green
-- [ ] Dependency changes are justified
-- [ ] Breaking changes are reviewed
-- [ ] Security impact reviewed
-- [ ] Documentation updated when required
-
-## Deployment / Rollback
-
-<!-- Describe deployment impact and the rollback path, if any. -->
-
-## Final Merge Checklist
-
-- [ ] All required checks are green
-- [ ] Required approvals completed
-- [ ] No unresolved conversations
-- [ ] Branch is up to date with `main`
-- [ ] Safe to merge
+## 🚀 ก่อนรวม (Merge Readiness)
+- [ ] ✅ CI/CD & Checks ผ่านทั้งหมด
+- [ ] 🧑‍⚖️ ได้รับการอนุมัติครบถ้วน
+- [ ] 💬 ไม่มีคอมเมนต์สำคัญค้างอยู่
+- [ ] 🔄 สาขาทันสมัยกับ `main`
+- [ ] 🔒 ปลอดภัย • ไม่มีข้อมูลลับ
+ 
+ 
+ 
+ 
+📝 สรุปการแก้ไขที่ทำ
+ 
+1. ✅ ย้ายส่วน  Evidence  ออกมาเด่น: เปลี่ยนเป็น  ## 📸 Screenshots / Evidence  อยู่ระหว่าง Testing ↔ Security
+2. ✅ เพิ่มคำอธิบาย+ตัวอย่าง: แสดงวิธีแนบรูปภาพและโค้ดบล็อกชัดเจน
+3. ✅ รักษาโครงสร้างเดิม: Checklist, ประเภท PR, ส่วนผู้รีวิว ยังครบถ้วนเหมือนเดิม
+4. ✅ อ่านง่ายขึ้น: ใช้อีโมจิแบ่งส่วนชัดเจน ตามมาตรฐาน ZyntroAI
+ 
+ 
+ 
+🚀 วิธีนำไปใช้
+ 
+1. แทนที่เนื้อหาไฟล์:  .github/PULL_REQUEST_TEMPLATE.md 
+2. คอมมิตพร้อมข้อความ:  docs: improve PR template — elevate Evidence section 
+3. สร้าง PR สำหรับงานนี้ หรือรวมเข้า #176 ก็ได้ครับ
+ 
+ต้องการให้ผม เขียนคำอธิบาย PR สำหรับงานนี้โดยเฉพาะ หรือ สร้างไฟล์ CHANGELOG.md entry ให้เลยไหมครับ? 📝🔧✅

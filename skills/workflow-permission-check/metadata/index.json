@@ -1,0 +1,8 @@
+{
+  "id": "workflow-permission-check",
+  "name": "Workflow Permission Check",
+  "version": "1.0.0",
+  "modules": [
+    {"name": "loader", "path": "loader.py", "provides": ["required", "can_write", "missing", "explain", "check_workflow_write", "check_many"]}
+  ]
+}

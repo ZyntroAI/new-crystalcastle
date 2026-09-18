@@ -1,0 +1,47 @@
+diff --git a/.github/workflows/pytest-suites.yml b/.github/workflows/pytest-suites.yml
+new file mode 100644
+index 0000000..0a6756e
+--- /dev/null
++++ b/.github/workflows/pytest-suites.yml
+@@ -0,0 +1,41 @@
++name: Pytest Suites (Isolated)
++
++# Each suite runs in its own process, so suites that declare modules with the
++# same name (loader.py, test_suite.py) cannot shadow one another.
++#
++# A plain `pytest` from the repo root fails collection with:
++#   import file mismatch: imported module 'test_suite' has this __file__ ...
++#   ModuleNotFoundError: No module named 'site_config'
++# while every suite passes on its own.
++
++on:
++  push:
++    branches: [main]
++  pull_request:
++    branches: [main]
++  workflow_dispatch:
++
++permissions:
++  contents: read
++
++jobs:
++  suites:
++    name: Per-suite pytest run
++    runs-on: ubuntu-latest
++
++    steps:
++      - name: Checkout repository
++        uses: actions/checkout@v4
++
++      - name: Set up Python
++        uses: actions/setup-python@v5
++        with:
++          python-version: "3.11"
++
++      - name: Install test dependencies
++        run: |
++          python -m pip install --upgrade pip
++          python -m pip install pytest pyflakes
++
++      - name: Run each suite in isolation
++        run: python3 src/run_test_suites.py
