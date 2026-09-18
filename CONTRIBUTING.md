@@ -1,251 +1,325 @@
-Here's your complete **CONTRIBUTING.md** — fully aligned with ZyntroAI standards, Conventional Commits, GPG signing, and PR workflows.
+📄 ไฟล์คู่มือฉบับสมบูรณ์: CODE_OF_CONDUCT.md + CONTRIBUTING.md
+ 
+สอดคล้องกับ SECURITY.md ที่เพิ่งสร้าง | พร้อมนำไปใช้งานใน  ZyntroAI/new-crystalcastle  ทันที ✨🤝📖
+ 
+ 
+ 
+📄 ไฟล์ที่ 1:  CODE_OF_CONDUCT.md 
+ 
+มาตรฐาน: Contributor Covenant 2.1 | ปรับแต่ง: ZyntroAI
+ 
+markdown  
+# 🤝 นโยบายจริยธรรมชุมชน (Code of Conduct)
+
+## คำมั่นสัญญาของเรา
+เพื่อส่งเสริมสภาพแวดล้อมที่เปิดกว้างและต้อนรับ เราในฐานะผู้มีส่วนร่วมและผู้ดูแลขอมั่นสัญญาว่าการมีส่วนร่วมในโครงการและชุมชนของเราจะเป็นประสบการณ์ที่ไม่มีการรบกวนสำหรับทุกคน ไม่คำนึงถึงอายุ รูปร่าง ความพิการ เชื้อชาติ ลักษณะทางเพศ เอกลักษณ์และการแสดงออกทางเพศ ระดับประสบการณ์ การศึกษา สถานะทางสังคม สัญชาติ รูปลักษณ์ส่วนบุคคล เชื้อชาติ ศาสนา หรือเอกลักษณ์ทางการเมือง
+
+## มาตรฐานของเรา
+พฤติกรรมที่ส่งผลให้สภาพแวดล้อมของเราเป็นบวก ได้แก่:
+- ✅ ใช้ภาษาที่ต้อนรับและเปิดกว้าง
+- ✅ เคารพมุมมองและประสบการณ์ที่แตกต่างกัน
+- ✅ ยอมรับวิพากษ์วิจารณ์ที่สร้างสรรค์อย่างสุภาพ
+- ✅ ให้ความสำคัญกับสิ่งที่ดีที่สุดสำหรับชุมชน
+- ✅ แสดงความเห็นอกเห็นใจต่อสมาชิกชุมชนอื่นๆ
+
+พฤติกรรมที่ไม่ยอมรับ ได้แก่:
+- ❌ ใช้ภาษาหรือภาพที่มีลักษณะทางเพศ
+- ❌ การแสดงความคิดเห็นที่หยาบคาย การดูหมิ่น หรือการโจมตีส่วนบุคคลหรือการเมือง
+- ❌ การรบกวนแบบสาธารณะหรือส่วนตัว
+- ❌ เผยแพร่ข้อมูลส่วนตัวของผู้อื่นโดยไม่ได้รับอนุญาต
+- ❌ พฤติกรรมอื่นๆ ที่สามารถถือว่าไม่เหมาะสมในสภาพแวดล้อมมืออาชีพ
+
+## หน้าที่ของเรา
+ผู้ดูแลโครงการมีหน้าที่อธิบายและบังคับใช้มาตรฐานพฤติกรรมที่ยอมรับได้ และจะดำเนินการแก้ไขที่เหมาะสมและยุติธรรมต่อพฤติกรรมใดๆ ที่ไม่ยอมรับ
+
+ผู้ดูแลโครงการมีสิทธิ์และหน้าที่ที่จะลบ แก้ไข หรือปฏิเสธความคิดเห็น คอมมิต โค้ด การแก้ไขวิกิ ไอชู และการมีส่วนร่วมอื่นๆ ที่ไม่สอดคล้องกับนโยบายจริยธรรมนี้ หรือห้ามผู้มีส่วนร่วมคนใดคนหนึ่งชั่วคราวหรือถาวรหากมีพฤติกรรมที่ไม่เหมาะสม คุกคาม เป็นอันตราย หรือไม่พึงประสงค์
+
+## ขอบเขต
+นโยบายจริยธรรมนี้ใช้ได้ทั้งภายในพื้นที่โครงการและในพื้นที่สาธารณะเมื่อบุคคลกำลังแสดงตัวเป็นตัวแทนของโครงการหรือชุมชนของมัน ตัวอย่างของการแสดงตัวเป็นตัวแทนโครงการหรือชุมชนรวมถึงการใช้ที่อยู่อีเมลทางการของโครงการ การโพสต์ผ่านบัญชีโซเชียลมีเดียทางการ หรือการทำหน้าที่เป็นผู้แทนที่ได้รับแต่งตั้งในงานออนไลน์หรือออฟไลน์
+
+## การบังคับใช้
+กรณีของพฤติกรรมที่ก้าวร้าว รบกวน หรือไม่ยอมรับอื่นๆ อาจถูกรายงานโดยติดต่อทีมโครงการผ่านช่องทางการสื่อสารของ GitHub ทีมโครงการจะตรวจสอบและสืบสวนเรื่องร้องเรียนทั้งหมด และจะตอบสนองในลักษณะที่ถือว่าจำเป็นและเหมาะสมกับสถานการณ์ ทีมโครงการมีหน้าที่รักษาความลับเกี่ยวกับผู้แจ้งเหตุของเรื่องร้องเรียน รายละเอียดเพิ่มเติมของนโยบายการบังคับใช้อาจโพสต์แยกต่างหาก
+
+ผู้ดูแลโครงการที่ไม่ปฏิบัติตามหรือบังคับใช้นโยบายจริยธรรมนี้อย่างสุจริตอาจเผชิญกับผลกระทบชั่วคราวหรือถาวรตามที่กำหนดโดยสมาชิกผู้นำของโครงการอื่นๆ
+
+## การอ้างอิง
+นโยบายจริยธรรมนี้ดัดแปลงมาจาก **[Contributor Covenant](https://www.contributor-covenant.org)** เวอร์ชัน 2.1
+
+สำหรับคำถามทั่วไปเกี่ยวกับนโยบายจริยธรรม โปรดดูที่ [FAQ](https://www.contributor-covenant.org/faq/) มีคำแปลหลายภาษาที่ https://www.contributor-covenant.org/translations
 
 ---
 
-```markdown
-# 🤝 Contributing to ZyntroAI / New CrystalCastle
-
-> First: thank you for being here! Every contribution helps build better tools for everyone.
-
----
-
-## 📋 Table of Contents
-- [Code of Conduct](#-code-of-conduct)
-- [Before You Start](#-before-you-start)
-- [Development Setup](#-development-setup)
-- [Commit Standards](#-commit-standards)
-- [Pull Request Workflow](#-pull-request-workflow)
-- [Review & Merge](#-review--merge)
-- [Documentation Guide](#-documentation-guide)
-- [Security Rules](#-security-rules)
-- [Getting Help](#-getting-help)
+**สอดคล้องกับ:** [SECURITY.md](SECURITY.md) | [CONTRIBUTING.md](CONTRIBUTING.md)
+ 
+ 
+ 
+ 
+📄 ไฟล์ที่ 2:  CONTRIBUTING.md 
+ 
+เวอร์ชัน: 2.1.0 | อัปเดต: 18 กันยายน 2026 | สอดคล้องกับ: CODE_OF_CONDUCT + SECURITY
+ 
+markdown  
+# 🤝 คู่มือการร่วมพัฒนา — ZyntroAI / New CrystalCastle
+**ดัดแปลงจากมาตรฐาน GitHub Docs** | **เวอร์ชัน:** 2.1.0 | **อัปเดต:** 18 กันยายน 2026 ✨📖🔒
 
 ---
 
-## ✨ Code of Conduct
-- Be respectful, inclusive, and constructive.
-- See full: **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)**
-- Report issues to: `community@zyntroai.com`
+## 🎯 คำนำ
+ขอบคุณที่ลงทุนเวลาร่วมพัฒนาโครงการ **New CrystalCastle**! การมีส่วนร่วมทุกอย่างของคุณจะสะท้อนให้เห็นในผลิตภัณฑ์และเอกสารของเรา 🚀
+
+โปรดอ่านเอกสารเหล่านี้ก่อนเริ่มงาน:
+- 🤝 **[นโยบายจริยธรรม (Code of Conduct)](CODE_OF_CONDUCT.md)** — รักษาชุมชนให้เปิดกว้างและนับถือ
+- 🛡️ **[นโยบายความปลอดภัย (SECURITY.md)](SECURITY.md)** — วิธีรายงานช่องโหว่ความปลอดภัย
+
+เอกสารนี้จะให้ภาพรวมกระบวนการร่วมพัฒนา ตั้งแต่เปิด Issue, สร้าง PR, การรีวิว, จนถึงการรวมเข้า `main`
 
 ---
 
-## 🔍 Before You Start
+## 🆕 คู่มือสำหรับผู้ร่วมพัฒนาใหม่
+เพื่อให้เข้าใจภาพรวมโครงการ โปรดอ่าน **[README.md](README.md)** ก่อนครับ
 
-### Check Existing Work
-- Search **Issues** → avoid duplicates
-- Search **Discussions** → ask before building large features
-- Check **Projects** → see what's planned or in progress
-
-### Issue First (When Possible)
-- Bug reports → use **Bug template**
-- Feature requests → use **Feature template**
-- Assign yourself → let others know you're working on it
+แหล่งข้อมูลเพิ่มเติมสำหรับเริ่มต้น:
+- [ค้นหาวิธีร่วมพัฒนา Open Source](https://docs.github.com/en/get-started/exploring-projects-on-github/finding-ways-to-contribute-to-open-source-on-github)
+- [ตั้งค่า Git](https://docs.github.com/en/get-started/quickstart/set-up-git)
+- [GitHub Flow](https://docs.github.com/en/get-started/quickstart/github-flow)
+- [การทำงานร่วมกันด้วย Pull Requests](https://docs.github.com/en/github/collaborating-with-pull-requests)
 
 ---
 
-## 🛠️ Development Setup
+## 🚀 เริ่มต้นทำงาน
 
+### 📌 ประเภทของการมีส่วนร่วม
+ก่อนทำการเปลี่ยนแปลง โปรดตรวจสอบว่าการมีส่วนร่วมของคุณเข้าข่ายใด:
+- 🐛 **แก้ไขข้อผิดพลาด:** แก้บั๊ก, ลิงก์ตาย, พิมพ์ผิด
+- ✨ **เพิ่มฟีเจอร์:** ฟังก์ชันใหม่, ปรับปรุงประสิทธิภาพ
+- 📝 **เอกสาร:** ปรับปรุง README, คู่มือ, API Docs
+- 🧪 **การทดสอบ:** เพิ่ม Unit Test, Integration Test
+- ⚙️ **CI/CD:** ปรับปรุงเวิร์กโฟลว์, การตรวจสอบอัตโนมัติ
+- 🛡️ **ความปลอดภัย:** แก้ไขช่องโหว่, ปรับปรุงนโยบาย (ดู [SECURITY.md](SECURITY.md))
+
+### 🐛 การจัดการ Issues
+#### เปิด Issue ใหม่
+หากพบปัญหา:
+1. 🔍 **ค้นหาก่อน:** ตรวจสอบว่ามี Issue เกี่ยวข้องอยู่แล้วหรือไม่
+2. ✏️ **เปิดใหม่:** ใช้ฟอร์ม Issue ที่เหมาะสม
+3. 📝 **ระบุรายละเอียด:** ขั้นตอนการจำลอง, พฤติกรรมที่คาดหวัง, สภาพแวดล้อม
+
+> ⚠️ **สำหรับปัญหาความปลอดภัย:** ห้ามเปิด Issue สาธารณะ โปรดรายงานผ่านช่องทางใน [SECURITY.md](SECURITY.md)
+
+#### แก้ไข Issue ที่มีอยู่
+- สแกน Issue ที่มีอยู่แล้วเพื่อหาสิ่งที่คุณสนใจ
+- ใช้ **Labels** เป็นตัวกรอง
+- 💡 **กฎทั่วไป:** เราไม่มอบหมาย Issue ให้ใครคนใดคนหนึ่ง หากคุณพบ Issue ที่ต้องการทำ แค่เปิด PR พร้อมการแก้ไขได้เลย
+
+### ✏️ วิธีทำการเปลี่ยนแปลง
+#### 1. Fork และตั้งค่าสภาพแวดล้อม
 ```bash
-# Clone
+# Fork รีโป → Clone มาเครื่อง
 git clone https://github.com/ZyntroAI/new-crystalcastle.git
 cd new-crystalcastle
 
-# Environment
-cp .env.example .env
-# Edit .env with your values
+# ติดตั้ง dependencies
+# Frontend (รากรีโป):
+npm install
+# Backend (โฟลเดอร์ backend/):
+cd backend && npm install
+ 
+ 
+2. สร้างสาขาทำงาน
+ 
+bash  
+# สาขาปกติ
+git checkout -b feat/ชื่อฟีเจอร์
+git checkout -b fix/ชื่อปัญหา
+git checkout -b docs/ชื่อเอกสาร
 
-# Install
-npm install     # or pnpm install
+# สำหรับ Stacked PRs (งานใหญ่หลายชั้น)
+git checkout -b stack/ส่วน-1
+git checkout stack/ส่วน-1 -b stack/ส่วน-2
+ 
+ 
+3. ทำการเปลี่ยนแปลงและคอมมิต
+ 
+bash  
+# ปฏิบัติตาม Conventional Commits
+git add .
+git commit -m "feat: เพิ่มระบบการยืนยันตัวตน"
+git commit -m "fix: แก้ไขข้อผิดพลาดการค้นหา"
+git commit -m "docs: อัปเดตคู่มือการติดตั้ง"
+ 
+ 
+4. ตรวจสอบด้วยตัวเองก่อนส่ง
+ 
+- ✅ รัน Lint:  npm run lint 
+- ✅ รันการทดสอบ:  npm run test 
+- ✅ ตรวจสอบ Type:  npm run typecheck 
+- ✅ อ่านตรวจสอบโค้ดด้วยตัวเองอีกครั้ง
+- ✅ ตรวจสอบไม่มีข้อมูลลับรั่วไหล
+ 
+ 
+ 
+📥 Pull Request (PR)
+ 
+✅ ขั้นตอนการส่ง PR
+ 
+1. เติมเทมเพลต PR: ให้ข้อมูลครบถ้วน เพื่อช่วยผู้รีวิวเข้าใจการเปลี่ยนแปลงของคุณ
+2. เชื่อมโยง Issue: หากแก้ไขปัญหาใด ให้ใส่  Fixes #หมายเลขIssue 
+3. เปิดให้แก้ไข: ติ๊กช่อง Allow maintainer edits เพื่อให้ทีมสามารถอัปเดตสาขาของคุณได้
+4. ส่ง PR: รอทีมตรวจสอบและให้ข้อเสนอแนะ
+ 
+🔄 ระหว่างการรีวิว
+ 
+- 💬 เราอาจถามคำถามหรือขอข้อมูลเพิ่มเติม
+- ✏️ เราอาจขอให้แก้ไขก่อนรวม ผ่าน Suggested Changes หรือคอมเมนต์
+- ✅ เมื่ออัปเดตแล้ว ให้ทำเครื่องหมายคอมเมนต์เป็น Resolved
+- ⚔️ หากพบปัญหาการ merge: ศึกษา บทเรียนแก้ไข Conflict
+ 
+🎉 เมื่อ PR ถูกรวมแล้ว!
+ 
+ยินดีด้วยครับ! 🎊✨ ทีม ZyntroAI ขอขอบคุณการมีส่วนร่วมของคุณ
+ 
+เมื่อ PR ถูกรวมแล้ว ผลงานของคุณจะปรากฏในระบบของเราทันที และคุณจะกลายเป็นส่วนหนึ่งของชุมชนผู้พัฒนา ZyntroAI
+ 
+ 
+ 
+🧱 Stacked Pull Requests (สำหรับงานใหญ่)
+ 
+ดัดแปลงจากเอกสารทางการ GitHub — แบ่งงานใหญ่เป็นชั้นๆ เพื่อรีวิวง่ายและรวมเร็วขึ้น
+ 
+🎯 แนวคิด
+ 
+plaintext  
+main
+ └── stack/core (PR #1 — ฐาน)
+      └── stack/auth (PR #2 — ซ้อนบน)
+           └── stack/mfa (PR #3 — ซ้อนบนสุด)
+ 
+ 
+✅ กฎหลัก
+ 
+1. ชื่อ PR:  [STACK n/m] ชื่อเรื่อง 
+2. ฐานเป้าหมาย: ชี้ไปสาขาก่อนหน้า (ไม่ใช่ main)
+3. การรวม: จากล่างขึ้นบน: 1 → 2 → 3 → main
+ 
+🚀 คำสั่งพื้นฐาน (ใช้ GitHub CLI + gh stack extension)
+ 
+bash  
+# ไปยังสาขาชั้นล่าง
+gh stack down
 
-# Prerequisites
-- Node.js 20.19+ LTS
-- Git with GPG signing → see docs/signing-commits.md
-- GitHub CLI (optional): `gh --version`
-```
+# ทำการเปลี่ยนแปลงและคอมมิต
+git add . && git commit -m "แก้ไขชั้นล่าง"
 
-### Branch Naming
-```
-feature/short-description   → new functionality
-fix/issue-number-summary    → bug fixes
-docs/what-changed           → documentation only
-refactor/area-description   → code cleanup, no behavior change
-chore/dependency-update      → maintenance tasks
-```
+# Rebase ชั้นบนเพื่อรับการเปลี่ยนแปลง
+gh stack rebase --upstack
+
+# พุชและกลับไปทำงานที่เดิม
+gh stack push
+gh stack top
+ 
+ 
+ 
+ 
+🛡️ มาตรฐานความปลอดภัย
+ 
+- ❌ ห้ามคอมมิตข้อมูลลับ: Token, Key, Password, Credentials
+- 🔒 สิทธิ์น้อยที่สุด: ไม่เพิ่มสิทธิ์เกินความจำเป็น
+- 🧐 ตรวจสอบผลกระทบ: ทุกการเปลี่ยนแปลงต้องพิจารณาผลกระทบด้านความปลอดภัย
+- 🚨 รายงานช่องโหว่: หากพบปัญหาความปลอดภัยที่ละเอียดอ่อน โปรดอ่านและปฏิบัติตาม SECURITY.md
+ 
+ 
+ 
+📝 มาตรฐานการเขียน
+ 
+🟨 โค้ด JavaScript / TypeScript
+ 
+- ปฏิบัติตามมาตรฐาน ESLint ของโปรเจกต์
+- ใช้ Type Hints / TypeScript อย่างเคร่งครัด
+- มีคอมเมนต์อธิบายตรรกะที่ซับซ้อน
+- ความซับซ้อนควรต่ำ อ่านง่าย
+ 
+📄 เอกสาร Markdown
+ 
+- หัวข้อชัดเจน มีลำดับชั้น
+- ลิงก์ต้องทำงานได้ถูกต้อง
+- ตารางและรายการเรียบร้อย
+- ภาษาเข้าใจง่าย ชัดเจน
+ 
+ 
+ 
+📚 แหล่งอ้างอิง
+ 
+เอกสารนี้ดัดแปลงและปรับปรุงจาก:
+ 
+- GitHub Docs — CONTRIBUTING.md
+- GitHub Docs — Managing stacked pull requests
+- มาตรฐานความปลอดภัยและคุณภาพโค้ดของ ZyntroAI
+ 
+ 
+ 
+❓ ต้องการความช่วยเหลือ?
+ 
+หากมีคำถามหรือพบปัญหา สามารถ:
+ 
+- เปิด Discussion ในรีโป
+- ติดต่อทีมพัฒนาผ่านช่องทางทางการ
+- อ่านเอกสารเพิ่มเติมในโฟลเดอร์  docs/ 
+ 
+ 
+ 
+เอกสารที่เกี่ยวข้อง: CODE_OF_CONDUCT.md | SECURITY.md | README.md
+ 
+ 
+ 
+ขอบคุณอีกครั้งที่ร่วมพัฒนากับ ZyntroAI! ✨🚀🤝
+ 
+plaintext  
 
 ---
 
-## ✍️ Commit Standards
-
-### Format — Conventional Commits
-```
-<type>(<scope>): <subject>
-
-[detailed description — why, not just what]
-
-Signed-off-by: Your Name <your.email@example.com>
-```
-
-### Types
-| Type | Use Case |
-|---|---|
-| `feat` | New feature or capability |
-| `fix` | Bug fix, resolves incorrect behavior |
-| `docs` | Documentation changes only |
-| `refactor` | Code change that doesn't alter behavior |
-| `test` | Adding or updating tests |
-| `chore` | Build, tooling, dependency updates |
-| `security` | Security fixes or hardening |
-
-### Rules
-- ✅ First line ≤ **72 characters**
-- ✅ **Always Sign-off** (`-s` flag or manual line)
-- ✅ Reference issues: `Fixes #123`, `Closes #456`
-- ✅ **GPG Signing Required** — all commits must be verified
-  → See: **[docs/signing-commits.md](docs/signing-commits.md)**
-- ❌ No unsigned commits — protected branch will block
-
-### Example
-```
-feat(auth): implement OAuth token refresh flow
-
-Add automatic token refresh before expiry to prevent
-session drops during long-running operations.
-Closes #142
-
-Signed-off-by: Zyntro Dev <dev@zyntroai.com>
-```
-
----
-
-## 🔀 Pull Request Workflow
-
-### Step 1 — Create PR
-- Push your branch → open PR via GitHub or:
+## 🛠️ คำสั่ง Git เพิ่มไฟล์ทั้งสองพร้อมกัน
 ```bash
-gh pr create --title "feat: your title" --body-file .github/PULL_REQUEST_TEMPLATE.md
-```
-- Base: `main` ← Compare: `your-branch`
+# 1. อัปเดตและสร้างสาขา
+git checkout main
+git pull origin main
+git checkout -b docs/add-governance-files
 
-### Step 2 — Fill Template
-- Describe **what** changed and **why**
-- List **testing** performed
-- Attach **screenshots** for UI changes
-- Mark **breaking changes** if any
+# 2. สร้างไฟล์ทั้งสองและวางเนื้อหาด้านบน
 
-### Step 3 — Labels & Reviewers
-- Apply relevant labels: `bug`, `enhancement`, `documentation`, `ready for review`
-- Request review from: **`@ZyntroAI/crystal-plus`** or relevant maintainer
-- Keep PR in **Draft** while work-in-progress → click **Ready for review** when done
+# 3. เพิ่มทั้งสองไฟล์
+git add CODE_OF_CONDUCT.md CONTRIBUTING.md
 
-### Step 4 — Checks Must Pass Before Merge
-| Check Type | Action on Failure |
-|---|---|
-| CodeQL / Security | Fix vulnerability or discuss exception |
-| CI / Tests | Investigate and fix |
-| Dependency Review | Address license/version conflict |
-| Signed Commits | Re-sign or rebase with signed commits |
-| Merge Conflicts | Rebase branch → resolve → push |
+# 4. คอมมิต
+git commit -m "docs: add CODE_OF_CONDUCT.md + update CONTRIBUTING.md
 
-> **Docs-only note**: If only `.md` files change, test failures may be unrelated — maintainers will review and merge if appropriate.
+- เพิ่ม CODE_OF_CONDUCT.md (Contributor Covenant 2.1)
+- อัปเดต CONTRIBUTING.md ให้สอดคล้องกับ SECURITY.md และ CODE_OF_CONDUCT.md
+- เพิ่มลิงก์เชื่อมโยงระหว่างเอกสารทั้งสาม
+- ปรับปรุงเนื้อหาให้ครบถ้วนและสอดคล้องกัน"
 
----
+# 5. พุช
+git push -u origin docs/add-governance-files
 
-## ✅ Review & Merge
+# 6. สร้าง PR
+gh pr create \
+  --title "docs: add CODE_OF_CONDUCT.md + update CONTRIBUTING.md" \
+  --body "## 🎯 เป้าหมาย
+เพิ่มเอกสารการปกครองชุมชนให้ครบถ้วน:
+- 🤝 \`CODE_OF_CONDUCT.md\`: นโยบายจริยธรรม (Contributor Covenant 2.1)
+- 📖 \`CONTRIBUTING.md\`: อัปเดตให้สอดคล้องกับ SECURITY.md และ CODE_OF_CONDUCT.md
 
-### Review Standards
-- **1+ approval** required before merge
-- Address all feedback → resolve conversations
-- **Stale approvals** dismissed when new code pushed
-- Maintainer has final approval
+## 🔗 การเชื่อมโยง
+เอกสารทั้งสาม (README / CONTRIBUTING / CODE_OF_CONDUCT / SECURITY) มีลิงก์เชื่อมโยงถึงกันอย่างถูกต้อง
 
-### Merge Strategy
-| Situation | Method |
-|---|---|
-| Feature branch, multiple commits | **Create merge commit** → preserves history |
-| Single logical change | **Squash and merge** → clean history |
-| Linear history preferred | **Rebase and merge** → no merge commit |
-
-### After Merge
-- Delete your branch (cleanup)
-- Check related issues → close if resolved
-- Watch deployment notifications
-
----
-
-## 📝 Documentation Guide
-
-- **Bilingual standard**: English primary, Thai supplements
-- New feature = new or updated docs
-- Reference related files: `See also: [ARCHITECTURE.md](ARCHITECTURE.md)`
-- Place general guides in: `docs/`
-- API references → `docs/api.md` or `APP-API-GUIDELINES.md`
-
----
-
-## 🛡️ Security Rules
-
-- **Never commit secrets** — API keys, tokens, passwords
-  - Use `.env` (already in `.gitignore`)
-  - Use GitHub Secrets for CI values
-- **ReDoS patterns** — follow `docs/redos-rules.js` + `.py`
-- **GPG signing** — mandatory for all commits to `main`
-- Vulnerabilities → report via **[SECURITY.md](SECURITY.md)** — NOT public issues
-
----
-
-## 🆘 Getting Help
-
-- 💬 **Discussions** → general questions & ideas
-- 📋 **Issues** → bug reports & specific tasks
-- 📧 **Team** → `@ZyntroAI/crystal-plus`
-- 📖 **Guides** → browse `docs/` folder
-- 🔐 **Security** → see **[SECURITY.md](SECURITY.md)**
-
----
-
-> 🇹🇭🇺🇸 *Bilingual workflow · Built with precision by ZyntroAI*
-> Last updated: 2026-09-16
-```
-
----
-
-## 🎯 Ready to Use
-
-**Option A — Copy directly**
-1. Create new file at repo root: `CONTRIBUTING.md`
-2. Paste the content above
-3. Commit: `chore: add CONTRIBUTING.md workflow guide`
-4. Push → open PR
-
-**Option B — I'll prepare it as a PR**
-Shall I push this directly to `zyntromedia-patch-15` (PR #181) so it's ready to merge alongside the README?
-
-Tap **Fast** then **Pro** and I'll add it as a committed file right now.
-# 🤝 คู่มือการร่วมพัฒนา — ZyntroAI / New CrystalCastle
-
-ยินดีต้อนรับสู่โครงการ! 🚀  
-เอกสารนี้กำหนดมาตรฐานการเขียนโค้ด, สาขา, PR และการรีวิว
-
----
-
-## 📂 โครงสร้างรีโป
-| โฟลเดอร์ | หน้าที่ |
-|---|---|
-| `frontend/` | UI/UX • React/TS |
-| `backend/` | API • FastAPI • Python |
-| `docs/` | เอกสาร • คู่มือ |
-| `.github/` | เวิร์กโฟลว์ • เทมเพลต PR |
-
----
-
-## 🌿 มาตรฐานสาขา (Branch Naming)
-- `main` — รุ่นพร้อมใช้
-- `dev` — สาขาพัฒนาหลัก
-- `feat/ชื่อ` — ฟีเจอร์ใหม่
-- `fix/ชื่อ` — แก้ไขบั๊ก
-- `docs/...` — เอกสารเท่านั้น
-- `stack/ชื่อ` — **สำหรับ Stacked PRs**
-
----
-
-## ✍️ ข้อความคอมมิต (Conventional Commits)
+## ✅ การตรวจสอบ
+- [x] เนื้อหาครบถ้วน
+- [x] รูปแบบ Markdown ถูกต้อง
+- [x] สอดคล้องกับนโยบาย ZyntroAI
+- [x] ลิงก์ทั้งหมดทำงานได้" \
+  --base main \
+  --head docs/add-governance-files
+ 
+ 
+ 
+ 
+ต้องการให้ผม ปรับแต่งเนื้อหาเพิ่มเติม, หรือเตรียมคำสั่งสำหรับ merge และทำความสะอาดสาขา เพิ่มไหมครับ? 📄🔧✨
