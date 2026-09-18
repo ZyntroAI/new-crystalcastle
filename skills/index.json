@@ -3,16 +3,16 @@
     "path": "skills/crystalcastlex-skill-suite",
     "depends": [],
     "provides": [
-      "github-workflow-repair",
-      "monorepo-turborepo",
-      "git-repair",
-      "semantic-release",
-      "graphql-federation-gateway",
-      "vercel-deployment",
-      "package-lockfile-management",
-      "fastapi-research",
-      "langchain-research",
-      "auto-debugging"
+      "crystalcastlex-github-workflow-repair",
+      "crystalcastlex-monorepo-turborepo",
+      "crystalcastlex-git-repair",
+      "crystalcastlex-semantic-release",
+      "crystalcastlex-graphql-federation-gateway",
+      "crystalcastlex-vercel-deployment",
+      "crystalcastlex-package-lockfile-management",
+      "crystalcastlex-fastapi-research",
+      "crystalcastlex-langchain-research",
+      "crystalcastlex-auto-debugging"
     ],
     "priority": 1
   },
@@ -23,6 +23,16 @@
       "cwe-1321-protection",
       "prototype-pollution-detection",
       "prototype-pollution-sanitization"
+    ],
+    "priority": 1
+  },
+  "cwe1333-redos-detector": {
+    "path": "security/cwe1333",
+    "depends": [],
+    "provides": [
+      "cwe-1333-detection",
+      "redos-detection",
+      "regex-safety-analysis"
     ],
     "priority": 1
   },
@@ -46,12 +56,12 @@
     "path": "skills/supabase-agent-suite",
     "depends": [],
     "provides": [
-      "supabase-connect",
-      "supabase-schema-inventory",
-      "supabase-migrations",
-      "supabase-concurrency",
-      "supabase-security",
-      "supabase-postgres-best-practices"
+      "supabase-agent-connect",
+      "supabase-agent-schema-inventory",
+      "supabase-agent-migrations",
+      "supabase-agent-concurrency",
+      "supabase-agent-security",
+      "supabase-agent-postgres-best-practices"
     ],
     "priority": 1
   },
@@ -61,15 +71,40 @@
       "pyyaml"
     ],
     "provides": [
-      "fig-best-practices",
-      "six-layer-standard",
-      "quality-gate",
-      "design-token-validation",
-      "secret-scanning",
-      "sql-injection-detection",
-      "dependency-audit",
-      "sha-pinning-check",
-      "deployment-readiness"
+      "figbp-developer",
+      "figbp-designer",
+      "figbp-security",
+      "figbp-performance",
+      "figbp-reviewer",
+      "figbp-deployment"
+    ],
+    "priority": 1
+  },
+  "fig-suite": {
+    "path": "skills/fig-suite",
+    "depends": [
+      "pyyaml"
+    ],
+    "provides": [
+      "fig-platform",
+      "fig-artifacts",
+      "fig-connectors",
+      "fig-research",
+      "fig-automation",
+      "fig-safety"
+    ],
+    "priority": 1
+  },
+  "workflow-permission-check": {
+    "path": "skills/workflow-permission-check",
+    "depends": [],
+    "provides": [
+      "required",
+      "can_write",
+      "missing",
+      "explain",
+      "check_workflow_write",
+      "check_many"
     ],
     "priority": 1
   }

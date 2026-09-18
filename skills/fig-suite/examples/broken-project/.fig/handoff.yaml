@@ -1,0 +1,4 @@
+card: true
+follow_ups:
+  - Review the copy
+notify: true

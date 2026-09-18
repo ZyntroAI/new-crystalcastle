@@ -1,0 +1,258 @@
+Sensation-Release-Skills
+
+นี่คือชุด **Sensation-Release-Skills** สำหรับใช้กับ repository ของ ZyntroAI โดยเฉพาะ โดยเน้นการตรวจ, ตัดสินใจ และดำเนินการอย่างปลอดภัยก่อนการปล่อยเวอร์ชันหรือฟีเจอร์ใหม่
+
+## Skill 1: `sensation-release-readiness`
+
+### จุดประสงค์
+ประเมินความพร้อมของ repository ก่อนเริ่มกระบวนการ release โดยรวมผลตรวจหลายมิติเป็นสถานะเดียว
+
+### Inputs
+- Repository: `owner/name`
+- Default branch: `main`
+- Release branch หรือ tag เป้าหมาย (ถ้ามี)
+- GitHub token (optional)
+
+### Checks
+1. Repository availability
+2. Branch protection rules
+3. Open PRs ที่ยังค้างอยู่
+4. Checks บน default branch
+5. Workflow readiness
+6. Artifact presence
+7. Rate limit
+
+### Output
+- Overall status: `READY`, `NOT READY`, `WARNINGS`
+- รายการ check พร้อม status, code และคำอธิบาย
+- Recommended next actions
+
+***
+
+## Skill 2: `sensation-release-branch-audit`
+
+### จุดประสงค์
+ตรวจ branch ที่เกี่ยวข้องกับ release ว่าถูกต้องและพร้อม merge
+
+### Checks
+1. Branch naming convention
+2. Branch age (stale detection)
+3. Commits ahead/behind default branch
+4. Merge conflicts
+5. Required checks status
+6. Review status
+
+### Output
+- Branch name
+- Status: `HEALTHY`, `STALE`, `CONFLICT`, `PENDING CHECKS`
+- Commits ahead/behind
+- Recommended action
+
+***
+
+## Skill 3: `sensation-release-pr-gate`
+
+### จุดประสงค์
+ประเมิน PR ว่าพร้อม merge สำหรับ release หรือไม่
+
+### Checks
+1. PR state (open, closed, merged)
+2. Approval status
+3. Required checks
+4. Labels และ milestone
+5. Changes summary (files, lines)
+6. Conflict status
+7. Draft status
+
+### Output
+- PR number
+- Title
+- Status: `MERGEABLE`, `BLOCKED`, `PENDING`
+- Blockers list
+- Recommended action
+
+***
+
+## Skill 4: `sensation-release-workflow-verify`
+
+### จุดประสงค์
+ยืนยันว่า workflow ที่ใช้สำหรับ release พร้อมทำงาน
+
+### Checks
+1. Workflow file presence
+2. YAML syntax
+3. `workflow_dispatch` trigger
+4. Permissions
+5. Action versions
+6. Required secrets
+7. Recent run history
+
+### Output
+- Workflow name
+- Status: `READY`, `INVALID`, `INCOMPLETE`
+- Issues list
+- Recommended fix
+
+***
+
+## Skill 5: `sensation-release-artifact-check`
+
+### จุดประสงค์
+ตรวจว่าไฟล์ที่จำเป็นสำหรับ release ถูกสร้างและเผยแพร่แล้ว
+
+### Artifacts to check
+- `CHANGELOG.md`
+- `VERSION` หรือ `pyproject.toml` version field
+- Release notes template
+- Build artifacts (ถ้ามี)
+- Documentation updates
+
+### Output
+- Artifact name
+- Status: `PRESENT`, `MISSING`, `OUTDATED`
+- Last modified time
+- Recommended action
+
+***
+
+## Skill 6: `sensation-release-rate-limit-monitor`
+
+### จุดประสงค์
+ติดตาม quota ของ GitHub API เพื่อป้องกันการ block ระหว่างกระบวนการ release
+
+### Checks
+1. Core rate limit remaining
+2. Secondary rate limit (ถ้ามี)
+3. Reset time
+4. Risk level
+
+### Risk levels
+- `OK`: remaining > 20
+- `WARNING`: remaining 5–20
+- `BLOCKED`: remaining < 5
+
+### Output
+- Remaining / limit
+- Reset time
+- Risk level
+- Recommended action (wait, authenticate, retry later)
+
+***
+
+## Skill 7: `sensation-release-execution-plan`
+
+### จุดประสงค์
+สร้างแผนดำเนินการ release จากผลตรวจทั้งหมด
+
+### Inputs
+- ผลจาก skills 1–6
+- Release type: `patch`, `minor`, `major`
+- Target date/time
+- Rollback strategy
+
+### Output
+- Execution plan
+- ลำดับขั้นตอน
+- Dependencies
+- Rollback steps
+- Estimated duration
+- Risk assessment
+
+***
+
+## Skill 8: `sensation-release-post-mortem`
+
+### จุดประสงค์
+วิเคราะห์ผลหลัง release เพื่อปรับปรุงกระบวนการ
+
+### Inputs
+- Release outcome (success, partial, failed)
+- Workflow run logs
+- Issues/PRs ที่เกี่ยวข้อง
+- User feedback (ถ้ามี)
+
+### Output
+- Timeline
+- What went well
+- What went wrong
+- Root causes
+- Action items
+- Lessons learned
+
+***
+
+## โครงสร้างไฟล์แนะนำ
+
+```text
+skills/
+└── sensation-release/
+    ├── SKILL.md
+    ├── readiness/
+    │   ├── SKILL.md
+    │   └── script.sh
+    ├── branch-audit/
+    │   └── SKILL.md
+    ├── pr-gate/
+    │   └── SKILL.md
+    ├── workflow-verify/
+    │   └── SKILL.md
+    ├── artifact-check/
+    │   └── SKILL.md
+    ├── rate-limit-monitor/
+    │   └── SKILL.md
+    ├── execution-plan/
+    │   └── SKILL.md
+    └── post-mortem/
+        └── SKILL.md
+```
+
+***
+
+## ตัวอย่างการเรียกใช้
+
+```bash
+# ตรวจความพร้อมก่อน release
+bash skills/sensation-release/readiness/script.sh ZyntroAI/new-crystalcastle
+
+# ตรวจ branch
+bash skills/sensation-release/branch-audit/script.sh ZyntroAI/new-crystalcastle release/v1.2.0
+
+# ตรวจ PR
+bash skills/sensation-release/pr-gate/script.sh ZyntroAI/new-crystalcastle 123
+
+# ตรวจ workflow
+bash skills/sensation-release/workflow-verify/script.sh ZyntroAI/new-crystalcastle release.yml
+
+# ตรวจ artifacts
+bash skills/sensation-release/artifact-check/script.sh ZyntroAI/new-crystalcastle
+
+# ตรวจ rate limit
+bash skills/sensation-release/rate-limit-monitor/script.sh
+```
+
+***
+
+## Safety Rules
+
+- Read-only โดย default
+- ไม่สร้าง branch, PR หรือ tag อัตโนมัติ
+- ไม่ merge, close หรือ delete โดยไม่ได้รับอนุญาต
+- ไม่ใช้ token ที่ไม่จำเป็น
+- ไม่พิมพ์ secret หรือ token
+- แยกความแตกต่างระหว่าง resource ไม่มี กับ resource เข้าไม่ถึง
+- ไม่ถือว่า HTTP 200 คือ workflow รันสำเร็จ
+- ตรวจสอบ logs และ conclusion ของ workflow run แยกต่างหาก
+
+***
+
+## Next Steps
+
+1. เลือก skill ที่ต้องการใช้ก่อน
+2. สร้างไฟล์ script และ SKILL.md ตาม template
+3. ทดสอบกับ repository เป้าหมาย
+4. ปรับปรุงตามผลจริง
+5. รวมเป็น pipeline ที่รันซ้ำได้
+
+ต้องการให้ร่าง script สำหรับ skill ไหนเป็นพิเศษ หรือต้องการปรับโครงสร้างให้ตรงกับ workflow ของ ZyntroAI อย่างไรบ้างครับ
+
+
