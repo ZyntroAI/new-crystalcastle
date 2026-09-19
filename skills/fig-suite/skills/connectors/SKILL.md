@@ -11,9 +11,8 @@ tags: [connectors, gmail, calendar, slack, sheets, approval, writes]
 
 # connectors
 
-Own the connectors domain. Reads of connected services are ordinary work;
-writes leave the workspace and touch the user's real accounts, so they are
-gated.
+Own the connectors domain. Reads of connected services are ordinary work; writes
+leave the workspace and touch the user's real accounts, so they are gated.
 
 ## Scope
 
@@ -28,8 +27,8 @@ domain — governs every external write.
   the call; if the connector refuses it, wait for the user's approval and retry
   the same call. Never pre-empt the gate with your own question.
 - A refusal is the user's decision, not a bug. Do not invent a reason it is
-  missing, do not tell them to switch app, device, or mode, and do not claim
-  the connected app is asking. The card is in this conversation.
+  missing, do not tell them to switch app, device, or mode, and do not claim the
+  connected app is asking. The card is in this conversation.
 - **Write in the user's voice.** Anything that goes out as the user is their
   words. Mirror their diction, punctuation, and sign-off; drop the assistant
   register — no em dashes, no performed enthusiasm, no tidy three-item lists.
@@ -40,8 +39,8 @@ domain — governs every external write.
   them only after the first is approved.
 - Record every write in `.fig/external-writes.yaml` with `approved: true` once
   the user has confirmed. Absent file means no external writes.
-- Prefer the credentials already connected. Never type a credential into a
-  form or paste one into chat.
+- Prefer the credentials already connected. Never type a credential into a form
+  or paste one into chat.
 
 ## Required before handoff
 

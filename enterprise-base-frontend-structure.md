@@ -39,8 +39,11 @@ src/
 ## Migration notes
 
 - Vue scoped selectors such as `[data-v-xxxx]` were removed.
-- Component class names were retained where practical for incremental Angular migration.
+- Component class names were retained where practical for incremental Angular
+  migration.
 - CSS custom properties provide enterprise design tokens.
 - Dark mode supports both `.theme-dark` and `[data-theme="dark"]`.
-- The source's image asset paths remain compatible with an `assets/img/` layout after path adjustment.
-- Angular templates should use semantic HTML5 elements and bind state through Angular rather than embedding framework-generated CSS selectors.
+- The source's image asset paths remain compatible with an `assets/img/` layout
+  after path adjustment.
+- Angular templates should use semantic HTML5 elements and bind state through
+  Angular rather than embedding framework-generated CSS selectors.

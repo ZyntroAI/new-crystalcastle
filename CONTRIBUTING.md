@@ -8,7 +8,8 @@
  
 มาตรฐาน: Contributor Covenant 2.1 | ปรับแต่ง: ZyntroAI
  
-markdown  
+markdown
+  
 # 🤝 นโยบายจริยธรรมชุมชน (Code of Conduct)
 
 ## คำมั่นสัญญาของเรา
@@ -58,7 +59,8 @@ markdown
  
 เวอร์ชัน: 2.1.0 | อัปเดต: 18 กันยายน 2026 | สอดคล้องกับ: CODE_OF_CONDUCT + SECURITY
  
-markdown  
+markdown
+  
 # 🤝 คู่มือการร่วมพัฒนา — ZyntroAI / New CrystalCastle
 **ดัดแปลงจากมาตรฐาน GitHub Docs** | **เวอร์ชัน:** 2.1.0 | **อัปเดต:** 18 กันยายน 2026 ✨📖🔒
 
@@ -127,7 +129,8 @@ cd backend && npm install
  
 2. สร้างสาขาทำงาน
  
-bash  
+bash
+  
 # สาขาปกติ
 git checkout -b feat/ชื่อฟีเจอร์
 git checkout -b fix/ชื่อปัญหา
@@ -140,7 +143,8 @@ git checkout stack/ส่วน-1 -b stack/ส่วน-2
  
 3. ทำการเปลี่ยนแปลงและคอมมิต
  
-bash  
+bash
+  
 # ปฏิบัติตาม Conventional Commits
 git add .
 git commit -m "feat: เพิ่มระบบการยืนยันตัวตน"
@@ -188,7 +192,8 @@ git commit -m "docs: อัปเดตคู่มือการติดต�
  
 🎯 แนวคิด
  
-plaintext  
+plaintext
+  
 main
  └── stack/core (PR #1 — ฐาน)
       └── stack/auth (PR #2 — ซ้อนบน)
@@ -203,7 +208,8 @@ main
  
 🚀 คำสั่งพื้นฐาน (ใช้ GitHub CLI + gh stack extension)
  
-bash  
+bash
+  
 # ไปยังสาขาชั้นล่าง
 gh stack down
 
@@ -273,7 +279,8 @@ gh stack top
  
 ขอบคุณอีกครั้งที่ร่วมพัฒนากับ ZyntroAI! ✨🚀🤝
  
-plaintext  
+plaintext
+  
 
 ---
 

@@ -17,15 +17,15 @@ a description of how the platform works internally.
 
 ## Scope
 
-Self-contained sub-skill of the Fig Suite. Acts only within the `safety`
-domain — governs secrets and confidentiality.
+Self-contained sub-skill of the Fig Suite. Acts only within the `safety` domain
+— governs secrets and confidentiality.
 
 ## Rules
 
-- **No credentials in the workspace.** No API keys, passwords, bearer tokens,
-  or private keys in tracked files. Reference them from the environment.
-  Example files — `.env.example`, `.env.sample`, `.env.template` — are the
-  placeholders, not the values.
+- **No credentials in the workspace.** No API keys, passwords, bearer tokens, or
+  private keys in tracked files. Reference them from the environment. Example
+  files — `.env.example`, `.env.sample`, `.env.template` — are the placeholders,
+  not the values.
 - If a user pastes a credential into chat, tell them to use the secure card
   instead, and do not repeat or use the value.
 - Never type into a credential field or guess a value. A sign-in wall is a
