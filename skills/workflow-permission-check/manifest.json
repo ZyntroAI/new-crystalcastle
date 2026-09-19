@@ -1,0 +1,12 @@
+{
+  "id": "workflow-permission-check",
+  "name": "Workflow Permission Check",
+  "version": "1.0.0",
+  "description": "Permission-aware gate for GitHub App operations (contents != workflows).",
+  "tags": ["github", "permissions", "workflows", "ci-cd", "least-privilege"],
+  "entrypoint": "loader.py",
+  "runtime": "python3",
+  "dependencies": [],
+  "visibility": "public",
+  "importable": true
+}

@@ -1,0 +1,210 @@
+📜 นโยบายความเป็นส่วนตัว | Privacy Policy
+ 
+สำหรับโปรเจกต์ ZyntroAI / New CrystalCastle
+ฉบับสองภาษา EN/TH | เวอร์ชัน: 1.0.0 | อัปเดต: 18 กันยายน 2026 🔒🌐👤
+ 
+ 
+ 
+หมายเหตุ / Note:
+นโยบายนี้อ้างอิงโครงสร้างมาตรฐานจาก GitHub Privacy Policies และปรับแต่งให้สอดคล้องกับบริบทของโปรเจกต์โอเพ่นซอร์สของ ZyntroAI
+This policy references the standard structure from GitHub Privacy Policies and is adapted for the context of ZyntroAI's open-source projects.
+ 
+ 
+ 
+1. คำนำ / Introduction
+ 
+EN
+ 
+Welcome to the ZyntroAI / New CrystalCastle project ("we", "us", or "our"). We respect your privacy and are committed to protecting your personal data. This Privacy Policy explains what information we may collect, how we use it, and your rights regarding your data when you interact with our project, repositories, and related services.
+ 
+TH
+ 
+ยินดีต้อนรับสู่โปรเจกต์ ZyntroAI / New CrystalCastle ("เรา", "พวกเรา", หรือ "ของเรา") เราเคารพความเป็นส่วนตัวของคุณและมีความมุ่งมั่นในการปกป้องข้อมูลส่วนบุคคลของคุณ นโยบายความเป็นส่วนตัวนี้อธิบายว่าเราอาจรวบรวมข้อมูลอะไร, เราใช้ข้อมูลอย่างไร, และสิทธิของคุณเกี่ยวกับข้อมูลของคุณเมื่อคุณโต้ตอบกับโปรเจกต์, รีโป, และบริการที่เกี่ยวข้องของเรา
+ 
+ 
+ 
+2. ข้อมูลที่เราอาจรวบรวม / Information We May Collect
+ 
+EN
+ 
+We may collect the following types of information when you interact with our project:
+ 
+- Account Information: If you create an account or use GitHub to interact, we may receive your public profile information (username, display name, email address if public).
+- Contribution Data: Information related to your code contributions, comments, issues, pull requests, and other activities in our repositories.
+- Communication Data: Information you provide when you contact us directly, participate in discussions, or report issues.
+- Technical Data: Basic technical information such as IP address, browser type, device information, and usage patterns (collected automatically through standard web technologies).
+- Voluntary Information: Any other information you choose to provide voluntarily.
+ 
+TH
+ 
+เราอาจรวบรวมประเภทข้อมูลต่อไปนี้เมื่อคุณโต้ตอบกับโปรเจกต์ของเรา:
+ 
+- ข้อมูลบัญชี: หากคุณสร้างบัญชีหรือใช้ GitHub ในการโต้ตอบ เราอาจได้รับข้อมูลโปรไฟล์สาธารณะของคุณ (ชื่อผู้ใช้, ชื่อแสดง, ที่อยู่อีเมลหากเปิดสาธารณะ)
+- ข้อมูลการมีส่วนร่วม: ข้อมูลที่เกี่ยวข้องกับการมีส่วนร่วมโค้ด, คอมเมนต์, ไอชู, พูลรีเควสต์, และกิจกรรมอื่นๆ ในรีโปของเรา
+- ข้อมูลการสื่อสาร: ข้อมูลที่คุณให้เมื่อคุณติดต่อเราโดยตรง, เข้าร่วมการสนทนา, หรือรายงานปัญหา
+- ข้อมูลทางเทคนิค: ข้อมูลทางเทคนิคพื้นฐานเช่น ที่อยู่ IP, ประเภทเบราว์เซอร์, ข้อมูลอุปกรณ์, และรูปแบบการใช้งาน (รวบรวมอัตโนมัติผ่านเทคโนโลยีเว็บมาตรฐาน)
+- ข้อมูลโดยสมัครใจ: ข้อมูลอื่นๆ ใดๆ ที่คุณเลือกให้โดยสมัครใจ
+ 
+ 
+ 
+3. วัตถุประสงค์การใช้ข้อมูล / How We Use Information
+ 
+EN
+ 
+We use the collected information for the following purposes:
+ 
+- ✅ To operate and maintain the project: Manage repositories, process contributions, and ensure the project functions properly.
+- ✅ To communicate with you: Respond to your inquiries, provide updates, and facilitate discussions.
+- ✅ To improve the project: Analyze usage patterns, identify issues, and enhance features and documentation.
+- ✅ To ensure security: Detect and prevent fraud, abuse, and security vulnerabilities.
+- ✅ To comply with legal obligations: Meet applicable laws, regulations, and legal requirements.
+ 
+TH
+ 
+เราใช้ข้อมูลที่รวบรวมเพื่อวัตถุประสงค์ต่อไปนี้:
+ 
+- ✅ เพื่อดำเนินงานและดูแลรักษาโปรเจกต์: จัดการรีโป, ประมวลผลการมีส่วนร่วม, และรับประกันว่าโปรเจกต์ทำงานได้อย่างถูกต้อง
+- ✅ เพื่อสื่อสารกับคุณ: ตอบกลับคำถามของคุณ, ให้ข้อมูลอัปเดต, และอำนวยความสะดวกในการสนทนา
+- ✅ เพื่อปรับปรุงโปรเจกต์: วิเคราะห์รูปแบบการใช้งาน, ระบุปัญหา, และปรับปรุงฟีเจอร์และเอกสาร
+- ✅ เพื่อรับประกันความปลอดภัย: ตรวจจับและป้องกันการฉ้อโกง, การใช้งานที่ไม่เหมาะสม, และช่องโหว่ความปลอดภัย
+- ✅ เพื่อปฏิบัติตามภาระหน้าที่ทางกฎหมาย: ปฏิบัติตามกฎหมาย, กฎระเบียบ, และข้อกำหนดทางกฎหมายที่ใช้บังคับ
+ 
+ 
+ 
+4. การแชร์ข้อมูล / Sharing of Information
+ 
+EN
+ 
+We do not sell your personal data. We may share information only in the following limited circumstances:
+ 
+- 🤝 With your consent: When you explicitly agree to the sharing.
+- 🛠️ With service providers: To trusted third parties who assist us in operating the project (bound by confidentiality obligations).
+- ⚖️ For legal reasons: When required by law, court order, or to protect our rights, property, or safety.
+- 📊 Aggregated data: Non-personal, aggregated information that cannot identify you individually.
+ 
+TH
+ 
+เรา ไม่ขาย ข้อมูลส่วนบุคคลของคุณ เราอาจแชร์ข้อมูลเฉพาะในกรณีที่จำกัดต่อไปนี้:
+ 
+- 🤝 ด้วยความยินยอมของคุณ: เมื่อคุณยินยอมอย่างชัดเจนต่อการแชร์
+- 🛠️ กับผู้ให้บริการ: กับบุคคลที่สามที่น่าเชื่อถือซึ่งช่วยเราในการดำเนินงานโปรเจกต์ (ผูกพันด้วยภาระหน้าที่รักษาความลับ)
+- ⚖️ เพื่อเหตุผลทางกฎหมาย: เมื่อจำเป็นตามกฎหมาย, คำสั่งศาล, หรือเพื่อปกป้องสิทธิ, ทรัพย์สิน, หรือความปลอดภัยของเรา
+- 📊 ข้อมูลรวม: ข้อมูลที่ไม่ใช่ข้อมูลส่วนบุคคลและรวมกันแล้วซึ่งไม่สามารถระบุตัวตนคุณได้โดยเดี่ยว
+ 
+ 
+ 
+5. คุกกี้และเทคโนโลยีคล้ายๆ กัน / Cookies and Similar Technologies
+ 
+EN
+ 
+Our project may use cookies and similar technologies to enhance your experience, understand usage patterns, and improve our services. You can control cookies through your browser settings. Disabling cookies may affect some functionalities of the project interfaces.
+ 
+TH
+ 
+โปรเจกต์ของเราอาจใช้คุกกี้และเทคโนโลยีที่คล้ายกันเพื่อปรับปรุงประสบการณ์ของคุณ, ทำความเข้าใจรูปแบบการใช้งาน, และปรับปรุงบริการของเรา คุณสามารถควบคุมคุกกี้ผ่านการตั้งค่าเบราว์เซอร์ของคุณ การปิดใช้งานคุกกี้อาจส่งผลต่อฟังก์ชันบางประการของอินเทอร์เฟซโปรเจกต์
+ 
+ 
+ 
+6. การเก็บรักษาข้อมูล / Data Retention
+ 
+EN
+ 
+We retain your personal data only for as long as necessary to fulfill the purposes outlined in this policy, comply with legal obligations, resolve disputes, and enforce our agreements. When data is no longer needed, we will securely delete or anonymize it.
+ 
+TH
+ 
+เราเก็บรักษาข้อมูลส่วนบุคคลของคุณเฉพาะในช่วงเวลาที่จำเป็นเพื่อปฏิบัติวัตถุประสงค์ที่ระบุในนโยบายนี้, ปฏิบัติตามภาระหน้าที่ทางกฎหมาย, แก้ไขข้อพิพาท, และบังคับใช้ข้อตกลงของเรา เมื่อข้อมูลไม่จำเป็นอีกต่อไป เราจะลบหรือทำให้ข้อมูลเป็นแบบไม่ระบุตัวตนอย่างปลอดภัย
+ 
+ 
+ 
+7. สิทธิของคุณ / Your Rights
+ 
+EN
+ 
+Depending on your location, you may have the following rights regarding your personal data:
+ 
+- 📖 Right to access: Request a copy of your personal data.
+- ✏️ Right to rectification: Request correction of inaccurate data.
+- 🗑️ Right to erasure: Request deletion of your data (where applicable).
+- ⏸️ Right to restriction: Request restriction of processing.
+- 📤 Right to data portability: Request transfer of your data.
+- 🚫 Right to object: Object to certain types of processing.
+- 🔐 Right to withdraw consent: Withdraw consent at any time (where consent was the basis).
+ 
+To exercise these rights, please contact us through the channels specified in the "Contact Us" section.
+ 
+TH
+ 
+ขึ้นอยู่กับที่ตั้งของคุณ คุณอาจมีสิทธิต่อไปนี้เกี่ยวกับข้อมูลส่วนบุคคลของคุณ:
+ 
+- 📖 สิทธิในการเข้าถึง: ขอสำเนาข้อมูลส่วนบุคคลของคุณ
+- ✏️ สิทธิในการแก้ไข: ขอแก้ไขข้อมูลที่ไม่ถูกต้อง
+- 🗑️ สิทธิในการลบ: ขอลบข้อมูลของคุณ (เมื่อใช้ได้)
+- ⏸️ สิทธิในการจำกัด: ขอจำกัดการประมวลผล
+- 📤 สิทธิในการถ่ายโอนข้อมูล: ขอถ่ายโอนข้อมูลของคุณ
+- 🚫 สิทธิในการคัดค้าน: คัดค้านการประมวลผลบางประเภท
+- 🔐 สิทธิในการถอนความยินยอม: ถอนความยินยอมได้ตลอดเวลา (เมื่อความยินยอมเป็นพื้นฐาน)
+ 
+เพื่อใช้สิทธิเหล่านี้ โปรดติดต่อเราผ่านช่องทางที่ระบุในส่วน "ติดต่อเรา"
+ 
+ 
+ 
+8. ความปลอดภัย / Security
+ 
+EN
+ 
+We implement appropriate technical and organizational measures to protect your personal data against unauthorized access, use, disclosure, alteration, or destruction. However, no method of transmission over the internet or electronic storage is 100% secure, and we cannot guarantee absolute security.
+ 
+For reporting security vulnerabilities, please see our SECURITY.md.
+ 
+TH
+ 
+เราปฏิบัติตามมาตรการทางเทคนิคและการจัดการที่เหมาะสมเพื่อปกป้องข้อมูลส่วนบุคคลของคุณจากการเข้าถึง, การใช้งาน, การเปิดเผย, การแก้ไข, หรือการทำลายโดยไม่ได้รับอนุญาต อย่างไรก็ตาม ไม่มีวิธีการส่งผ่านทางอินเทอร์เน็ตหรือการจัดเก็บอิเล็กทรอนิกส์ที่ปลอดภัย 100% และเราไม่สามารถรับประกันความปลอดภัยอย่างสมบูรณ์ได้
+ 
+สำหรับการรายงานช่องโหว่ความปลอดภัย โปรดดูที่ SECURITY.md ของเรา
+ 
+ 
+ 
+9. การเปลี่ยนแปลงนโยบาย / Changes to This Policy
+ 
+EN
+ 
+We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the updated policy on this page with a new "Last updated" date. We encourage you to review this policy periodically.
+ 
+TH
+ 
+เราอาจอัปเดตนโยบายความเป็นส่วนตัวนี้เป็นครั้งคราว เราจะแจ้งให้คุณทราบถึงการเปลี่ยนแปลงที่สำคัญโดยการโพสต์นโยบายที่อัปเดตบนหน้านี้พร้อมวันที่ "อัปเดตล่าสุด" ใหม่ เราแนะนำให้คุณตรวจทบทวนนโยบายนี้เป็นระยะ
+ 
+ 
+ 
+10. ติดต่อเรา / Contact Us
+ 
+EN
+ 
+If you have questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact us through:
+ 
+- GitHub Issues / Discussions: In the respective project repository
+- Project maintainers: Through official project communication channels
+ 
+TH
+ 
+หากคุณมีคำถาม, ความกังวล, หรือคำขอเกี่ยวกับนโยบายความเป็นส่วนตัวนี้หรือการปฏิบัติเกี่ยวกับข้อมูลของเรา โปรดติดต่อเราผ่าน:
+ 
+- GitHub Issues / Discussions: ในรีโปโปรเจกต์ที่เกี่ยวข้อง
+- ผู้ดูแลโปรเจกต์: ผ่านช่องทางการสื่อสารทางการของโปรเจกต์
+ 
+ 
+ 
+📄 เอกสารที่เกี่ยวข้อง / Related Documents
+ 
+- 🤝 CODE_OF_CONDUCT.md — นโยบายจริยธรรมชุมชน
+- 📖 CONTRIBUTING.md — คู่มือการร่วมพัฒนา
+- 🛡️ SECURITY.md — นโยบายความปลอดภัย
+ 
+ 
+ 
+ขอบคุณที่ไว้วางใจเรา / Thank you for trusting us! ✨🔒🤝
+ 
+ 
+ 
+ต้องการให้ผม ปรับแต่งเนื้อหาเฉพาะจุด, หรือแปลงเอกสารอื่นๆ (SECURITY / CODE_OF_CONDUCT / CONTRIBUTING) เป็นฉบับสองภาษาเช่นกัน ไหมครับ? 📄🌐🔄

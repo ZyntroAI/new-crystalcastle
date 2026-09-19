@@ -1,4 +1,5 @@
-For GitHub Actions workflows, add instructions such as these to `.github/copilot-instructions.md`:
+For GitHub Actions workflows, add instructions such as these to
+`.github/copilot-instructions.md`:
 
 ```md
 ## GitHub Actions workflow guidelines
@@ -21,7 +22,8 @@ For GitHub Actions workflows, add instructions such as these to `.github/copilot
 - Validate changed workflow files with a YAML parser and GitHub Actions workflow checks.
 ```
 
-For instructions that apply only to workflow files, create `.github/instructions/workflows.instructions.md`:
+For instructions that apply only to workflow files, create
+`.github/instructions/workflows.instructions.md`:
 
 ```md
 ---
@@ -35,4 +37,5 @@ applyTo: ".github/workflows/**/*.yml,.github/workflows/**/*.yaml"
 - Keep workflows reusable and avoid unnecessary duplication.
 ```
 
-The path-specific file is useful when you want these rules applied only while Copilot edits GitHub Actions workflows.
+The path-specific file is useful when you want these rules applied only while
+Copilot edits GitHub Actions workflows.

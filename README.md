@@ -21,8 +21,20 @@ Full-stack platform by ZyntroAI for documentation, tickets, and AI-assisted rese
 ### `src/` — legacy React work
 - Vite React template content (`main.tsx`, `App.tsx`) that was merged in and is **not wired to a runnable build**; `index.html` at root is a static snapshot rather than the app entry. Being reconciled.
 
+### `skills/` — agent skill suites
+- Suite manifests plus an importable skill tree; each sub-skill is a `SKILL.md` with YAML frontmatter.
+- `skills/index.json` is the central registry: one entry per suite with `path`, `depends`, `provides`, `priority`. **`provides` lists the frontmatter `id` of every sub-skill the suite ships**, so it can be matched against a skill on disk.
+- Current suites: `crystalcastlex-skill-suite` (10), `supabase-agent-suite` (6), `fig-suite` (6), `fig-best-practices-suite` (6), and the standalone `python-dev` engine. Each suite also declares its own ordered list in `<suite>/metadata/index.json`.
+- `skills/claude-rest/` and `skills/claude-rest-api.md` are documentation for the Claude REST surface.
+
+### `security/`
+- `security/cwe1321/` — CWE-1321 (Prototype Pollution) protection module: ESLint / Semgrep / CodeQL / Bandit rules plus JS and Python runtime sanitizers, with tests and a `TEST-REPORT.md`.
+
+### `knowledge-base/`
+- Curated reference material. [`knowledge-base/mcp-tools/`](./knowledge-base/mcp-tools/README.md) holds the MCP & AI tool catalog — `registry.yaml` (name / tier / permissions / redact), a generated `dashboard.html`, and the MCP architecture diagram.
+
 ### `docs/`
-- Working documentation and knowledge-base material (see `docs/` and `docs/kb/`).
+- Working documentation and knowledge-base material (see `docs/`).
 
 ### `.github/workflows/`
 - Many workflow files, several copied from a FastAPI boilerplate and **mismatched to this Node/Express + React stack**. The active set for CI on this repo is being corrected; until then, workflow checks on PRs are **not reliable signals**.

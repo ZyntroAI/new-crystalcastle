@@ -12,9 +12,12 @@ tags: [postgres-best-practices, supabase, postgres]
 ## Indexes
 
 - Index the columns you actually filter and join on — not every column.
-- Composite index column order follows the query's selectivity and equality-then-range pattern.
-- Use `create index concurrently` in production; it cannot run inside a transaction.
-- Find missing-index candidates from `pg_stat_user_tables` (high `seq_scan` on big tables).
+- Composite index column order follows the query's selectivity and
+  equality-then-range pattern.
+- Use `create index concurrently` in production; it cannot run inside a
+  transaction.
+- Find missing-index candidates from `pg_stat_user_tables` (high `seq_scan` on
+  big tables).
 
 ## Transactions
 
@@ -25,14 +28,16 @@ tags: [postgres-best-practices, supabase, postgres]
 ## Deadlocks
 
 - Take locks in a **consistent order** across all code paths.
-- `FOR UPDATE SKIP LOCKED` for queues; plain `FOR UPDATE` for contended single rows.
+- `FOR UPDATE SKIP LOCKED` for queues; plain `FOR UPDATE` for contended single
+  rows.
 - On `deadlock detected`, retry the whole transaction — do not partial-retry.
 
 ## Connections
 
 - Every connection is a server slot. Cap worker concurrency to fit the pool.
 - Use a pooler (Supavisor / PgBouncer) for many short-lived clients.
-- Set statement and lock timeouts so a stuck query cannot pin a connection forever.
+- Set statement and lock timeouts so a stuck query cannot pin a connection
+  forever.
 
 ## Quick wins
 

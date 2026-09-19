@@ -16,9 +16,8 @@ is never overridden by schedule pressure.
 
 ## Scope
 
-Self-contained sub-skill of the Fig Best Practices Suite. Acts only within
-layer `03-security`. This skill may block a release that every other skill
-passed.
+Self-contained sub-skill of the Fig Best Practices Suite. Acts only within layer
+`03-security`. This skill may block a release that every other skill passed.
 
 ## Rules
 
@@ -34,8 +33,8 @@ passed.
 
 ## Detection — secrets
 
-Scan the whole tree for the `forbidden_patterns` in `kernel/policy.yaml`.
-A match is a `FAIL`, not a warning.
+Scan the whole tree for the `forbidden_patterns` in `kernel/policy.yaml`. A
+match is a `FAIL`, not a warning.
 
 A secret that has ever been committed is compromised. Rotate it — deleting the
 line is not remediation.
@@ -73,8 +72,8 @@ dependency makes every build a different build.
 
 ## Stop condition
 
-On `SECURITY`, `SQL_INJECTION`, or `DEPENDENCY_AUDIT` = FAIL, block the
-handoff, rotate anything exposed, and report the finding with its file and line.
+On `SECURITY`, `SQL_INJECTION`, or `DEPENDENCY_AUDIT` = FAIL, block the handoff,
+rotate anything exposed, and report the finding with its file and line.
 
 ## Triggers
 

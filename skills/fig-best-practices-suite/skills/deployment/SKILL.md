@@ -16,8 +16,8 @@ release.
 
 ## Scope
 
-Self-contained sub-skill of the Fig Best Practices Suite. Acts only within
-layer `06-deployment`.
+Self-contained sub-skill of the Fig Best Practices Suite. Acts only within layer
+`06-deployment`.
 
 ## Rules
 
