@@ -1,0 +1,193 @@
+📦 Full  dependabot.yml  — ZyntroAI Agent Runtime
+ 
+Production-Grade • Grouped Updates • Secure • Python + GitHub Actions 🚀🔒
+ 
+ 
+ 
+📄 Complete File:  .github/dependabot.yml 
+ 
+yaml
+  
+# 🛡️ Dependabot Configuration — ZyntroAI Agent Runtime
+# 📅 Updated: 2026-09-19 | 🧩 Grouped Updates | 🔒 Security First
+# 🔗 Ref: https://docs.github.com/en/code-security/supply-chain-security
+
+version: 2
+
+updates:
+  # ────────────────────────────────────────────────────
+  # 🐍 Python / Pip — Agent Runtime Core
+  # ────────────────────────────────────────────────────
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "09:00"
+      timezone: "Asia/Bangkok"
+    open-pull-requests-limit: 5
+    reviewers: ["@zyntromedia"]
+    assignees: ["@zyntromedia"]
+    labels: ["dependencies", "python", "agent-runtime"]
+    commit-message:
+      prefix: "deps(pip)"
+      prefix-development: "deps-dev(pip)"
+      include: "scope"
+    versioning-strategy: "increase"
+    rebase-strategy: "auto"
+    groups:
+      # 🧱 Core Runtime — Framework & Base
+      core:
+        patterns:
+          - "fastapi"
+          - "uvicorn"
+          - "pydantic"
+          - "pydantic-settings"
+          - "starlette"
+          - "httpx"
+        update-types: ["minor", "patch"]
+
+      # 🛡️ Security — Critical Fixes Only
+      security:
+        patterns:
+          - "cryptography"
+          - "pyjwt"
+          - "passlib"
+          - "python-jose"
+          - "bcrypt"
+          - "openssl-python"
+        update-types: ["patch"]
+        dependency-type: "production"
+
+      # 🧪 Dev & Test — Tooling
+      dev:
+        patterns:
+          - "pytest"
+          - "pytest-*"
+          - "mypy"
+          - "ruff"
+          - "black"
+          - "isort"
+          - "httpx"
+          - "asgi-lifespan"
+        exclude-patterns:
+          - "pytest-critical"
+          - "legacy-*"
+        dependency-type: "development"
+
+      # 🧩 Registry & Adapters
+      adapters:
+        patterns:
+          - "minio"
+          - "boto3"
+          - "google-cloud-storage"
+          - "azure-storage-blob"
+          - "apscheduler"
+        update-types: ["minor", "patch"]
+
+      # 📊 Observability
+      observability:
+        patterns:
+          - "prometheus-client"
+          - "structlog"
+          - "python-json-logger"
+
+  # ────────────────────────────────────────────────────
+  # 🤖 GitHub Actions — CI/CD Workflows
+  # ────────────────────────────────────────────────────
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "10:00"
+      timezone: "Asia/Bangkok"
+    open-pull-requests-limit: 3
+    reviewers: ["@zyntromedia"]
+    labels: ["dependencies", "github-actions", "ci"]
+    commit-message:
+      prefix: "deps(actions)"
+    groups:
+      all-actions:
+        patterns: ["*"]
+        update-types: ["patch", "minor"]
+
+  # ────────────────────────────────────────────────────
+  # 🐳 Docker — Base Images
+  # ────────────────────────────────────────────────────
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 2
+    reviewers: ["@zyntromedia"]
+    labels: ["dependencies", "docker", "container"]
+    groups:
+      docker-base:
+        patterns: ["python", "alpine", "golang"]
+
+  # ────────────────────────────────────────────────────
+  # 📜 Git Submodules (Optional)
+  # ────────────────────────────────────────────────────
+  - package-ecosystem: "gitsubmodule"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    groups:
+      submodules:
+        patterns: ["*"]
+ 
+ 
+ 
+ 
+✅ Key Features
+ 
+🧩 Grouped Updates
+ 
+- core: FastAPI/Pydantic → 1 PR
+- security: Cryptography/JWT → Patch-only
+- dev: Pytest/Lint → Dev tools
+- adapters: S3/Azure/MinIO → Storage
+- observability: Logging/Metrics
+- actions: All workflows together
+ 
+⏰ Schedule
+ 
+- 🐍 Python: Weekly Wed 09:00 (TH)
+- 🤖 Actions: Weekly Thu 10:00
+- 🐳 Docker: Monthly
+ 
+🔒 Security Rules
+ 
+-  security  group → patch only
+-  dependency-type  filtered
+- Auto-rebase + limit 5 open PRs
+- Signed commit prefixes
+ 
+ 
+ 
+📁 Install
+ 
+1. Save as:  .github/dependabot.yml 
+2. Commit:
+ 
+bash
+  
+git add .github/dependabot.yml
+git commit -m "config: add grouped dependabot [ZyntroAI Standard]"
+git push
+ 
+ 
+3. GitHub → Insights → Dependency Graph → Dependabot ✅
+ 
+ 
+ 
+🧾 Matches Our Stack
+ 
+✅ Agent Runtime
+✅ Registry/Permissions
+✅ Mock/Test Tools
+✅ GitHub Actions Workflows
+✅ Docker Compose
+ 
+Ready to merge ✅🔐📦
