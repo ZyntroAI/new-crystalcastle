@@ -34,7 +34,11 @@ Full-stack platform by ZyntroAI for documentation, tickets, and AI-assisted rese
 - Curated reference material. [`knowledge-base/mcp-tools/`](./knowledge-base/mcp-tools/README.md) holds the MCP & AI tool catalog — `registry.yaml` (name / tier / permissions / redact), a generated `dashboard.html`, and the MCP architecture diagram.
 
 ### `docs/`
-- Working documentation and knowledge-base material (see `docs/`).
+- Working documentation (guidelines, runbooks, agreements).
+
+### `knowledge-base/`
+- Reference material and catalogs that have settled — see **[knowledge-base/README.md](knowledge-base/README.md)** for the index.
+- Currently: the MCP & AI tools catalog (`knowledge-base/mcp-tools/`) and the Steam Web API infographic set (`knowledge-base/steam-web-api/`).
 
 ### `.github/workflows/`
 - Many workflow files, several copied from a FastAPI boilerplate and **mismatched to this Node/Express + React stack**. The active set for CI on this repo is being corrected; until then, workflow checks on PRs are **not reliable signals**.
