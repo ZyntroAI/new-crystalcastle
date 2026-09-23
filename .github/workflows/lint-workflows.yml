@@ -1,0 +1,87 @@
+name: 🧹 Lint Workflows
+
+run-name: Lint Workflows • ${{ github.sha }}
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/*.yml'
+      - '.github/workflows/*.yaml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/*.yml'
+      - '.github/workflows/*.yaml'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  lint:
+    name: ⚙️ Validate & Lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: 📥 Download actionlint
+        run: |
+          VERSION="1.7.3"
+          curl -sL "https://github.com/rhysd/actionlint/releases/download/v${VERSION}/actionlint_${VERSION}_linux_amd64.tar.gz" | tar xz
+          echo "$PWD/actionlint" >> "$GITHUB_PATH"
+
+      - name: 🔍 Run actionlint (syntax & best practices)
+        run: |
+          actionlint -color .github/workflows/
+          echo "✅ actionlint passed"
+
+      - name: 🧪 Custom Policy Checks
+        run: |
+          cd .github/workflows || exit 1
+          FAIL=0
+
+          echo "=== Checking for outdated checkout ==="
+          if grep -r "actions/checkout@v[0-4]" .; then
+            echo "❌ Found outdated actions/checkout — upgrade to @v5"
+            FAIL=1
+          else
+            echo "✅ All checkout references are up to date (@v5)"
+          fi
+
+          echo "=== Checking for deprecated runner ==="
+          if grep -r "ubuntu-latest" .; then
+            echo "❌ Found ubuntu-latest — pin to ubuntu-24.04 explicitly"
+            FAIL=1
+          else
+            echo "✅ All runners explicitly pinned"
+          fi
+
+          echo "=== Checking FORCE_JAVASCRIPT_ACTIONS_TO_NODE24 ==="
+          MISSING=0
+          for f in *.yml *.yaml; do
+            [ -f "$f" ] || continue
+            if ! grep -q "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24" "$f"; then
+              echo "⚠️ Missing Node 24 env in: $f"
+              MISSING=$((MISSING + 1))
+            fi
+          done
+          if [ $MISSING -gt 0 ]; then
+            echo "🟡 $MISSING file(s) missing global Node 24 override — recommended"
+          else
+            echo "✅ All workflows have Node 24 override"
+          fi
+
+          echo "=== Summary ==="
+          if [ $FAIL -eq 0 ]; then
+            echo "✅ All critical policy checks passed"
+            exit 0
+          else
+            echo "🔴 Critical issues found — please fix above"
+            exit 1
+          fi
