@@ -1,0 +1,80 @@
+name: 🧪 Manual Playwright Test
+
+run-name: Playwright | ${{ github.event.inputs.browser || 'all browsers' }} | ${{ github.event.inputs.debug == 'true' && '🔴 Debug' || '🟢 Standard' }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_command:
+        description: "Playwright command"
+        required: true
+        default: "npx playwright test"
+      browser:
+        description: "Target browser project"
+        required: false
+        type: choice
+        options:
+          - all
+          - chromium
+          - firefox
+          - webkit
+      debug:
+        description: "Enable debug mode"
+        required: false
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 1 * * *'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  NODE_ENV: ci
+
+jobs:
+  test:
+    name: ▶️ Run Playwright Tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🎭 Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: 🚀 Execute tests
+        shell: bash
+        run: |
+          CMD="${{ github.event.inputs.test_command }}"
+          BROWSER="${{ github.event.inputs.browser }}"
+          if [[ -n "$BROWSER" && "$BROWSER" != "all" ]]; then
+            CMD="$CMD --project=$BROWSER"
+          fi
+          if [ "${{ github.event.inputs.debug }}" = "true" ]; then
+            CMD="$CMD --debug"
+          fi
+          echo "▶️ Running: $CMD"
+          exec $CMD
+
+      - name: 📤 Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.run_id }}
+          path: playwright-report/
+          retention-days: 14
+          overwrite: true
