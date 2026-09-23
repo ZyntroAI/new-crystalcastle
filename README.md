@@ -21,19 +21,60 @@ Full-stack platform by ZyntroAI for documentation, tickets, and AI-assisted rese
 ### `src/` — legacy React work
 - Vite React template content (`main.tsx`, `App.tsx`) that was merged in and is **not wired to a runnable build**; `index.html` at root is a static snapshot rather than the app entry. Being reconciled.
 
+### `skills/` — agent skill suites
+- Suite manifests plus an importable skill tree; each sub-skill is a `SKILL.md` with YAML frontmatter.
+- `skills/index.json` is the central registry: one entry per suite with `path`, `depends`, `provides`, `priority`. **`provides` lists the frontmatter `id` of every sub-skill the suite ships**, so it can be matched against a skill on disk.
+- Current suites: `crystalcastlex-skill-suite` (10), `supabase-agent-suite` (6), `fig-suite` (6), `fig-best-practices-suite` (6), and the standalone `python-dev` engine. Each suite also declares its own ordered list in `<suite>/metadata/index.json`.
+- `skills/claude-rest/` and `skills/claude-rest-api.md` are documentation for the Claude REST surface.
+
+### `security/`
+- `security/cwe1321/` — CWE-1321 (Prototype Pollution) protection module: ESLint / Semgrep / CodeQL / Bandit rules plus JS and Python runtime sanitizers, with tests and a `TEST-REPORT.md`.
+
+### `knowledge-base/`
+- Curated reference material. [`knowledge-base/mcp-tools/`](./knowledge-base/mcp-tools/README.md) holds the MCP & AI tool catalog — `registry.yaml` (name / tier / permissions / redact), a generated `dashboard.html`, and the MCP architecture diagram.
+
 ### `docs/`
-- Working documentation and knowledge-base material (see `docs/` and `docs/kb/`).
+- Working documentation (guidelines, runbooks, agreements).
 
 ### `.github/workflows/`
 - Many workflow files, several copied from a FastAPI boilerplate and **mismatched to this Node/Express + React stack**. The active set for CI on this repo is being corrected; until then, workflow checks on PRs are **not reliable signals**.
 
+## Runtime contract
+
+| Layer | Node | Source |
+|---|---|---|
+| Local development | 22.19.0 | `.nvmrc` |
+| Compatibility floor | >=22 <27 | `package.json` -> `engines.node` |
+| Backend (legacy) | >=18 <22 | `backend/package.json` -> `engines.node` |
+| CI | mixed: 18 / 20 / 22 | `.github/workflows/*` -> `actions/setup-node` |
+| Container (backend) | 22 (`node:22-alpine`) | `backend/Dockerfile` |
+| Devcontainer | 24 (`dev-24-bullseye`) | `.devcontainer/Dockerfile.dockerfile` |
+
+- **Package manager:** npm only. Lockfiles: root `package-lock.json` (lockfileVersion 3) and `backend/package-lock.json`.
+- **Install:** `npm ci` at the repo root and in `backend/`. The root dependency tree requires the peer-override committed in `.npmrc`; without it `npm ci` fails with ERESOLVE.
+
 ## Getting started
+
 ```bash
-# Backend
+# Frontend (repo root, Vite + React)
+nvm use            # reads .nvmrc -> 22.19.0
+npm ci
+npm run dev        # vite
+
+# Backend API
 cd backend
 cp .env.example .env   # fill in Supabase/Groq keys
-npm install
+npm ci
 npm run dev
+```
+
+## Verification
+
+```bash
+npm run typecheck   # tsc -p ./jsconfig.json
+npm run lint        # eslint . --quiet
+npm test            # no suite configured; prints a notice and exits 0
+npm run build       # vite build
 ```
 
 ## Notes

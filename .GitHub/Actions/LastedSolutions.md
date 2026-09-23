@@ -10,7 +10,8 @@ The workflow now:
 - Always restores the original flag state, even after failures.
 - Runs legacy-path validation after restoration.
 - Adds results and collapsible logs to `$GITHUB_STEP_SUMMARY`.
-- Fails the workflow if toggling, testing, restoration, or validation ultimately fails.
+- Fails the workflow if toggling, testing, restoration, or validation ultimately
+  fails.
 - Limits summary logs with `tail -n 200`.
 - Avoids retrying non-idempotent API changes unless an idempotency key is used.
 

@@ -1,0 +1,30 @@
+{
+  "id": "fig-suite-v1.0.0",
+  "name": "Fig Suite",
+  "skills": [
+    {
+      "id": "fig-platform",
+      "path": "skills/platform"
+    },
+    {
+      "id": "fig-artifacts",
+      "path": "skills/artifacts"
+    },
+    {
+      "id": "fig-connectors",
+      "path": "skills/connectors"
+    },
+    {
+      "id": "fig-research",
+      "path": "skills/research"
+    },
+    {
+      "id": "fig-automation",
+      "path": "skills/automation"
+    },
+    {
+      "id": "fig-safety",
+      "path": "skills/safety"
+    }
+  ]
+}

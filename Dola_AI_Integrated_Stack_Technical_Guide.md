@@ -14,9 +14,9 @@
 3. [Model Routing Strategy](#3-model-routing-strategy)
 4. [useScope Hook — TypeScript Implementation](#4-usescope-hook-typescript-implementation)
 5. [API Security Framework](#5-api-security-framework)
-6. [Thread Model & Observability](#6-thread-model--observability)
+6. Thread Model & Observability
 7. [Obsidian REST API Integration](#7-obsidian-rest-api-integration)
-8. [Deployment & Operations](#8-deployment--operations)
+8. Deployment & Operations
 9. [References](#9-references)
 
 ---

@@ -16,8 +16,8 @@ before it is claimed.
 
 ## Scope
 
-Self-contained sub-skill of the Fig Best Practices Suite. Acts only within
-layer `04-performance`.
+Self-contained sub-skill of the Fig Best Practices Suite. Acts only within layer
+`04-performance`.
 
 ## Rules
 
