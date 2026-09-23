@@ -1,0 +1,89 @@
+# .github/workflows/aws-oidc-deploy.yml
+#
+# Deploy CrystalCastle ไปยัง AWS โดยใช้ OIDC (OpenID Connect) แทนการเก็บ
+# AWS Access Key/Secret Key เป็น GitHub Secret แบบเดิม
+#
+# ก่อนใช้ไฟล์นี้:
+#   1. รัน setup-aws-oidc.sh เพื่อสร้าง OIDC Provider + IAM Role บน AWS
+#   2. แก้ไขค่า role-to-assume ด้านล่างให้เป็น Role ARN จริงที่ได้จากขั้นตอนที่ 1
+#   3. แก้ไขขั้นตอน "Build and push" / "Deploy" ให้ตรงกับสิ่งที่ CrystalCastle
+#      deploy จริง (ตัวอย่างนี้สมมติว่า push image เข้า ECR แล้วอัปเดต ECS
+#      service — หากใช้ S3/Lambda/EC2 ให้ปรับ step เหล่านี้ตามจริง)
+
+name: Deploy CrystalCastle to AWS (OIDC)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+# ต้องเปิด id-token: write เสมอ มิฉะนั้น step ที่ขอ OIDC token จะล้มเหลว
+# ทันที (นี่คือสิทธิ์เดียวที่ workflow ต้องมีเพิ่มจากปกติ — ไม่ต้องมี
+# aws-credentials หรือ secrets อื่นใดเลย)
+permissions:
+  id-token: write
+  contents: read
+
+# แนะนำให้ผูก job นี้กับ GitHub Environment (เช่น "production") เพื่อเปิดใช้
+# required reviewers / deployment protection rules ได้ และเพื่อให้ trust
+# policy ฝั่ง AWS อ้างอิง sub claim แบบ
+# "repo:1napz/crystalcastle:environment:production" ได้อย่างแม่นยำ
+jobs:
+  deploy:
+    name: Build, push, and deploy
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ขั้นตอนนี้คือหัวใจของ OIDC: แลก id-token ของ GitHub Actions กับ
+      # AWS STS เพื่อขอ credential ชั่วคราว (ปกติอายุ 1 ชั่วโมง) — ไม่มี
+      # AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY ปรากฏในไฟล์นี้เลย
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::<AWS_ACCOUNT_ID>:role/crystalcastle-github-actions-deploy
+          aws-region: ap-southeast-1
+          role-session-name: crystalcastle-gha-${{ github.run_id }}
+
+      - name: Log in to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test --if-present
+
+      - name: Build Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t "$ECR_REGISTRY/crystalcastle:$IMAGE_TAG" .
+          docker tag "$ECR_REGISTRY/crystalcastle:$IMAGE_TAG" "$ECR_REGISTRY/crystalcastle:latest"
+
+      - name: Push image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker push "$ECR_REGISTRY/crystalcastle:$IMAGE_TAG"
+          docker push "$ECR_REGISTRY/crystalcastle:latest"
+
+      - name: Deploy new image to ECS service
+        run: |
+          aws ecs update-service \
+            --cluster crystalcastle-cluster \
+            --service crystalcastle-service \
+            --force-new-deployment
