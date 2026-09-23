@@ -1,0 +1,54 @@
+{
+  "id": "ci-troubleshooter",
+  "name": "CI Troubleshooter & Auto-Fixer",
+  "description": "Diagnoses and fixes GitHub Actions failures: path filters, permissions, SHA pins, test discovery",
+  "version": "1.0.0",
+  "author": "ZyntroAI",
+  "category": "devops",
+  "tags": ["ci", "github-actions", "troubleshoot", "auto-fix", "security"],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "repo": {
+        "type": "string",
+        "description": "Repository: owner/name",
+        "example": "ZyntroAI/new-crystalcastle"
+      },
+      "run_id": {
+        "type": "string",
+        "description": "Failed Actions Run ID",
+        "example": "35322599967"
+      },
+      "branch": {
+        "type": "string",
+        "description": "Branch name (auto-detected if empty)",
+        "default": null
+      },
+      "auto_apply_fix": {
+        "type": "boolean",
+        "description": "Create fix commit automatically",
+        "default": false
+      }
+    },
+    "required": ["repo", "run_id"]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "status": {"type": "string", "enum": ["diagnosed", "fixed", "needs-review", "unsolvable"]},
+      "root_cause": {"type": "string"},
+      "severity": {"type": "string", "enum": ["low", "medium", "high", "critical"]},
+      "diagnosis": {"type": "string"},
+      "fix": {
+        "type": "object",
+        "properties": {
+          "file": {"type": "string"},
+          "change_type": {"type": "string", "enum": ["edit", "replace", "create"]},
+          "diff": {"type": "string"},
+          "commit_message": {"type": "string"}
+        }
+      },
+      "next_steps": {"type": "array", "items": {"type": "string"}}
+    }
+  }
+}
