@@ -1,0 +1,60 @@
+name: 📝 Update README from docs/knowledge
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/knowledge/**'
+      - 'scripts/update_readme.py'
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🧹 Fix path conflict
+        run: |
+          if [ -f "docs/knowledge" ]; then
+            echo "⚠️ Renaming file → docs/knowledge.md"
+            mv docs/knowledge docs/knowledge.md
+          fi
+          mkdir -p docs/knowledge
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 📦 Install deps
+        run: pip install pyyaml
+
+      - name: 🚀 Run README sync
+        run: python scripts/update_readme.py
+
+      - name: ✍️ Commit & Push
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          if git diff --staged --quiet; then
+            echo "✅ No changes — skipping commit"
+            exit 0
+          fi
+          git commit -m "docs: auto-sync knowledge → README"
+          git push origin main
