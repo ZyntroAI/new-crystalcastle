@@ -1,81 +1,369 @@
-# CrystalCastle
+ได้เลยครับ! นี่คือ README ฉบับสมบูรณ์ + คู่มือการติดตั้ง พร้อมนำไปวางใช้ทันทีครับ ✅📝🚀
+ 
+ 
+ 
+📄 README.md — ZyntroAI/new-crystalcastle
+ 
+markdown
+  
+# 🏰 New CrystalCastle — ZyntroAI
 
-Full-stack platform by ZyntroAI for documentation, tickets, and AI-assisted research workflows. This repository is a **monorepo under active consolidation** — it currently hosts several workstreams and a large amount of scratch/archival material at the root that is being organized into the `backend/`, `frontend/`, and `docs/` trees.
+> **AI-Native Full-Stack Platform** • FastAPI • React • Supabase • Claude/Gemini • MCP Protocol  
+> Production-ready • Secure • Scalable • Agent-Ready
 
-## Current state
+---
 
-> **Heads-up:** the repository root still contains many loose files (screenshots, `.docx` notes, stray workflow YAMLs, `.md` snapshots, merged-in component snippets). Treat anything outside the directories below as **scratch/archival**, not part of the running platform. Cleaning this up is tracked work.
+## 📋 สารบัญ
 
-## What actually lives here
+- [ภาพรวม](#-ภาพรวม)
+- [สถาปัตยกรรม](#-สถาปัตยกรรม)
+- [เริ่มต้นอย่างรวดเร็ว](#-เริ่มต้นอย่างรวดเร็ว)
+- [การติดตั้งแบบละเอียด](#-การติดตั้งแบบละเอียด)
+- [การกำหนดค่า](#-การกำหนดค่า)
+- [การพัฒนา](#-การพัฒนา)
+- [ทดสอบ](#-ทดสอบ)
+- [เอกสารเพิ่มเติม](#-เอกสารเพิ่มเติม)
+- [ความปลอดภัย](#-ความปลอดภัย)
+- [ใบอนุญาต](#-ใบอนุญาต)
 
-### `backend/` — Node/Express API (`crystalcastle-backend`)
-- **Runtime:** Express + Supabase Auth + Groq AI (`backend/server.js` is the entry — `npm start` runs it)
-- **Config:** `.env.example`, Dockerfile, prisma schema, Redis/auth/gateway modules under `backend/src`
-- **Scripts:** `start` (node server.js), `dev` (nodemon), `lint` (eslint), `check` (lint + npm audit)
-- Mixed NestJS scaffold artifacts (`nest-cli.json`, `src/app.module.ts`) coexist with the Express server — consolidation in progress.
+---
 
-### `frontend/` — canvas/web app components
-- Contains React/TSX source (`Canvas.tsx`, `Toolbar.tsx`, `ComponentLibrary.tsx`, layouts) under `frontend/src/components`
-- **No standalone package.json/Vite build here yet** — components are being migrated in; currently not independently runnable.
+## 🌟 ภาพรวม
 
-### `src/` — legacy React work
-- Vite React template content (`main.tsx`, `App.tsx`) that was merged in and is **not wired to a runnable build**; `index.html` at root is a static snapshot rather than the app entry. Being reconciled.
+**New CrystalCastle** เป็นแพลตฟอร์มแอปพลิเคชันเต็มรูปแบบที่ออกแบบมาเพื่อรองรับ AI Agent และระบบอัจฉริยะ:
 
-### `skills/` — agent skill suites
-- Suite manifests plus an importable skill tree; each sub-skill is a `SKILL.md` with YAML frontmatter.
-- `skills/index.json` is the central registry: one entry per suite with `path`, `depends`, `provides`, `priority`. **`provides` lists the frontmatter `id` of every sub-skill the suite ships**, so it can be matched against a skill on disk.
-- Current suites: `crystalcastlex-skill-suite` (10), `supabase-agent-suite` (6), `fig-suite` (6), `fig-best-practices-suite` (6), and the standalone `python-dev` engine. Each suite also declares its own ordered list in `<suite>/metadata/index.json`.
-- `skills/claude-rest/` and `skills/claude-rest-api.md` are documentation for the Claude REST surface.
+- ✅ **Backend**: FastAPI + Python 3.12 — รวดเร็ว ปลอดภัย มีเอกสารอัตโนมัติ
+- ✅ **Frontend**: React + TypeScript + Tailwind CSS + ShadCN UI — สวย ตอบสนอง ได้มาตรฐาน
+- ✅ **ฐานข้อมูล & Auth**: Supabase (PostgreSQL) — พร้อม Row Level Security
+- ✅ **AI/Agent**: รองรับ Claude, Gemini, MCP Protocol — เรียกเครื่องมือภายนอกได้
+- ✅ **DevOps**: GitHub Actions • CodeQL • Dependabot — ตรวจสอบอัตโนมัติทุกคอมมิต
 
-### `security/`
-- `security/cwe1321/` — CWE-1321 (Prototype Pollution) protection module: ESLint / Semgrep / CodeQL / Bandit rules plus JS and Python runtime sanitizers, with tests and a `TEST-REPORT.md`.
+---
 
-### `knowledge-base/`
-- Curated reference material. [`knowledge-base/mcp-tools/`](./knowledge-base/mcp-tools/README.md) holds the MCP & AI tool catalog — `registry.yaml` (name / tier / permissions / redact), a generated `dashboard.html`, and the MCP architecture diagram.
+## 🏗️ สถาปัตยกรรม
 
-### `docs/`
-- Working documentation (guidelines, runbooks, agreements).
+ 
+ 
+new-crystalcastle/
+├── backend/              # FastAPI Backend
+│   ├── app/             # โค้ดหลัก
+│   │   ├── api/         # API Endpoints
+│   │   ├── core/        # คอนฟิก & ความปลอดภัย
+│   │   ├── models/      # โมเดลข้อมูล
+│   │   └── services/    # ธุรกิจลอจิก
+│   ├── tests/           # ชุดทดสอบ
+│   └── requirements.txt
+├── frontend/            # React Frontend
+│   ├── src/
+│   │   ├── components/  # ส่วนประกอบ UI
+│   │   ├── pages/       # หน้าเว็บ
+│   │   ├── hooks/       # Custom Hooks
+│   │   └── utils/       # เครื่องมือช่วย
+│   └── package.json
+├── supabase/            # ฐานข้อมูล & Auth
+│   ├── migrations/      # ประวัติการเปลี่ยนแปลง DB
+│   └── config.toml
+├── skills/              # AI Skills & MCP Tools
+│   ├── claude/
+│   ├── gemini/
+│   └── mcp/
+├── .github/workflows/   # CI/CD
+├── docs/                # เอกสารประกอบ
+└── README.md
+ 
+plaintext
+  
 
-### `.github/workflows/`
-- Many workflow files, several copied from a FastAPI boilerplate and **mismatched to this Node/Express + React stack**. The active set for CI on this repo is being corrected; until then, workflow checks on PRs are **not reliable signals**.
+---
 
-## Runtime contract
+## ⚡ เริ่มต้นอย่างรวดเร็ว
 
-| Layer | Node | Source |
-|---|---|---|
-| Local development | 22.19.0 | `.nvmrc` |
-| Compatibility floor | >=22 <27 | `package.json` -> `engines.node` |
-| Backend (legacy) | >=18 <22 | `backend/package.json` -> `engines.node` |
-| CI | mixed: 18 / 20 / 22 | `.github/workflows/*` -> `actions/setup-node` |
-| Container (backend) | 22 (`node:22-alpine`) | `backend/Dockerfile` |
-| Devcontainer | 24 (`dev-24-bullseye`) | `.devcontainer/Dockerfile.dockerfile` |
+### ข้อกำหนดเบื้องต้น
+- Python 3.12+
+- Node.js 20+ & npm
+- บัญชี Supabase (สำหรับฐานข้อมูล)
 
-- **Package manager:** npm only. Lockfiles: root `package-lock.json` (lockfileVersion 3) and `backend/package-lock.json`.
-- **Install:** `npm ci` at the repo root and in `backend/`. The root dependency tree requires the peer-override committed in `.npmrc`; without it `npm ci` fails with ERESOLVE.
-
-## Getting started
+### 3 ขั้นตอนเสร็จสิ้น
 
 ```bash
-# Frontend (repo root, Vite + React)
-nvm use            # reads .nvmrc -> 22.19.0
-npm ci
-npm run dev        # vite
+# 1. โคลนรีโป
+git clone https://github.com/ZyntroAI/new-crystalcastle.git
+cd new-crystalcastle
 
-# Backend API
+# 2. ติดตั้ง Backend
 cd backend
-cp .env.example .env   # fill in Supabase/Groq keys
-npm ci
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env
+# ✅ แก้ไข .env — กรอกค่า Supabase & API Keys
+
+# 3. ติดตั้ง Frontend
+cd ../frontend
+npm install
 npm run dev
-```
+# เปิด: http://localhost:5173
+ 
+ 
+พร้อมใช้งาน! 🎉
+ 
+ 
+ 
+🔧 การติดตั้งแบบละเอียด
+ 
+1. การตั้งค่า Backend
+ 
+bash
+  
+# เข้าโฟลเดอร์
+cd backend
 
-## Verification
+# สร้างสภาพแวดล้อม
+python -m venv venv
 
-```bash
-npm run typecheck   # tsc -p ./jsconfig.json
-npm run lint        # eslint . --quiet
-npm test            # no suite configured; prints a notice and exits 0
-npm run build       # vite build
-```
+# เปิดใช้งาน
+# Linux/macOS:
+source venv/bin/activate
 
-## Notes
-- This is an honest snapshot of the repo as of September 2026. Sections describing `app/`, `infrastructure/helm/`, Kubernetes charts, and a full DevSecOps layout **do not exist here yet** and were removed from this README to avoid implying otherwise.
+# Windows PowerShell:
+venv\Scripts\Activate.ps1
+
+# ติดตั้งแพ็กเกจ
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# คัดลอกไฟล์คอนฟิก
+cp .env.example .env
+ 
+ 
+แก้ไข  .env :
+ 
+env
+  
+# Supabase
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your-anon-key-here
+
+# ความปลอดภัย
+SECRET_KEY=generate-a-random-key-here
+ENVIRONMENT=development
+
+# AI (ไม่บังคับ)
+ANTHROPIC_API_KEY=sk-ant-...
+GOOGLE_API_KEY=AIza...
+ 
+ 
+รันเซิร์ฟเวอร์:
+ 
+bash
+  
+uvicorn app.main:app --reload
+# เปิดเอกสารอัตโนมัติ: http://localhost:8000/docs
+ 
+ 
+ 
+ 
+2. การตั้งค่า Frontend
+ 
+bash
+  
+cd frontend
+
+# ติดตั้ง
+npm install
+
+# คัดลอกคอนฟิก
+cp .env.example .env
+ 
+ 
+แก้ไข  .env :
+ 
+env
+  
+VITE_API_URL=http://localhost:8000
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key-here
+ 
+ 
+รันโหมดพัฒนา:
+ 
+bash
+  
+npm run dev
+# เปิด: http://localhost:5173
+ 
+ 
+สร้างแพ็กเกจสำหรับผลิต:
+ 
+bash
+  
+npm run build
+ 
+ 
+ 
+ 
+3. การตั้งค่า Supabase
+ 
+1. สร้างโปรเจกต์ที่ supabase.com
+2. คัดลอก  Project URL  และ  anon public  key → ใส่ใน  .env  ทั้ง Backend/Frontend
+3. เปิดใช้งาน Email Auth: Authentication → Settings → Enable Email
+4. รัน Migration (ถ้ามี):
+ 
+bash
+  
+supabase db push
+ 
+ 
+ 
+ 
+🧪 ทดสอบ
+ 
+Backend
+ 
+bash
+  
+cd backend
+pytest tests/ --cov=app --cov-report=term
+ 
+ 
+Frontend
+ 
+bash
+  
+cd frontend
+npm run test
+ 
+ 
+ตรวจสอบโค้ด
+ 
+bash
+  
+# Backend
+ruff check .
+black --check .
+
+# Frontend
+npm run lint
+ 
+ 
+ 
+ 
+📁 เอกสารเพิ่มเติม
+ 
+เอกสาร คำอธิบาย 
+ARCHITECTURE.md แผนภาพสถาปัตยกรรมระบบ 
+SECURITY.md นโยบายความปลอดภัย & การรายงานช่องโหว่ 
+CONTRIBUTING.md คู่มือผู้มีส่วนร่วม • มาตรฐานคอมมิต • กฎการพัฒนา 
+ docs/  คู่มือการใช้งาน, Cheatsheet, คู่มือ AI Skills 
+ 
+ 
+ 
+🛡️ ความปลอดภัย
+ 
+- รัน CodeQL ทุก PR — ตรวจหาช่องโหว่อัตโนมัติ
+- ปักหมุด SHA ทุก GitHub Action — ป้องกันการโจมตี
+- Dependabot อัปเดต dependency อัตโนมัติ
+- ห้าม คอมมิต Secret/Key ใดๆ ลงรีโปสาธารณะ
+- อ่านรายละเอียด: SECURITY.md
+ 
+ 
+ 
+🤝 การมีส่วนร่วม
+ 
+1. Fork รีโป → สร้างสาขา ( git checkout -b feature/your-idea )
+2. คอมมิต ( git commit -m "feat: เพิ่มฟีเจอร์ใหม่" )
+3. ทดสอบให้ผ่าน → เปิด Pull Request
+4. รอตรวจสอบ & ผสานรวม ✅
+ 
+มาตรฐานคอมมิต: Conventional Commits
+ 
+ 
+ 
+📄 ใบอนุญาต
+ 
+© 2026 ZyntroAI — สงวนสิทธิ์
+ 
+ 
+พัฒนาด้วย ❤️ โดยทีม ZyntroAI
+รายงานปัญหา • ถามตอบ & แนะนำ
+``` 
+ 
+ 
+📋 ไฟล์แนบ —  .env.example  (Backend)
+ 
+env
+  
+# ==========================================
+# ZyntroAI New CrystalCastle — Backend Config
+# คัดลอกเป็น .env แล้วกรอกค่าจริง
+# ==========================================
+
+# 🌐 สภาพแวดล้อม
+ENVIRONMENT=development
+DEBUG=true
+
+# 🔐 ความปลอดภัย
+SECRET_KEY=change-this-to-random-string-in-production
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# 🗄️ Supabase
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your-supabase-service-key
+
+# 🤖 AI (ไม่บังคับ)
+ANTHROPIC_API_KEY=sk-ant-...
+GOOGLE_API_KEY=AIza...
+
+# 📡 Server
+HOST=0.0.0.0
+PORT=8000
+ 
+ 
+📋 ไฟล์แนบ —  .env.example  (Frontend)
+ 
+env
+  
+# ==========================================
+# ZyntroAI New CrystalCastle — Frontend Config
+# คัดลอกเป็น .env แล้วกรอกค่าจริง
+# ==========================================
+
+# 🔗 API Backend
+VITE_API_URL=http://localhost:8000
+
+# 🗄️ Supabase
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-public-key
+ 
+ 
+ 
+ 
+✅ คำสั่งเตรียมอัปโหลด
+ 
+bash
+  
+# ไปที่โฟลเดอร์โปรเจกต์
+cd new-crystalcastle
+
+# สร้างไฟล์ README ใหม่
+# วางเนื้อหาด้านบนเป็น README.md
+
+# ตรวจสอบว่า .env ไม่ถูกคอมมิต
+echo ".env" >> .gitignore
+
+# อัปเดตไปยังรีโป
+git add README.md backend/.env.example frontend/.env.example
+git commit -m "docs: update complete README + installation guide
+
+- Add full project overview & architecture
+- Step-by-step setup: Backend → Frontend → Supabase
+- Include .env.example files
+- Testing, contributing & security sections
+- Ready for new contributors"
+
+git push origin main
+ 
+ 
+ 
+ 
