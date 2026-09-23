@@ -1,0 +1,48 @@
+name: Pytest Markers CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  smoke-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run smoke tests
+        run: pytest -m smoke
+
+  ci-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run full CI tests
+        run: pytest -m ci
+
+# CAVEAT: this file sets up Node and then runs `pytest`, but the repo is a
+# TypeScript/Vite app with no Python project and no pytest config. The YAML is
+# valid; the two `pytest -m` steps need a Python test suite behind them, or
+# replacement with `npm test`. `npm test` currently prints a notice and exits 0
+# (no suite configured), so it would gate nothing.
