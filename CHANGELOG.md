@@ -8,6 +8,15 @@ grouped by merge date. Each entry cites its pull request number.
 Repo layout notes live in [`README.md`](./README.md); architecture in
 [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 
+## [2026-09-23]
+
+### Fixed
+- **PR #198** — docs: elevate the `Screenshots / Evidence` field in `.github/PULL_REQUEST_TEMPLATE.md` out of the testing checklist into its own `##` section, placed between Testing and Security so reviewers reach submitted proof earlier and contributors are nudged to attach it.
+
+  The file on `main` was already mangled, and this rewrites it cleanly: it contained **no code fences at all** — only 6 backtick characters, from the inline `` `lint` `` and `` `main` `` literals — yet lines 9 and 55 still read `markdown` and `plaintext`, the language labels of openers that had been stripped. That left orphan labels and a half-open fence swallowing the rest of the file. Lines 1–7 and 93–112 were also handoff prose (`ฉบับสมบูรณ์ (แก้ไขแล้ว)`, `📝 สรุปการแก้ไขที่ทำ`, `🚀 วิธีนำไปใช้`, `ต้องการให้ผม เขียนคำอธิบาย PR...`) rather than template content, so anyone opening a pull request would have received those instructions as their starting body.
+
+  Checked before removing anything: all 6 original `##` headings survive and the checkbox count is unchanged at 33. Verified with `scripts/check_pr_template.py` — section order Testing < Evidence < Security, no orphan fence labels, headings preserved, handoff prose gone. 0 failures.
+
 ## [2026-09-16]
 
 ### Fixed
