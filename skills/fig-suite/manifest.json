@@ -1,0 +1,40 @@
+{
+  "id": "fig-suite-v1.0.0",
+  "name": "Fig Suite",
+  "version": "1.0.0",
+  "description": "Operating standard for working inside the Fig platform: when to answer vs build, how deliverables are routed, how connected services are written to, and what must be verified before handoff",
+  "tags": ["fig", "platform", "workflow", "connectors", "deliverables", "verification", "safety", "citations"],
+  "skill_count": 6,
+  "format": "skill-md-v1",
+  "importable": true,
+  "visibility": "public",
+  "compatibility": ["dola", "claude-code", "github-skill"],
+  "security": "verified",
+  "entrypoint": "loader.py",
+  "policy_version": "1.0.0",
+  "domains": [
+    "platform",
+    "artifacts",
+    "connectors",
+    "research",
+    "automation",
+    "safety"
+  ],
+  "gate_criteria": [
+    "CONTEXT",
+    "ROUTING",
+    "EVIDENCE",
+    "SECRETS",
+    "APPROVAL",
+    "VERIFY",
+    "NAMING",
+    "SOURCES",
+    "HANDOFF"
+  ],
+  "requires": {
+    "python": ">=3.10",
+    "dependencies": ["pyyaml>=6.0"],
+    "network": false,
+    "credentials": false
+  }
+}

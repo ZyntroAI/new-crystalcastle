@@ -1,0 +1,8 @@
+{
+  "verified": true,
+  "checks": [
+    "typecheck",
+    "unit-tests",
+    "render-smoke"
+  ]
+}

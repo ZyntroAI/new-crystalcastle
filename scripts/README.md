@@ -1,8 +1,1 @@
-
-├── scripts/
-│   ├── review.sh
-│   ├── build.sh
-│   ├── test.sh
-│   └── lint.sh
-├── 
-│   
+├── scripts/ │ ├── review.sh │ ├── build.sh │ ├── test.sh │ └── lint.sh ├── │

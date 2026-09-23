@@ -16,8 +16,8 @@ a component is a bug, not a shortcut.
 
 ## Scope
 
-Self-contained sub-skill of the Fig Best Practices Suite. Acts only within
-layer `02-design`.
+Self-contained sub-skill of the Fig Best Practices Suite. Acts only within layer
+`02-design`.
 
 ## Rules
 

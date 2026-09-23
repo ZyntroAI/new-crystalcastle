@@ -17,8 +17,8 @@ tags: [security, supabase, postgres]
 
 ## RLS
 
-Check that policies exist, not just that RLS is on — a table with RLS enabled and
-zero policies is deny-all (often a silent bug):
+Check that policies exist, not just that RLS is on — a table with RLS enabled
+and zero policies is deny-all (often a silent bug):
 
 ```sql
 select schemaname, tablename, policyname, roles, cmd, qual

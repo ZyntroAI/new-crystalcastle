@@ -1,0 +1,34 @@
+name: Stacked PR Validator
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+jobs:
+  validate-stack:
+    runs-on: ubuntu-latest
+    if: startsWith(github.head_ref, 'stack/') || contains(github.event.pull_request.title, '[STACK')
+    steps:
+      - name: 📥 ตรวจสอบโค้ด
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
+      - name: 🧠 ตรวจสอบโครงสร้าง
+        id: check
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          BASE="${{ github.base_ref }}"
+          if [[ "$TITLE" =~ \[STACK[[:space:]]*([0-9]+)/([0-9]+)\] ]]; then
+            echo "order=${BASH_REMATCH[1]}" >> $GITHUB_OUTPUT
+            echo "total=${BASH_REMATCH[2]}" >> $GITHUB_OUTPUT
+          else
+            echo "❌ ไม่พบรูปแบบ [STACK n/m] ในชื่อ"
+            exit 1
+          fi
+          if [[ "$BASE" != "main" ]]; then
+            echo "📂 เป็นส่วนซ้อน: ฐาน = $BASE"
+          fi
+
+      - name: 📝 สรุปผล
+        run: |
+          echo "✅ ตรวจสอบผ่าน: ลำดับ ${{ steps.check.outputs.order }}/${{ steps.check.outputs.total }}"
+          echo "📌 ฐานเป้าหมาย: ${{ github.base_ref }}"
+
