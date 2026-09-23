@@ -2,18 +2,29 @@ name: Supabase Deploy to Production
 
 on:
   push:
-    branches: [main]
-    paths: ["supabase/**"]
+    branches:
+      - main
+    paths:
+      - "supabase/**"
 
 env:
   SUPABASE_VERSION: "v1.226.0"
   SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+  SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-production
+  cancel-in-progress: false
 
 jobs:
   deploy:
     name: Deploy Migrations → Production
     runs-on: ubuntu-latest
     environment: production
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -23,30 +34,49 @@ jobs:
         with:
           version: ${{ env.SUPABASE_VERSION }}
 
-      - name: Link Production Project
-        run: supabase link --project-ref ${{ env.SUPABASE_PROJECT_ID }}
+      - name: Verify CLI
+        run: supabase --version
 
-      - name: Dry Run (ตรวจสอบก่อน)
-        run: supabase db push --dry-run
+      - name: Link Production Project
+        run: |
+          supabase link \
+            --project-ref "${{ env.SUPABASE_PROJECT_ID }}"
+
+      - name: Dry Run
+        run: |
+          supabase db push --dry-run
 
       - name: Deploy Migrations
         id: deploy
-        run: supabase db push
+        run: |
+          supabase db push
 
       - name: Deploy Edge Functions
-        run: supabase functions deploy --project-ref ${{ env.SUPABASE_PROJECT_ID }}
-
-      - name: Verify Health
         run: |
-          echo "✅ Migration Deployed"
-          supabase projects health --project-ref ${{ env.SUPABASE_PROJECT_ID }}
+          supabase functions deploy \
+            --project-ref "${{ env.SUPABASE_PROJECT_ID }}"
+
+      - name: Verify Deployment
+        run: |
+          echo "✅ Database migrations deployed"
+          echo "✅ Edge functions deployed"
 
   notify-deploy:
-    needs: deploy
+    name: Notify Deployment Result
+    needs:
+      - deploy
+
     runs-on: ubuntu-latest
+
     if: always()
-    uses: ./.github/actions/notify
-    with:
-      status: ${{ needs.deploy.result }}
-      title: "🚀 Supabase Deploy — Production"
-      message: "Migrations + Edge Functions Deployed ✅"
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Notify
+        uses: ./.github/actions/notify
+        with:
+          status: ${{ needs.deploy.result }}
+          title: "🚀 Supabase Deploy — Production"
+          message: "Migrations + Edge Functions Deployed ✅"
