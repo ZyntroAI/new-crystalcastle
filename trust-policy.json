@@ -14,8 +14,8 @@
         },
         "StringLike": {
           "token.actions.githubusercontent.com:sub": [
-            "repo:1napz/crystalcastle:ref:refs/heads/main",
-            "repo:1napz/crystalcastle:environment:production"
+           "repo:ZyntroAI/new-crystalcastle:ref:refs/heads/main",
+           "repo:ZyntroAI/new-crystalcastle:environment:production"
           ]
         }
       }
