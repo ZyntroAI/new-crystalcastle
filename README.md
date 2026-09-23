@@ -36,20 +36,45 @@ Full-stack platform by ZyntroAI for documentation, tickets, and AI-assisted rese
 ### `docs/`
 - Working documentation (guidelines, runbooks, agreements).
 
-### `knowledge-base/`
-- Reference material and catalogs that have settled — see **[knowledge-base/README.md](knowledge-base/README.md)** for the index.
-- Currently: the MCP & AI tools catalog (`knowledge-base/mcp-tools/`) and the Steam Web API infographic set (`knowledge-base/steam-web-api/`).
-
 ### `.github/workflows/`
 - Many workflow files, several copied from a FastAPI boilerplate and **mismatched to this Node/Express + React stack**. The active set for CI on this repo is being corrected; until then, workflow checks on PRs are **not reliable signals**.
 
+## Runtime contract
+
+| Layer | Node | Source |
+|---|---|---|
+| Local development | 22.19.0 | `.nvmrc` |
+| Compatibility floor | >=22 <27 | `package.json` -> `engines.node` |
+| Backend (legacy) | >=18 <22 | `backend/package.json` -> `engines.node` |
+| CI | mixed: 18 / 20 / 22 | `.github/workflows/*` -> `actions/setup-node` |
+| Container (backend) | 22 (`node:22-alpine`) | `backend/Dockerfile` |
+| Devcontainer | 24 (`dev-24-bullseye`) | `.devcontainer/Dockerfile.dockerfile` |
+
+- **Package manager:** npm only. Lockfiles: root `package-lock.json` (lockfileVersion 3) and `backend/package-lock.json`.
+- **Install:** `npm ci` at the repo root and in `backend/`. The root dependency tree requires the peer-override committed in `.npmrc`; without it `npm ci` fails with ERESOLVE.
+
 ## Getting started
+
 ```bash
-# Backend
+# Frontend (repo root, Vite + React)
+nvm use            # reads .nvmrc -> 22.19.0
+npm ci
+npm run dev        # vite
+
+# Backend API
 cd backend
 cp .env.example .env   # fill in Supabase/Groq keys
-npm install
+npm ci
 npm run dev
+```
+
+## Verification
+
+```bash
+npm run typecheck   # tsc -p ./jsconfig.json
+npm run lint        # eslint . --quiet
+npm test            # no suite configured; prints a notice and exits 0
+npm run build       # vite build
 ```
 
 ## Notes
