@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@base44/sdk": "^0.8.39",
-    "@base44/vite-plugin": "^1.0.30",
+    "@base44/vite-plugin": "^1.0.41",
     "@hello-pangea/dnd": "^18.0.1",
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^4.1.2",
@@ -51,10 +51,10 @@
     "@react-three/rapier": "^1.5.0",
     "@reduxjs/toolkit": "^2.9.0",
     "@stripe/react-stripe-js": "^6.8.0",
-    "@stripe/stripe-js": "^9.10.0",
-    "@supabase/supabase-js": "^2.116.0",
+    "@stripe/stripe-js": "^9.16.0",
+    "@supabase/supabase-js": "^2.51.0",
     "@tanstack/react-query": "^5.84.1",
-    "@tanstack/react-query-devtools": "^5.90.2",
+    "@tanstack/react-query-devtools": "^5.103.1",
     "axios": "^1.12.2",
     "canvas-confetti": "^1.9.4",
     "chart.js": "^4.5.0",
@@ -71,10 +71,10 @@
     "jspdf": "^4.2.1",
     "lodash": "^4.17.21",
     "leaflet": "^1.9.4",
-    "lucide-react": "^0.475.0",
+    "lucide-react": "^0.577.0",
     "next-themes": "^0.4.4",
     "qrcode": "^1.5.4",
-    "react": "^19.2.8",
+    "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-calendar": "^6.0.0",
     "react-day-picker": "^10.0.1",
@@ -107,7 +107,7 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^4.3.4",
     "@vitejs/plugin-react-swc": "^4.3.3",
-    "autoprefixer": "^10.4.20",
+    "autoprefixer": "^10.6.1",
     "baseline-browser-mapping": "^2.8.32",
     "eslint": "^9.19.0",
     "eslint-plugin-react": "^7.37.4",
@@ -124,5 +124,20 @@
   "engines": {
     "node": ">=22 <27",
     "npm": ">=10"
+  },
+  {
+  "scripts": {
+    "scripts:list": "node scripts/file-manager.js list",
+    "scripts:stats": "node scripts/file-manager.js stats",
+    "scripts:count": "node scripts/count-files.js",
+    "scripts:count:detail": "node scripts/count-files.js --detail",
+    "scripts:count:json": "node scripts/count-files.js --json",
+    "scripts:clean": "node scripts/file-manager.js clean",
+    "scripts:organize": "node scripts/file-manager.js organize",
+    "scripts:verify": "node scripts/file-manager.js verify",
+    "scripts:empty": "node scripts/file-manager.js empty-dirs",
+    "scripts:smoke": "bash scripts/smoke-tests.sh",
+    "scripts:check": "npm run scripts:verify && npm run scripts:smoke"
   }
+}
 }

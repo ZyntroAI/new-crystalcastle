@@ -5,14 +5,13 @@ node_modules/
 .pnp
 .pnp.js
 
-# ============================================
-# Environment & Secrets
-# ============================================
+# Environment files — NEVER commit secrets
 .env
 .env.local
 .env.*.local
-# Keep .env.example as a safe template
-!.env.example
+.env.production
+.env.staging
+.env.development
 
 # ============================================
 # Build Outputs
@@ -109,157 +108,9 @@ Thumbs.db
 *.tar
 *.zip
 
-# ============================================
-# Misc
-# ============================================
-*.swp
-*.swo
-*~
-# 🔒 Secrets & Credentials (ห้ามเด็ดขาด)
-.env
-.env.*
-!.env.example
-.credentials/
-.secrets/
-*.key
+# Secret / credential files
 *.pem
+*.key
 *.crt
-*.pfx
-id_*
-*token*
-*apikey*
-*secret*
-
-# 🐍 Python Artifacts
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.pyc
-venv/
-.venv/
-.pytest_cache/
-
-# 📦 Node/Dependencies
-node_modules/
-dist/
-build/
-
-# 🐳 Docker & Sandbox
-.docker/
-sandbox-*/
-
-# 📊 Logs & Reports (เก็บเฉพาะที่ตั้งใจ)
-logs/
-*.log
-audit/temp/
-
-# 💻 OS Junk
-.DS_Store
-Thumbs.db
-*.swp
-
-# 📂 Local Config (ไม่แชร์)
-config.local.json
-settings.local.yaml
-
-
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-Icon
-._*
-.Spotlight-V100
-.Trashes
-
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-.venv/
-venv/
-env/
-.env
-*.egg-info/
-dist/
-build/
-.pytest_cache/
-.mypy_cache/
-.DS_Store
-
-# Node.js
-node_modules/
-dist/
-build/
-.npm
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-.env
-.env.local
-.env.*.local
-.DS_Store
-Thumbs.db
-
-# JetBrains
-.idea/
-*.iml
-out/
-*.iws
-.idea_modules/
-
-# VS Code
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-
-# Windows
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-$RECYCLE.BIN/
-*.lnk
-
-# Rust
-target/
-Cargo.lock
-*.pdb
-.env
-
-# Java/Maven
-target/
-*.class
-*.jar
-*.war
-*.ear
-.env
-.DS_Store
-.idea/
-*.iml
-
-# Go
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-*.test
-*.out
-vendor/
-.env
-
-# React/Vite
-node_modules/
-dist/
-build/
-.env
-.env.local
-.env.*.local
-*.local
-.vite/
-.DS_Store
-Thumbs.db
+secrets/
+credentials/
