@@ -1,0 +1,73 @@
+name: 🚀 Deploy CrystalCastle to AWS (OIDC)
+
+run-name: Deploy → AWS OIDC | ${{ github.sha }}
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  AWS_REGION: ap-southeast-1
+
+jobs:
+  deploy:
+    name: Build → Push → Deploy
+    runs-on: ubuntu-24.04
+    environment: production
+    timeout-minutes: 20
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v5
+
+      - name: 🔐 Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: arn:aws:iam::<AWS_ACCOUNT_ID>:role/crystalcastle-github-actions-deploy
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: crystalcastle-gha-${{ github.run_id }}
+
+      - name: 📦 Log in to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v3
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: ✅ Run tests
+        run: npm test --if-present
+
+      - name: 🔨 Build Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t "$ECR_REGISTRY/crystalcastle:$IMAGE_TAG" .
+          docker tag "$ECR_REGISTRY/crystalcastle:$IMAGE_TAG" "$ECR_REGISTRY/crystalcastle:latest"
+
+      - name: 🚀 Push to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker push "$ECR_REGISTRY/crystalcastle:$IMAGE_TAG"
+          docker push "$ECR_REGISTRY/crystalcastle:latest"
+
+      - name: 🔄 Deploy to ECS
+        run: |
+          aws ecs update-service \
+            --cluster crystalcastle-cluster \
+            --service crystalcastle-service \
+            --force-new-deployment
