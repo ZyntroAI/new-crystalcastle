@@ -31,8 +31,8 @@ domain — declares context and governs naming.
   produce two `report.xlsx` and the second silently overwrites the first.
 - For batch outputs, bake the entity id into the filename in the loop, not a
   counter. `customer_acme_report.xlsx` beats `report_0.xlsx`.
-- For iterations on one deliverable, overwrite the same path. Do not mint
-  `_v1`, `_v2`, `_draft`, `_final` copies.
+- For iterations on one deliverable, overwrite the same path. Do not mint `_v1`,
+  `_v2`, `_draft`, `_final` copies.
 
 ## Required before handoff
 
@@ -42,9 +42,9 @@ domain — declares context and governs naming.
 
 ## Stop condition
 
-Run the gate. If `CONTEXT` or `NAMING` is not `PASS`, fix and re-run. Do not hand
-off because the content is right — an un-named workspace is one you cannot find
-again.
+Run the gate. If `CONTEXT` or `NAMING` is not `PASS`, fix and re-run. Do not
+hand off because the content is right — an un-named workspace is one you cannot
+find again.
 
 ## Triggers
 

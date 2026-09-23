@@ -10,14 +10,14 @@
 - [Workflow Overview](#workflow-overview)
 - [Project Planning](#project-planning)
 - [Feature Development](#feature-development)
-- [Build & Testing](#build--testing)
+- Build & Testing
 - [Documentation](#documentation)
-- [Docker & Containerization](#docker--containerization)
+- Docker & Containerization
 - [CI/CD with GitHub Actions](#cicd-with-github-actions)
 - [Kubernetes Deployment](#kubernetes-deployment)
 - [UAT Environment](#uat-environment)
 - [AI Integration (Vertex MCP)](#ai-integration-vertex-mcp)
-- [Maintenance & Automation](#maintenance--automation)
+- Maintenance & Automation
 - [Repository Structure](#repository-structure)
 - [Quick Reference](#quick-reference)
 

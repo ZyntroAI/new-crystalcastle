@@ -1,258 +1,348 @@
-✅ Merge Complete: Full  server.js  (Latest Production Version)
- 
-✅ Merged: Fixed Auth Middleware (Line 91+) + Groq Proxy + Full Error Handling + Best Practices
-Repo:  ZyntroAI/new-crystalcastle  | Branch:  main  | Status: Ready to Deploy 🚀
- 
- 
- 
-📄 Final Merged File:  backend/server.js 
- 
-javascript
-  
-// ============================================================
-// 🚀 CrystalCastle Backend — MERGED LATEST VERSION
-// Stack: Supabase Auth · Groq AI · Express · API v1
-// Fixed: Line 91 Auth · Error Handling · CORS · Validation
-// ============================================================
-
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
-const { createClient } = require('@supabase/supabase-js');
-const Groq = require('groq-sdk');
-
-// ============================================================
-// ⚙️ Configuration (Latest)
-// ============================================================
-const PORT = process.env.PORT || 8000;
-const API_VERSION = 'v1';
-
-// Supabase
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY,
-  { auth: { autoRefreshToken: true, persistSession: false } }
-);
-
-// Groq AI
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const rateLimit = require('express-rate-limit');
+const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const fs = require('fs');
+const { Octokit } = require('octokit');
 
 const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Behind a proxy/load balancer, req.ip is the proxy address unless Express is
+// told how many hops to trust. Without this, IP-keyed rate limiting collapses
+// every caller into a single bucket. Set TRUST_PROXY_HOPS=0 when exposed directly.
+app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS ?? 1));
 
 // ============================================================
-// 🛡️ Middleware (Merged & Fixed)
+// 🔐 CONFIGURATION
 // ============================================================
-app.use(cors({ 
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
-  credentials: true 
-}));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+const APP_ID = process.env.GITHUB_APP_ID;
+const CLIENT_ID = process.env.GITHUB_CLIENT_ID;
+const CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
+const WEBHOOK_SECRET = process.env.GITHUB_WEBHOOK_SECRET;
 
-// ============================================================
-// 🔐 Supabase JWT Auth — ✅ LINE 91 FULLY FIXED & MERGED
-// ============================================================
-app.use(async (req, res, next) => {
-  // Skip auth for public routes
-  const publicPaths = [`/api/${API_VERSION}/health`, '/docs', `/`];
-  if (publicPaths.some(p => req.path.startsWith(p))) return next();
+// Load private key (from env var or file)
+let PRIVATE_KEY;
+if (process.env.GITHUB_PRIVATE_KEY_PATH) {
+  PRIVATE_KEY = fs.readFileSync(process.env.GITHUB_PRIVATE_KEY_PATH, 'utf8');
+} else {
+  // Handle \n in env var
+  PRIVATE_KEY = process.env.GITHUB_PRIVATE_KEY.replace(/\\n/g, '\n');
+}
 
-  const authHeader = req.headers.authorization;
-  const token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
-
-  if (!token) {
-    return res.status(401).json({ error: 'Unauthorized: Bearer token required' });
-  }
-
-  try {
-    // ✅ Verified JWT + Explicit Error Destructure
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-
-    if (error || !user) {
-      return res.status(401).json({ error: 'Unauthorized: Invalid/expired token' });
-    }
-
-    // Attach clean user object
-    req.user = {
-      id: user.id,
-      email: user.email,
-      role: user.role || 'authenticated'
-    };
-    next();
-  } catch (err) {
-    console.error('❌ Auth Error:', err.message);
-    return res.status(401).json({ error: 'Authentication failed' });
-  }
-});
+if (!APP_ID || !PRIVATE_KEY) {
+  console.error('❌ Missing required config: GITHUB_APP_ID and GITHUB_PRIVATE_KEY');
+  process.exit(1);
+}
 
 // ============================================================
-// 📊 Health Check
+// 🔑 JWT GENERATION (App-level authentication)
 // ============================================================
-app.get(`/api/${API_VERSION}/health`, (req, res) => {
-  res.json({
-    status: 'healthy',
-    service: 'crystalcastle-backend',
-    version: API_VERSION,
-    timestamp: new Date().toISOString()
-  });
-});
-
-// ============================================================
-// 🤖 Groq AI — Chat Proxy (Merged: Validated + Error Safe)
-// ============================================================
-app.post(`/api/${API_VERSION}/ai/chat`, async (req, res) => {
-  try {
-    const {
-      messages,
-      model = 'mixtral-8x7b-32768',
-      temperature = 0.7,
-      max_tokens = 2048
-    } = req.body;
-
-    // ✅ Input Validation
-    if (!messages || !Array.isArray(messages) || messages.length === 0) {
-      return res.status(400).json({ error: 'Messages array required' });
-    }
-
-    const completion = await groq.chat.completions.create({
-      model, messages, temperature, max_tokens
-    });
-
-    res.json({
-      content: completion.choices[0].message.content,
-      model: completion.model,
-      usage: completion.usage,
-      created: new Date().toISOString()
-    });
-  } catch (err) {
-    console.error('❌ Groq Error:', err.response?.data || err.message);
-    const statusCode = err.response?.status || 500;
-    res.status(statusCode).json({
-      error: 'AI Service Unavailable',
-      details: err.message,
-      code: statusCode
-    });
-  }
-});
-
-// ============================================================
-// 📋 User-Scoped CRUD (Merged)
-// ============================================================
-app.get(`/api/${API_VERSION}/items`, async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('items')
-      .select('*')
-      .eq('user_id', req.user.id)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.post(`/api/${API_VERSION}/items`, async (req, res) => {
-  try {
-    const { title, description } = req.body;
-    const { data, error } = await supabase
-      .from('items')
-      .insert({ title, description, user_id: req.user.id })
-      .select()
-      .single();
-
-    if (error) throw error;
-    res.status(201).json(data);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-// ============================================================
-// 🛑 Global Error Handlers
-// ============================================================
-app.use('*', (req, res) => {
-  res.status(404).json({ error: 'Endpoint Not Found' });
-});
-
-app.use((err, req, res, next) => {
-  console.error('❌ Server Error:', err);
-  res.status(err.status || 500).json({
-    error: err.message || 'Internal Server Error'
-  });
-});
-
-// ============================================================
-// 🚀 Start Server
-// ============================================================
-app.listen(PORT, () => {
-  console.log(`✅ CrystalCastle Backend: MERGED VERSION`);
-  console.log(`📍 Port: ${PORT}`);
-  console.log(`🔗 API: http://localhost:${PORT}/api/${API_VERSION}`);
-  console.log(`🔐 Auth: Supabase JWT Verified`);
-  console.log(`🤖 AI: Groq Connected`);
-});
- 
- 
- 
- 
-📦 Support Files (Merged)
- 
- package.json 
- 
-json
+function generateJWT() {
+  const now = Math.floor(Date.now() / 1000);
+  const payload = {
+    iat: now - 60,      // Issued 60s ago (handles clock drift)
+    exp: now + 600,     // Expires in 10 minutes (max allowed)
+    iss: APP_ID         // Issuer = App ID
+  };
   
-{
-  "name": "crystalcastle-backend",
-  "version": "1.0.0",
-  "main": "server.js",
-  "dependencies": {
-    "dotenv": "^16.4.0",
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "@supabase/supabase-js": "^2.45.0",
-    "groq-sdk": "^0.5.0"
-  },
-  "scripts": {
-    "start": "node server.js",
-    "dev": "node -r dotenv/config server.js"
+  return jwt.sign(payload, PRIVATE_KEY, { algorithm: 'RS256' });
+}
+
+// ============================================================
+// � GET INSTALLATION ACCESS TOKEN
+// ============================================================
+async function getInstallationToken(installationId) {
+  const jwt = generateJWT();
+  const octokit = new Octokit({ auth: jwt });
+  
+  const response = await octokit.request(
+    'POST /app/installations/{installation_id}/access_tokens',
+    {
+      installation_id: installationId,
+      headers: {
+        'X-GitHub-Api-Version': '2022-11-28'
+      }
+    }
+  );
+  
+  return response.data.token;
+}
+
+// ============================================================
+// 🔍 WEBHOOK SIGNATURE VERIFICATION
+// ============================================================
+function verifyWebhookSignature(payload, signatureHeader) {
+  // Fail closed: a missing secret must never mean "accept anything".
+  if (!WEBHOOK_SECRET) {
+    console.error('❌ GITHUB_WEBHOOK_SECRET is not set — rejecting webhook');
+    return false;
+  }
+
+  if (typeof signatureHeader !== 'string') return false;
+
+  const expected = `sha256=${crypto
+    .createHmac('sha256', WEBHOOK_SECRET)
+    .update(payload)
+    .digest('hex')}`;
+
+  const a = Buffer.from(expected);
+  const b = Buffer.from(signatureHeader);
+
+  // timingSafeEqual throws when lengths differ — compare first.
+  if (a.length !== b.length) return false;
+
+  return crypto.timingSafeEqual(a, b);
+}
+
+// ============================================================
+// 🚦 RATE LIMITING — Webhook
+// ============================================================
+// Bounds request volume per IP so a flood cannot burn CPU on signature
+// verification and JSON parsing (CWE-770 / CWE-400). Keyed on req.ip,
+// which requires the `trust proxy` setting above to be correct.
+const webhookLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 นาที
+  limit: 100,               // 100 คำขอต่อ IP ต่อหน้าต่าง
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { error: 'Too many requests. Please try again later.' },
+});
+
+// ============================================================
+// 📡 WEBHOOK ENDPOINT
+// ============================================================
+// Use raw body for signature verification
+app.post(
+  '/webhook/github',
+  webhookLimiter,   // ← ก่อน parse/ตรวจสอบ เพื่อกัน CPU จากการโจมตี
+  express.raw({ type: 'application/json' }),
+  async (req, res) => {
+    try {
+      // 1. Verify signature
+      const signature = req.headers['x-hub-signature-256'];
+      if (!verifyWebhookSignature(req.body, signature)) {
+        console.warn('⚠️ Invalid webhook signature');
+        return res.status(401).json({ error: 'Invalid signature' });
+      }
+      
+      // 2. Parse payload
+      const payload = JSON.parse(req.body.toString());
+      const event = req.headers['x-github-event'];
+      const action = payload.action;
+      
+      console.log(`📥 Received event: ${event} / action: ${action}`);
+      
+      // 3. Handle specific events
+      switch (event) {
+        case 'pull_request':
+          await handlePullRequest(payload);
+          break;
+          
+        case 'installation':
+          await handleInstallation(payload);
+          break;
+          
+        case 'push':
+          console.log(`📤 Push to ${payload.repository.full_name}: ${payload.ref}`);
+          break;
+          
+        default:
+          console.log(`ℹ️ Unhandled event: ${event}`);
+      }
+      
+      res.status(200).json({ status: 'ok' });
+      
+    } catch (error) {
+      console.error('❌ Webhook error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+);
+
+// ============================================================
+// 🎯 EVENT HANDLERS
+// ============================================================
+
+// Handle Pull Request events — auto-comment on new PRs
+async function handlePullRequest(payload) {
+  const { action, pull_request, repository, installation } = payload;
+  
+  // Only act on newly opened PRs
+  if (action !== 'opened') {
+    console.log(`ℹ️ PR ${action}, skipping...`);
+    return;
+  }
+  
+  console.log(`🔧 New PR opened: #${pull_request.number} in ${repository.full_name}`);
+  
+  try {
+    // Get installation access token
+    const token = await getInstallationToken(installation.id);
+    const octokit = new Octokit({ auth: token });
+    
+    // Post a welcome comment
+    await octokit.request(
+      'POST /repos/{owner}/{repo}/issues/{issue_number}/comments',
+      {
+        owner: repository.owner.login,
+        repo: repository.name,
+        issue_number: pull_request.number,
+        body: `👋 Hello @${pull_request.user.login}! Thanks for opening this PR.\n\n` +
+              `**PR Details:**\n` +
+              `- Title: ${pull_request.title}\n` +
+              `- Branch: ${pull_request.head.ref} → ${pull_request.base.ref}\n` +
+              `- Commits: ${pull_request.commits}\n\n` +
+              `_This comment was posted automatically by the GitHub App 🤖_`,
+        headers: {
+          'X-GitHub-Api-Version': '2022-11-28'
+        }
+      }
+    );
+    
+    console.log(`✅ Comment posted on PR #${pull_request.number}`);
+    
+  } catch (error) {
+    console.error('❌ Failed to post comment:', error.message);
   }
 }
- 
- 
- .env 
- 
-env
+
+// Handle App installation events
+async function handleInstallation(payload) {
+  const { action, installation, repositories } = payload;
   
-PORT=8000
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
-GROQ_API_KEY=gsk_your_key_here
-ALLOWED_ORIGINS=https://your-app.com,http://localhost:3000
- 
- 
- 
- 
-✅ Merge Summary
- 
-- ✅ Line 91 Fixed:  getUser()  +  error  destructuring +  try/catch 
-- ✅ Public Routes:  /health ,  /docs  bypass auth
-- ✅ Groq Validated: Input check + structured error codes
-- ✅ CORS Secure: Origin from env
-- ✅ User Object:  id/email/role  guaranteed
-- ✅ No Conflicts: Clean merge with latest main
- 
- 
- 
-🚀 Deploy Now
- 
-bash
+  if (action === 'created') {
+    console.log(`🎉 App installed on account: ${installation.account.login}`);
+    console.log(`📦 Repositories accessible: ${repositories?.length || 0}`);
+    repositories?.forEach(repo => {
+      console.log(`   - ${repo.full_name}`);
+    });
+  } else if (action === 'deleted') {
+    console.log(`😢 App uninstalled from account: ${installation.account.login}`);
+  }
+}
+
+// ============================================================
+// 🔐 OAUTH FLOW (User authorization)
+// ============================================================
+
+// Step 1: Redirect user to GitHub for authorization
+app.get('/auth/github', (req, res) => {
+  const authUrl = `https://github.com/login/oauth/authorize?` +
+    `client_id=${CLIENT_ID}` +
+    `&redirect_uri=http://localhost:${PORT}/auth/github/callback` +
+    `&scope=repo,user`;
   
-npm install
-npm run dev
- 
- 
-Status: ✅ Ready to push to  main  / deploy to production 🎉
- 
-Do you want me to generate Git Commit Message or Pull Request Description for this merge? 📝✅
+  res.redirect(authUrl);
+});
+
+// Step 2: Handle callback & exchange code for token
+app.get('/auth/github/callback', async (req, res) => {
+  const { code } = req.query;
+  
+  if (!code) {
+    return res.status(400).json({ error: 'Authorization code missing' });
+  }
+  
+  try {
+    // Exchange code for access token
+    const response = await fetch('https://github.com/login/oauth/access_token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
+        code: code
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.error) {
+      return res.status(400).json({ error: data.error_description });
+    }
+    
+    // Get user info with the token
+    const userResponse = await fetch('https://api.github.com/user', {
+      headers: {
+        'Authorization': `Bearer ${data.access_token}`,
+        'Accept': 'application/json'
+      }
+    });
+    
+    const user = await userResponse.json();
+    
+    res.json({
+      message: '✅ OAuth successful!',
+      user: {
+        login: user.login,
+        name: user.name,
+        email: user.email,
+        avatar_url: user.avatar_url
+      },
+      token_type: data.token_type,
+      scope: data.scope
+    });
+    
+  } catch (error) {
+    console.error('❌ OAuth error:', error);
+    res.status(500).json({ error: 'OAuth failed' });
+  }
+});
+
+// ============================================================
+// 🧪 TEST / HEALTH ENDPOINTS
+// ============================================================
+
+app.get('/', (req, res) => {
+  res.json({
+    status: 'running',
+    app: 'GitHub App Example',
+    app_id: APP_ID,
+    endpoints: {
+      webhook: 'POST /webhook/github',
+      oauth_start: 'GET /auth/github',
+      oauth_callback: 'GET /auth/github/callback',
+      health: 'GET /health',
+      test_jwt: 'GET /test/jwt'
+    }
+  });
+});
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
+app.get('/test/jwt', (req, res) => {
+  try {
+    const token = generateJWT();
+    const decoded = jwt.decode(token);
+    res.json({
+      jwt: token,
+      decoded: decoded,
+      expires_at: new Date(decoded.exp * 1000).toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================================
+// 🚀 START SERVER
+// ============================================================
+app.listen(PORT, () => {
+  console.log(`\n🚀 GitHub App server running on http://localhost:${PORT}`);
+  console.log(`\n📋 Useful URLs:`);
+  console.log(`   - Homepage:    http://localhost:${PORT}/`);
+  console.log(`   - Health:      http://localhost:${PORT}/health`);
+  console.log(`   - Test JWT:    http://localhost:${PORT}/test/jwt`);
+  console.log(`   - OAuth Start: http://localhost:${PORT}/auth/github`);
+  console.log(`   - Webhook:     POST http://localhost:${PORT}/webhook/github`);
+  console.log(`\n🔧 For local webhook testing, use a tunnel:`);
+  console.log(`   npx smee-client -u YOUR_SMEE_URL -p ${PORT} -P /webhook/github`);
+  console.log(`\n`);
+});

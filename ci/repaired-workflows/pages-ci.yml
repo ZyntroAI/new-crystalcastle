@@ -1,0 +1,39 @@
+name: Pages CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'pages/**'
+      - 'knowledge-base/**'
+      - '.github/workflows/pages-ci.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'pages/**'
+      - 'knowledge-base/**'
+  workflow_dispatch:
+
+jobs:
+  pages-ci:
+    runs-on: ubuntu-latest
+    name: Validate pages
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Lint pages
+        run: npx eslint pages --quiet
+
+      - name: Type check pages
+        run: npx tsc --noEmit --allowJs --checkJs --skipLibCheck pages/rubric-dashboard.js

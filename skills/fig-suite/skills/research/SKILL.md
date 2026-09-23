@@ -24,8 +24,8 @@ domain — governs evidence and citation.
 
 - Record claims in `.fig/evidence.json`: a list of `{claim, source}`. Every
   claim ties to a source — a tool result, a file, or a URL.
-- Any claim marked `kind: web` carries a `url`. Non-web claims (from a file or
-  a tool result) are exempt.
+- Any claim marked `kind: web` carries a `url`. Non-web claims (from a file or a
+  tool result) are exempt.
 - **Cite at the point of the claim**, inline, using the source's bracketed
   number from the tool result. These are not links; the client renders them as
   chips.
@@ -36,9 +36,8 @@ domain — governs evidence and citation.
   the schema, the config, the filter — when it is reachable.
 - When two observations disagree, the disagreement is the lead. Resolve it
   before answering; never average over it or silently drop one side.
-- One good search answers a casual lookup. Reserve multi-source verification
-  for high-stakes claims, conflicting results, or an explicit ask for
-  thoroughness.
+- One good search answers a casual lookup. Reserve multi-source verification for
+  high-stakes claims, conflicting results, or an explicit ask for thoroughness.
 
 ## Required before handoff
 
@@ -48,8 +47,8 @@ domain — governs evidence and citation.
 
 ## Stop condition
 
-Run the gate. If `EVIDENCE` or `SOURCES` is not `PASS`, a claim is unbacked or
-a web claim is uncited — fix and re-run.
+Run the gate. If `EVIDENCE` or `SOURCES` is not `PASS`, a claim is unbacked or a
+web claim is uncited — fix and re-run.
 
 ## Triggers
 

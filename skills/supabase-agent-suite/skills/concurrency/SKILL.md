@@ -32,8 +32,8 @@ create table if not exists task_queue (
 
 ## Claim atomically
 
-`FOR UPDATE SKIP LOCKED` lets concurrent workers take *different* rows instead of
-blocking on the same one:
+`FOR UPDATE SKIP LOCKED` lets concurrent workers take *different* rows instead
+of blocking on the same one:
 
 ```sql
 with next_tasks as (
@@ -51,8 +51,8 @@ where t.id = n.id
 returning t.*;
 ```
 
-The re-claim of stale `processing` rows is the **lease**: a crashed worker's work
-becomes available again after the timeout instead of deadlocking the queue.
+The re-claim of stale `processing` rows is the **lease**: a crashed worker's
+work becomes available again after the timeout instead of deadlocking the queue.
 
 ## Idempotency keys
 
@@ -63,7 +63,8 @@ Derive the key deterministically from the logical work, e.g.
 ## Checklist
 
 - [ ] Read-only tasks fan out; write tasks claim first.
-- [ ] Transactions stay short — slow API calls happen **outside** the transaction.
+- [ ] Transactions stay short — slow API calls happen **outside** the
+  transaction.
 - [ ] `FOR UPDATE SKIP LOCKED` for every queue worker.
 - [ ] Lease timeout on `locked_at`.
 - [ ] Idempotency key on every retryable write.
@@ -71,5 +72,5 @@ Derive the key deterministically from the logical work, e.g.
 
 ## Runnable
 
-`tools/task_queue.py` generates the claim SQL, computes lease expiry, and derives
-idempotency keys — all unit-tested without a database.
+`tools/task_queue.py` generates the claim SQL, computes lease expiry, and
+derives idempotency keys — all unit-tested without a database.

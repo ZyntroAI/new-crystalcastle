@@ -1,61 +1,80 @@
-# 📚 knowledge-base — settled reference material
+# 📚 Knowledge Base — ดัชนีรวม
 
-Material that has **settled** and is meant to be looked things up in, rather than
-edited in place. In-flight working documentation lives in [`docs/`](../docs/); this
-folder holds what is done being figured out.
+**อัปเดต:** 2026-09-12 • **หมวด:** 2 • **สถานะ:** ✅ พร้อมใช้งาน
 
-Last reviewed: **2026-09-16**
+คลังความรู้ของ repo นี้ — เอกสารอ้างอิง แคตตาล็อกเครื่องมือ และสื่อประกอบ (ไดอะแกรม/อินโฟกราฟิก)
+จัดเป็นโฟลเดอร์ตามหัวข้อ แต่ละโฟลเดอร์มี `README.md` ของตัวเองเป็นดัชนีย่อย
 
-## Contents
+---
 
-| Folder | What it holds |
+## 🗂️ หมวดความรู้
+
+### 🧠 เครื่องมือ MCP & AI
+**[ดูรายการเต็ม →](mcp-tools/README.md)** — คลังเครื่องมือ MCP & AI 40+ รายการ
+แบ่ง 5 หมวดย่อย: การตลาด & เนื้อหา · พัฒนา & โค้ด & ระบบ · ข้อมูล & ฐานข้อมูล & วิเคราะห์ ·
+การทำงานร่วมกัน & ประสิทธิภาพ · แกนกลาง AI & การประสานงาน
+พร้อมระดับความปลอดภัย T1–T4 (อ้างอิง OWASP LLM Top 10) จาก `registry.yaml` ซึ่งเป็นแหล่งข้อมูลจริง
+
+- 📄 `README.md` — ดัชนีรวม + ค้นหาด่วน
+- 📄 `category-*.md` — 5 หมวดย่อย
+- 🗂️ `registry.yaml` — แหล่งข้อมูลจริง (name/tier/permissions/redact)
+- 📊 `dashboard.html` — Dashboard ค้นหา/กรอง (สร้างจาก registry.yaml)
+- 🗺️ `diagram-mcp-architecture.svg` + `.md` — แผนภาพสถาปัตยกรรม Gateway → MCP Servers
+
+### 🎮 Steam Web API — REST API Performance
+**[ดูรายละเอียดเต็ม →](steam-web-api/README.md)** — ชุดอินโฟกราฟิกสรุปงานค้นคว้าเรื่อง
+Steamlink / Steam Web API ในมุมประสิทธิภาพของ REST API พร้อมการเปรียบเปรยกับกระบวนการ
+Root Canal (รักษารากฟัน): *ขจัดจุดอ่อน → เติมกลไกใหม่ → คืนพลังให้ระบบ*
+
+- 🖼️ `steam-web-api-root-canal-infographic.html` — ต้นฉบับ SVG/HTML 16:9 (ฟอนต์ไทยฝังในไฟล์ เปิดออฟไลน์ได้)
+- 🖼️ `steam-web-api-root-canal-infographic-1920x1080.png` — PNG สำหรับสไลด์/เว็บ
+- 🖼️ `steam-web-api-root-canal-infographic-3840x2160.png` — PNG 4K สำหรับพิมพ์/ฉาย
+- 🐍 `build_infographic.py` — สคริปต์สร้าง SVG ใหม่ (แก้ข้อความ/สี/เลย์เอาต์ได้)
+- 📄 `README.md` — เอกสารประกอบ เนื้อหาบนภาพ และวิธีสร้างใหม่
+
+---
+
+## 🔍 ค้นหาด่วน
+
+| อยากได้อะไร | ไปที่ |
 |---|---|
-| [`mcp-tools/`](mcp-tools/README.md) | MCP & AI tools catalog — 39 tools across 5 categories, with AST security tiers (T1–T4) aligned to the OWASP LLM Top 10. Ships an HTML dashboard and an architecture diagram. |
-| [`workflows/`](workflows/vite-vitest-pages.md) | Self-contained workflow bundles — Vite + Vitest Pages workflow (config, CI, package scripts). |
+| เครื่องมือ MCP สำหรับงานการตลาด | [mcp-tools/category-marketing.md](mcp-tools/category-marketing.md) |
+| เครื่องมือสำหรับ CI/CD, Docker, Security | [mcp-tools/category-development.md](mcp-tools/category-development.md) |
+| ระดับความปลอดภัยของแต่ละเครื่องมือ | [mcp-tools/registry.yaml](mcp-tools/registry.yaml) |
+| แผนภาพสถาปัตยกรรม MCP | [mcp-tools/diagram-mcp-architecture.svg](mcp-tools/diagram-mcp-architecture.svg) |
+| แนวปฏิบัติ REST API ประสิทธิภาพสูง | [steam-web-api/README.md](steam-web-api/README.md) |
+| อินโฟกราฟิกสำหรับรายงาน/สไลด์ | [steam-web-api/](steam-web-api/) |
 
-## `mcp-tools/` — MCP & AI tools catalog
+---
 
-The catalog is a table-based reference: one file per category, plus a registry and a
-diagram. [Start at its index →](mcp-tools/README.md)
+## 📐 แนวปฏิบัติของคลังนี้
 
-| File | Purpose |
-|---|---|
-| [`mcp-tools/README.md`](mcp-tools/README.md) | Catalog index — search-by-need, browse-by-category, and the security-tier standard |
-| [`mcp-tools/registry.yaml`](mcp-tools/registry.yaml) | Source of truth for the catalog — tool entries plus the T1–T4 tier definitions |
-| [`mcp-tools/category-marketing.md`](mcp-tools/category-marketing.md) | Marketing & content tools |
-| [`mcp-tools/category-development.md`](mcp-tools/category-development.md) | Development & code tools |
-| [`mcp-tools/category-data.md`](mcp-tools/category-data.md) | Data & analytics tools |
-| [`mcp-tools/category-collaboration.md`](mcp-tools/category-collaboration.md) | Collaboration & productivity tools |
-| [`mcp-tools/category-ai-core.md`](mcp-tools/category-ai-core.md) | AI-core & orchestration tools |
-| [`mcp-tools/diagram-mcp-architecture.md`](mcp-tools/diagram-mcp-architecture.md) | MCP architecture diagram ([SVG](mcp-tools/diagram-mcp-architecture.svg)) |
-| [`mcp-tools/dashboard.html`](mcp-tools/dashboard.html) | Browsable HTML dashboard over the catalog |
+- **แหล่งข้อมูลจริงต้องชัดเจน** — ข้อมูลที่เครื่องอ่านได้ (เช่น `registry.yaml`) เป็น source of truth
+  เอกสาร Markdown และสื่อประกอบสร้าง/อ้างจากแหล่งนั้น ไม่ใช่ทางกลับกัน
+- **สื่อประกอบเป็นไฟล์ที่แก้ไขได้** — ไดอะแกรมและอินโฟกราฟิกเก็บเป็น SVG/HTML ต้นฉบับ
+  ไม่ใช่แค่ภาพแบน ช่วยให้แก้ข้อความ/สีได้โดยไม่ต้องวาดใหม่
+- **สองภาษา** — เนื้อหาและ UI ใช้ภาษาไทย โดยคงศัพท์เทคนิคเป็นภาษาอังกฤษ
+- **อ้างแหล่งที่มาเสมอ** — ทุกเอกสารระบุที่มาและวันที่อัปเดต
 
-### Security tiers
+---
 
-Every tool carries a tier, and the tier — not the vendor — drives the review bar.
+## 🗂️ โครงสร้างโฟลเดอร์
 
-| Tier | Meaning | Risk |
-|---|---|---|
-| **T1** | Public read — reads public data only | low |
-| **T2** | Internal read — reads internal/org data | medium |
-| **T3** | Write / execute — writes data or runs commands | high |
-| **T4** | Admin / security — manages credentials and permissions | critical |
+```
+knowledge-base/
+├─ README.md                          # 📚 ดัชนีรวม (ไฟล์นี้)
+├─ mcp-tools/                         # 🧠 คลังเครื่องมือ MCP & AI
+│  ├─ README.md                       #    ดัชนีรวม + ค้นหาด่วน
+│  ├─ category-{marketing,development,data,collaboration,ai-core}.md
+│  ├─ registry.yaml                   #    แหล่งข้อมูลจริง
+│  ├─ dashboard.html                  #    Dashboard ค้นหา/กรอง
+│  └─ diagram-mcp-architecture.{md,svg}
+└─ steam-web-api/                     # 🎮 Steam Web API — REST API Performance
+   ├─ README.md                       #    เอกสารประกอบ
+   ├─ steam-web-api-root-canal-infographic.{html,png}
+   ├─ build_infographic.py            #    สคริปต์สร้างใหม่
+   └─ NotoSansThai.ttf                #    ฟอนต์ที่ฝังใน HTML (OFL 1.1)
+```
 
-## `workflows/` — workflow bundles
-
-Complete, self-contained bundles that can be dropped into a project as-is.
-
-- [**Vite + Vitest Pages workflow**](workflows/vite-vitest-pages.md) — test/build/deploy
-  a multi-page site with a dedicated `pages/` folder. The folder also ships the real
-  config files it documents: [`package.json`](package.json) and
-  [`vite.pages.config.ts`](vite.pages.config.ts).
-
-## Conventions
-
-- **`knowledge-base/` vs `docs/`** — `knowledge-base/` is reference material that has
-  settled; `docs/` is for work in progress. If something here starts changing again,
-  it belongs back in `docs/` until it settles.
-- **One topic per file**, named in lowercase kebab-case.
-- **Verify against the source before trusting a copy** — catalog entries and workflow
-  bundles describe external tools, which change. The registry's `updated` field dates
-  the snapshot.
+> **หมายเหตุ:** `docs/` เก็บเอกสารงานที่ยังดำเนินอยู่ (guidelines, runbook, agreement)
+> ส่วน `knowledge-base/` เก็บเอกสารอ้างอิงที่นิ่งแล้ว — ทั้งคู่มี README/index ของตัวเอง

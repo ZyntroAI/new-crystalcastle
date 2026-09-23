@@ -1,8 +1,8 @@
 # CrystalCastleX Skill Suite — Full Import Package
 
-**ID:** `crystalcastlex-core-suite-v1.0.0`  **Version:** 1.0.0  **Type:** Suite/Orchestrator
-**Tags:** github, ci-cd, monorepo, turborepo, git, graphql, vercel, pnpm, fastapi, langchain
-**Visibility:** Public · Production Ready
+**ID:** `crystalcastlex-core-suite-v1.0.0` **Version:** 1.0.0 **Type:**
+Suite/Orchestrator **Tags:** github, ci-cd, monorepo, turborepo, git, graphql,
+vercel, pnpm, fastapi, langchain **Visibility:** Public · Production Ready
 
 ## Sub-skills (10)
 
@@ -18,4 +18,5 @@
 
 ## Usage
 
-Import this suite via the included loader, or read individual `skills/<name>/SKILL.md`.
+Import this suite via the included loader, or read individual
+`skills/<name>/SKILL.md`.
