@@ -170,6 +170,51 @@ def test_env_example_is_not_flagged(tmp_path):
     assert report["passed"]
 
 
+def test_gate_fails_on_missing_required_path(tmp_path):
+    """STRUCTURE reads required_paths from the policy; without this the whole
+    checker could be deleted and the suite would stay green."""
+    project = _project(tmp_path)
+    assert run_gate(project)["passed"], "baseline project must satisfy every criterion"
+
+    (project / "BEST-PRACTICES.md").unlink()
+    report = run_gate(project)
+    assert report["results"]["STRUCTURE"] == "FAIL"
+    assert any("BEST-PRACTICES.md" in f["detail"] for f in report["findings"])
+    assert not report["passed"]
+
+
+def test_gate_fails_on_incomplete_agents_dir(tmp_path):
+    """The agents/ branch only fires when the directory exists at all."""
+    project = _project(tmp_path)
+    agents = project / "agents"
+    agents.mkdir()
+    (agents / "README.md").write_text("# a\n", encoding="utf-8")
+
+    report = run_gate(project)
+    assert report["results"]["STRUCTURE"] == "FAIL"
+    assert any("agents/ incomplete" in f["detail"] for f in report["findings"])
+
+
+def test_gate_fails_on_oversized_image(tmp_path):
+    """PERFORMANCE enforces max_uncompressed_image_kb; the budget is 300."""
+    project = _project(tmp_path)
+    assert run_gate(project)["passed"]
+
+    (project / "hero.png").write_bytes(b"\x00" * (400 * 1024))  # 400KB, over budget
+    report = run_gate(project)
+    assert report["results"]["PERFORMANCE"] == "FAIL"
+    assert any("over the" in f["detail"] for f in report["findings"])
+    assert not report["passed"]
+
+
+def test_gate_accepts_image_within_budget(tmp_path):
+    """The reverse direction, so the check cannot pass merely by always failing."""
+    project = _project(tmp_path)
+    (project / "hero.webp").write_bytes(b"\x00" * (10 * 1024))
+    report = run_gate(project)
+    assert report["results"]["PERFORMANCE"] == "PASS", report["findings"]
+
+
 def test_gate_fails_on_committed_secret(tmp_path):
     project = _project(tmp_path)
     (project / "leak.py").write_text('TOKEN = "ghp_' + "a" * 36 + '"\n', encoding="utf-8")
