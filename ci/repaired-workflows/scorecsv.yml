@@ -1,0 +1,40 @@
+name: Score CSV
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'scripts/**'
+      - 'pages/**'
+      - '.github/workflows/scorecsv.yml'
+  workflow_dispatch:
+
+jobs:
+  score-csv:
+    runs-on: ubuntu-latest
+    name: Score CSV
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Run scoring entrypoint if present
+        run: |
+          if [ -f scripts/scorer.js ]; then
+            node scripts/scorer.js
+          else
+            echo "No scripts/scorer.js in this repo yet — nothing to score."
+          fi
+
+# CAVEAT: no scoring entrypoint (scripts/scorer.js) exists in this repo, so the
+# step below no-ops with a message rather than failing. The YAML is valid.
+# Replace the step once the scorer lands, or delete this workflow if it is dead.

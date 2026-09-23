@@ -8,6 +8,18 @@ grouped by merge date. Each entry cites its pull request number.
 Repo layout notes live in [`README.md`](./README.md); architecture in
 [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 
+## [2026-09-23]
+
+### Fixed
+- **PR #198** — docs: clean up `.github/PULL_REQUEST_TEMPLATE.md` so the file is a usable pull-request body again.
+
+  The real template (9 headings, 33 checkboxes) was intact and already had `📸 Screenshots / Evidence` between Testing and Security — the shape the task asked for. What it also had was text meant for a reader of the task description rather than a contributor:
+
+  - **Lines 1–10 and 93–113 were handoff prose** — `ฉบับสมบูรณ์ (แก้ไขแล้ว)`, `✅ ปรับปรุง: ...`, `📝 สรุปการแก้ไขที่ทำ`, `🚀 วิธีนำไปใช้`, and a closing `ต้องการให้ผม เขียนคำอธิบาย PR สำหรับงานนี้...`. Anyone opening a pull request received those lines as their starting body, ending with a question addressed to whoever wrote the file.
+  - **Two orphan code-fence labels** — line 9 read `markdown` and line 55 read `plaintext`, the language tags of fences that no longer existed; the file contained no triple-backtick at all. The bare `markdown` line sat exactly where the template begins, and the `plaintext` line sat inside the evidence example, so that example never rendered as a code block.
+
+  The heading layout was left untouched. Checked: 9/9 headings survive, the checkbox count is unchanged at 33, 0 orphan labels, 0 handoff prose. Final file 80 lines against 113 before. Rebuilt by `scripts/rebuild_pr_template.py` so the edit is reproducible rather than hand-typed.
+
 ## [2026-09-16]
 
 ### Fixed
