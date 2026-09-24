@@ -21,3 +21,15 @@ services:
       "
     volumes:
       - ocr-data:/data
+services:
+  pdf-ocr:
+    environment:
+      # Email Monitor
+      - IMAP_HOST=imap.gmail.com
+      - IMAP_PORT=993
+      - IMAP_USER=ocr@yourdomain.com
+      - IMAP_PASS=your-app-password
+      - EMAIL_CHECK_INTERVAL=30
+      - EMAIL_MAX_SIZE_MB=50
+      # Existing vars below
+      - SMTP_HOST=...
