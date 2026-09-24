@@ -13,6 +13,12 @@ node_modules/
 .env.staging
 .env.development
 
+# Catch-all for any other env variant (backups, ad-hoc copies)
+# Templates are re-included below so they stay trackable.
+.env.*
+!.env.example
+!.env.*.example
+
 # ============================================
 # Build Outputs
 # ============================================
