@@ -55,7 +55,7 @@ the FastAPI lifespan hook, and stops cleanly on shutdown.
 Core build dependencies:
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-docs.txt
 mkdocs serve
 ```
 
@@ -71,5 +71,5 @@ sudo apt-get install -y libpango-1.0-0 libpangocairo-1.0-0 \
 pip install -r requirements-pdf.txt
 ```
 
-PDF export is deliberately kept out of `requirements.txt` so that a
+PDF export is deliberately kept out of `requirements-docs.txt` so that a
 documentation build never fails on a missing native library.

@@ -54,7 +54,7 @@ FastAPI และหยุดอย่างเรียบร้อยตอน
 dependencies หลัก:
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-docs.txt
 mkdocs serve
 ```
 
@@ -70,5 +70,5 @@ sudo apt-get install -y libpango-1.0-0 libpangocairo-1.0-0 \
 pip install -r requirements-pdf.txt
 ```
 
-เราแยกการ export PDF ออกจาก `requirements.txt` โดยตั้งใจ
+เราแยกการ export PDF ออกจาก `requirements-docs.txt` โดยตั้งใจ
 เพื่อให้การ build เอกสารไม่ล้มเพราะขาดไลบรารีของระบบ

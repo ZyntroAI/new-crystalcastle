@@ -1,5 +1,5 @@
-# Optional PDF export. Install alongside requirements.txt.
+# Optional PDF export. Install alongside requirements-docs.txt.
 # WeasyPrint needs system libraries (pango, cairo, gdk-pixbuf); see the
 # Configuration page for the platform packages.
--r requirements.txt
+-r requirements-docs.txt
 mkdocs-exporter[weasyprint]>=6.0
