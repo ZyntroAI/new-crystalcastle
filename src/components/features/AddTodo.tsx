@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 
-interface AddTodoProps {
+export interface AddTodoProps {
   onAdd: (title: string) => Promise<void> | void;
 }
 
