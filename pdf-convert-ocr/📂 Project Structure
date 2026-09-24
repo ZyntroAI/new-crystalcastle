@@ -1,0 +1,23 @@
+pdf-convert-ocr/
+├── src/
+│   ├── lib/
+│   │   ├── ocr/              # Core OCR engine (TypeScript)
+│   │   └── scanner/         # Folder watcher + webhooks
+│   ├── api/                  # FastAPI backend
+│   │   ├── main.py           # Entry point
+│   │   ├── models.py         # Pydantic schemas
+│   │   ├── config.py         # Settings
+│   │   ├── routes/           # API endpoints
+│   │   └── services/         # Job queue · WebSockets · Notifications
+│   └── cli/                  # Command-line interface
+├── ui/                       # React Dashboard
+│   ├── src/
+│   │   ├── components/       # Upload · Status · Results · Settings
+│   │   ├── hooks/            # WebSocket · Notifications
+│   │   └── api/              # Client SDK
+│   └── public/assets/        # Sounds · Icons
+├── Dockerfile                # Multi-stage production build
+├── docker-compose.yml        # Deployment manifest
+├── requirements.txt          # Python dependencies
+├── package.json              # Node dependencies
+└── .env                      # Secrets & configuration
