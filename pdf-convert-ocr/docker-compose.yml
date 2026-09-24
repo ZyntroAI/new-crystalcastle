@@ -33,3 +33,16 @@ services:
       - EMAIL_MAX_SIZE_MB=50
       # Existing vars below
       - SMTP_HOST=...
+
+      services:
+  pdf-ocr:
+    environment:
+      # Email
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_USER=your-email@gmail.com
+      - SMTP_PASS=your-app-password
+      - SMTP_FROM=your-email@gmail.com
+      - ALERT_EMAIL=notify@yourdomain.com
+      # Slack
+      - SLACK_WEBHOOK=https://hooks.slack.com/services/XXX/YYY/ZZZ
