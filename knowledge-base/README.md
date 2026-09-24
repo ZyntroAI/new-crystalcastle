@@ -1,6 +1,6 @@
 # 📚 Knowledge Base — ดัชนีรวม
 
-**อัปเดต:** 2026-09-12 • **หมวด:** 2 • **สถานะ:** ✅ พร้อมใช้งาน
+**อัปเดต:** 2026-09-24 • **หมวด:** 3 • **สถานะ:** ✅ พร้อมใช้งาน
 
 คลังความรู้ของ repo นี้ — เอกสารอ้างอิง แคตตาล็อกเครื่องมือ และสื่อประกอบ (ไดอะแกรม/อินโฟกราฟิก)
 จัดเป็นโฟลเดอร์ตามหัวข้อ แต่ละโฟลเดอร์มี `README.md` ของตัวเองเป็นดัชนีย่อย
@@ -10,7 +10,7 @@
 ## 🗂️ หมวดความรู้
 
 ### 🧠 เครื่องมือ MCP & AI
-**[ดูรายการเต็ม →](mcp-tools/README.md)** — คลังเครื่องมือ MCP & AI 40+ รายการ
+**[ดูรายการเต็ม →](mcp-tools/README.md)** — คลังเครื่องมือ MCP & AI 39 รายการ
 แบ่ง 5 หมวดย่อย: การตลาด & เนื้อหา · พัฒนา & โค้ด & ระบบ · ข้อมูล & ฐานข้อมูล & วิเคราะห์ ·
 การทำงานร่วมกัน & ประสิทธิภาพ · แกนกลาง AI & การประสานงาน
 พร้อมระดับความปลอดภัย T1–T4 (อ้างอิง OWASP LLM Top 10) จาก `registry.yaml` ซึ่งเป็นแหล่งข้อมูลจริง
@@ -32,6 +32,14 @@ Root Canal (รักษารากฟัน): *ขจัดจุดอ่อ�
 - 🐍 `build_infographic.py` — สคริปต์สร้าง SVG ใหม่ (แก้ข้อความ/สี/เลย์เอาต์ได้)
 - 📄 `README.md` — เอกสารประกอบ เนื้อหาบนภาพ และวิธีสร้างใหม่
 
+### ⚙️ Workflows — Vite + Vitest Pages
+**[ดูรายละเอียดเต็ม →](workflows/vite-vitest-pages.md)** — ชุด workflow สำหรับเว็บหลายหน้า
+แยก test/build ของ `pages/**` ออกจากกัน พร้อม GitHub Actions (Test → Build → Deploy)
+และ config ที่ให้มาครบทั้ง `vitest.config.pages.ts` / `vite.pages.config.ts`
+
+- 📄 `vite-vitest-pages.md` — บันเดิลครบชุด รวม config และไฟล์ workflow
+- ⚙️ `../vite.pages.config.ts` — Vite build config ที่ไฟล์นี้ใช้งาน
+
 ---
 
 ## 🔍 ค้นหาด่วน
@@ -44,6 +52,7 @@ Root Canal (รักษารากฟัน): *ขจัดจุดอ่อ�
 | แผนภาพสถาปัตยกรรม MCP | [mcp-tools/diagram-mcp-architecture.svg](mcp-tools/diagram-mcp-architecture.svg) |
 | แนวปฏิบัติ REST API ประสิทธิภาพสูง | [steam-web-api/README.md](steam-web-api/README.md) |
 | อินโฟกราฟิกสำหรับรายงาน/สไลด์ | [steam-web-api/](steam-web-api/) |
+| Workflow Vite + Vitest สำหรับเว็บหลายหน้า | [workflows/vite-vitest-pages.md](workflows/vite-vitest-pages.md) |
 
 ---
 
@@ -74,6 +83,8 @@ knowledge-base/
    ├─ steam-web-api-root-canal-infographic.{html,png}
    ├─ build_infographic.py            #    สคริปต์สร้างใหม่
    └─ NotoSansThai.ttf                #    ฟอนต์ที่ฝังใน HTML (OFL 1.1)
+└─ workflows/                         # ⚙️ Workflow Vite + Vitest Pages
+   └─ vite-vitest-pages.md            #    บันเดิลครบชุด (config + CI)
 ```
 
 > **หมายเหตุ:** `docs/` เก็บเอกสารงานที่ยังดำเนินอยู่ (guidelines, runbook, agreement)
