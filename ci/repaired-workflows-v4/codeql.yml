@@ -1,0 +1,30 @@
+name: Code Quality / Security Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ["python", "javascript-typescript"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71903bbe692ec551598c3250cdd4a43181bd
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@c549b93d13d2c1522d46288e1d2abd5df7deef3e
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@c549b93d13d2c1522d46288e1d2abd5df7deef3e
+
+      - name: Perform Analysis
+        uses: github/codeql-action/analyze@c549b93d13d2c1522d46288e1d2abd5df7deef3e
