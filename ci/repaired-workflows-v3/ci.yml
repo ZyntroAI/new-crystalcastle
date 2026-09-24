@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type Check
+        run: npm run typecheck --if-present
+
+      - name: Unit Test
+        run: npm test -- --runInBand
+
+      - name: Coverage Test
+        run: npm run test:coverage --if-present
+
+      - name: Build
+        run: npm run build
+
+      - name: Set Short SHA
+        run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+      - name: Generate Build Metadata
+        run: |
+          mkdir -p build-meta
+
+          echo "${GITHUB_SHA}" > build-meta/commit.sha
+          echo "${GITHUB_REF_NAME}" > build-meta/branch.txt
+          echo "${GITHUB_RUN_ID}" > build-meta/run-id.txt
+
+      - name: Generate SHA256 Checksums
+        run: |
+          mkdir -p checksums
+
+          if [ -d dist ]; then
+            find dist -type f -exec sha256sum {} \; > checksums/dist.sha256
+          fi
+
+          if [ -d build ]; then
+            find build -type f -exec sha256sum {} \; > checksums/build.sha256
+          fi
+
+      - name: Upload Coverage
+        if: success()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        with:
+          name: coverage-report-${{ github.ref_name }}-${{ github.run_number }}-${{ env.SHORT_SHA }}
+          path: coverage/
+          if-no-files-found: ignore
+
+      - name: Upload Build Artifact
+        if: success()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        with:
+          name: build-output-${{ github.ref_name }}-${{ github.run_number }}-${{ env.SHORT_SHA }}
+          path: |
+            dist/
+            build/
+          if-no-files-found: warn
+
+      - name: Upload Build Metadata
+        if: success()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        with:
+          name: build-metadata-${{ github.ref_name }}-${{ github.run_number }}-${{ env.SHORT_SHA }}
+          path: |
+            build-meta/
+            checksums/
