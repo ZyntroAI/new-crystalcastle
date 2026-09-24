@@ -1,0 +1,271 @@
+Here’s a complete, production-ready workflow suite to **automatically generate & update PR descriptions** — including templates, extraction logic, and multi-trigger support.
+
+---
+
+## 📁 File 1: Auto-PR Description Generator
+**Path:** `.github/workflows/auto-pr-description.yml`
+
+```yaml
+name: Auto PR Description
+run-name: Generate description for PR #${{ github.event.pull_request.number }}
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+  pull_request_target:
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  generate-description:
+    runs-on: ubuntu-latest
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      !contains(fromJson('["dependabot[bot]", "renovate[bot]", "github-actions[bot]"]'), github.actor)
+
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332@v4.2.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Extract change info
+        id: info
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          PR_BODY="${{ github.event.pull_request.body }}"
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          BASE_REF="${{ github.event.pull_request.base.ref }}"
+          HEAD_REF="${{ github.event.pull_request.head.ref }}"
+          AUTHOR="${{ github.event.pull_request.user.login }}"
+
+          # Get changed files
+          CHANGED_FILES=$(git diff --name-only "origin/${BASE_REF}...HEAD" 2>/dev/null | sed 's/^/- /' | head -30)
+          if [ -z "$CHANGED_FILES" ]; then
+            CHANGED_FILES="- No file list available"
+          fi
+
+          # Get commit summary
+          COMMITS=$(git log --format="- %s (%h)" "origin/${BASE_REF}...HEAD" 2>/dev/null | head -20)
+          if [ -z "$COMMITS" ]; then
+            COMMITS="- Commits unavailable"
+          fi
+
+          # Infer change type
+          CHANGE_TYPE="Other"
+          if echo "$PR_TITLE" | grep -qiE "^(feat:|feature:|add:|new:)"; then
+            CHANGE_TYPE="Feature"
+          elif echo "$PR_TITLE" | grep -qiE "^(fix:|bug:|hotfix:|resolve:)"; then
+            CHANGE_TYPE="Bug Fix"
+          elif echo "$PR_TITLE" | grep -qiE "^(docs:|doc:|documentation:|readme:)"; then
+            CHANGE_TYPE="Documentation"
+          elif echo "$PR_TITLE" | grep -qiE "^(refactor:|chore:|cleanup:|style:)"; then
+            CHANGE_TYPE="Refactor"
+          elif echo "$PR_TITLE" | grep -qiE "^(ci:|github:|workflow:|actions:)"; then
+            CHANGE_TYPE="CI/CD"
+          elif echo "$PR_TITLE" | grep -qiE "^(dep:|deps:|upgrade:|bump:)"; then
+            CHANGE_TYPE="Dependency Update"
+          fi
+
+          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          echo "commits<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMITS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          echo "change_type=$CHANGE_TYPE" >> $GITHUB_OUTPUT
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "base_ref=$BASE_REF" >> $GITHUB_OUTPUT
+          echo "head_ref=$HEAD_REF" >> $GITHUB_OUTPUT
+          echo "author=$AUTHOR" >> $GITHUB_OUTPUT
+          echo "title=$PR_TITLE" >> $GITHUB_OUTPUT
+
+      - name: Build PR Body
+        id: build
+        uses: actions/github-script@60a0d83021f400469cb355e61a7d140008035d7d@v7.0.1
+        with:
+          script: |
+            const {
+              change_type,
+              pr_number,
+              base_ref,
+              head_ref,
+              author,
+              title,
+              changed_files,
+              commits
+            } = ${{ toJSON(steps.info.outputs) }};
+
+            const existingBody = context.payload.pull_request.body || '';
+            const markerStart = '<!-- AUTO-PR-DESC:START -->';
+            const markerEnd = '<!-- AUTO-PR-DESC:END -->';
+
+            // Preserve user-written content outside markers
+            let userContent = '';
+            if (existingBody.includes(markerStart) && existingBody.includes(markerEnd)) {
+              const parts = existingBody.split(markerEnd);
+              userContent = parts.length > 1 ? parts[1].trim() : '';
+            } else if (existingBody.trim() !== '') {
+              userContent = existingBody;
+            }
+
+            const autoSection = `${markerStart}
+## 📋 Pull Request Summary
+
+| Field | Value |
+|---|---|
+| **Title** | ${title} |
+| **Type** | ${change_type} |
+| **Author** | @${author} |
+| **Source** | \`${head_ref}\` |
+| **Target** | \`${base_ref}\` |
+| **PR #** | #${pr_number} |
+
+### 📝 Commits
+${commits}
+
+### 📂 Files Changed
+${changed_files}
+
+---
+*Auto-generated — edit below or above to customize*
+${markerEnd}`;
+
+            const newBody = userContent
+              ? `${autoSection}\n\n---\n\n## ✍️ Notes\n${userContent}`
+              : autoSection;
+
+            console.log('Body length:', newBody.length);
+            return newBody;
+
+      - name: Update PR Description
+        uses: actions/github-script@60a0d83021f400469cb355e61a7d140008035d7d@v7.0.1
+        with:
+          script: |
+            const body = ${{ steps.build.outputs.result }};
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              body: body
+            });
+            console.log('✅ PR description updated');
+```
+
+---
+
+## 📁 File 2: Standard PR Template
+**Path:** `.github/PULL_REQUEST_TEMPLATE.md`
+*(Fills initial description; auto-generator enhances it)*
+
+```markdown
+<!-- AUTO-PR-DESC:START -->
+<!-- Everything above/below this block will be preserved. DO NOT EDIT THE MARKERS. -->
+
+## Change Type
+- [ ] Feature
+- [ ] Bug fix
+- [ ] Refactor
+- [ ] Documentation
+- [ ] CI/CD
+- [ ] Dependency update
+- [ ] Security
+- [ ] Breaking change
+
+## Description
+Brief summary of changes.
+
+## Related
+Closes #
+
+## Validation
+- [ ] Tests pass
+- [ ] Lint clean
+- [ ] Docs updated
+- [ ] No secrets exposed
+
+## Notes
+<!-- Add details, context, or screenshots here -->
+
+<!-- AUTO-PR-DESC:END -->
+```
+
+---
+
+## 📁 File 3: Label Auto-Assign
+**Path:** `.github/workflows/auto-pr-labels.yml`
+*(Companion — applies labels based on title/changed files)*
+
+```yaml
+name: Auto PR Labels
+run-name: Auto-label PR #${{ github.event.pull_request.number }}
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/labeler@8558fd74291d68becae16e055fe952a2005241e7@v5.0.0
+        with:
+          configuration-path: .github/labeler-rules.yml
+```
+
+**Path:** `.github/labeler-rules.yml`
+```yaml
+ci:
+  - changed-files:
+      - any-glob-to-any-file: [".github/workflows/**", ".github/actions/**"]
+documentation:
+  - changed-files:
+      - any-glob-to-any-file: ["docs/**", "*.md"]
+python:
+  - changed-files:
+      - any-glob-to-any-file: ["**/*.py", "requirements*.txt", "pyproject.toml"]
+javascript:
+  - changed-files:
+      - any-glob-to-any-file: ["**/*.js", "**/*.ts", "package.json"]
+dependencies:
+  - title: "^deps?:|^upgrade:|^bump:"
+bug:
+  - title: "^fix:|^bug:|^hotfix:"
+feature:
+  - title: "^feat:|^feature:|^add:"
+```
+
+---
+
+## ✅ How It Works
+
+| Feature | Behavior |
+|---|---|
+| **Triggers** | PR opened → fills description; push/update → refreshes file/commit list |
+| **Preservation** | Content between `AUTO-PR-DESC` markers = auto-managed; everything else = yours to edit |
+| **Change Type** | Detected from conventional commit prefix in title (`fix:`, `feat:`, `ci:`, etc.) |
+| **Exclusions** | Skips dependabot/renovate bots to avoid noise |
+| **Security** | Only runs on same-repo PRs; no cross-fork write access |
+
+## 🚀 Setup
+1. Save all 3 files above to your repo
+2. Commit to `main`
+3. Next PR you open → description auto-populates ✅
+
+## 💡 Customization Tips
+- **Keep manual notes** below the auto-block — they survive refreshes
+- **Conventional titles** = better auto-detection: `fix: timeout issue`, `ci: update checkout to v4`
+- **Pre-populate template** with your own checklists in `PULL_REQUEST_TEMPLATE.md`
+- **Adjust file limits** in the script (`head -30` / `head -20`) to show more/less context
+
+---
+
+Want me to adapt this to **ZyntroAI's exact conventions** — add your specific labels, milestone links, or team review routing? Let me know and I'll tune the templates! 🎯
