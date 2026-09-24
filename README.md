@@ -1,369 +1,332 @@
-ได้เลยครับ! นี่คือ README ฉบับสมบูรณ์ + คู่มือการติดตั้ง พร้อมนำไปวางใช้ทันทีครับ ✅📝🚀
- 
- 
- 
-📄 README.md — ZyntroAI/new-crystalcastle
- 
-markdown
-  
 # 🏰 New CrystalCastle — ZyntroAI
 
-> **AI-Native Full-Stack Platform** • FastAPI • React • Supabase • Claude/Gemini • MCP Protocol  
-> Production-ready • Secure • Scalable • Agent-Ready
+> AI-Native full-stack platform · FastAPI · React + TypeScript · Supabase · GitHub Actions
+
+[![CI](https://github.com/ZyntroAI/new-crystalcastle/actions/workflows/ci.yml/badge.svg)](https://github.com/ZyntroAI/new-crystalcastle/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
 ---
 
 ## 📋 สารบัญ
 
 - [ภาพรวม](#-ภาพรวม)
-- [สถาปัตยกรรม](#-สถาปัตยกรรม)
+- [โครงสร้างที่จัดเก็บจริง](#-โครงสร้างที่จัดเก็บจริง)
 - [เริ่มต้นอย่างรวดเร็ว](#-เริ่มต้นอย่างรวดเร็ว)
-- [การติดตั้งแบบละเอียด](#-การติดตั้งแบบละเอียด)
-- [การกำหนดค่า](#-การกำหนดค่า)
 - [การพัฒนา](#-การพัฒนา)
 - [ทดสอบ](#-ทดสอบ)
+- [CI/CD และ Workflows](#-cicd-และ-workflows)
+- [Skills Registry](#-skills-registry)
+- [Security Suites](#-security-suites)
+- [Knowledge Base](#-knowledge-base)
 - [เอกสารเพิ่มเติม](#-เอกสารเพิ่มเติม)
-- [ความปลอดภัย](#-ความปลอดภัย)
+- [ข้อควรระวังด้านความปลอดภัย](#-ข้อควรระวังด้านความปลอดภัย)
+- [การมีส่วนร่วม](#-การมีส่วนร่วม)
 - [ใบอนุญาต](#-ใบอนุญาต)
 
 ---
 
 ## 🌟 ภาพรวม
 
-**New CrystalCastle** เป็นแพลตฟอร์มแอปพลิเคชันเต็มรูปแบบที่ออกแบบมาเพื่อรองรับ AI Agent และระบบอัจฉริยะ:
+**New CrystalCastle** เป็น monorepo ที่รวม backend, frontend, ชุด security tooling, AI skills และ
+knowledge base ไว้ในที่เดียว — ออกแบบมาให้ agent อ่านและแก้ไขได้โดยตรง
 
-- ✅ **Backend**: FastAPI + Python 3.12 — รวดเร็ว ปลอดภัย มีเอกสารอัตโนมัติ
-- ✅ **Frontend**: React + TypeScript + Tailwind CSS + ShadCN UI — สวย ตอบสนอง ได้มาตรฐาน
-- ✅ **ฐานข้อมูล & Auth**: Supabase (PostgreSQL) — พร้อม Row Level Security
-- ✅ **AI/Agent**: รองรับ Claude, Gemini, MCP Protocol — เรียกเครื่องมือภายนอกได้
-- ✅ **DevOps**: GitHub Actions • CodeQL • Dependabot — ตรวจสอบอัตโนมัติทุกคอมมิต
+- **Backend** — FastAPI + SQLAlchemy (async) + APScheduler สำหรับงาน cron/scheduled jobs
+- **Frontend** — React + TypeScript + Vite + Tailwind (shadcn/ui components)
+- **Database & Auth** — Supabase (PostgreSQL)
+- **DevOps** — GitHub Actions 29 workflows · CodeQL · Dependabot
+- **Agent tooling** — skills registry, security suites (CWE-1321, CWE-1333), knowledge base
+
+> หมายเหตุ: รีโปนี้มีไฟล์จำนวนมากที่ยังไม่จัดหมวด (ดู [โครงสร้างที่จัดเก็บจริง](#-โครงสร้างที่จัดเก็บจริง))
+> การย้ายไฟล์ควรทำเป็น PR แยก เพื่อไม่ให้ประวัติ git ปนกับงานเอกสาร
 
 ---
 
-## 🏗️ สถาปัตยกรรม
+## 🏗️ โครงสร้างที่จัดเก็บจริง
 
- 
- 
+```
 new-crystalcastle/
-├── backend/              # FastAPI Backend
-│   ├── app/             # โค้ดหลัก
-│   │   ├── api/         # API Endpoints
-│   │   ├── core/        # คอนฟิก & ความปลอดภัย
-│   │   ├── models/      # โมเดลข้อมูล
-│   │   └── services/    # ธุรกิจลอจิก
-│   ├── tests/           # ชุดทดสอบ
-│   └── requirements.txt
-├── frontend/            # React Frontend
-│   ├── src/
-│   │   ├── components/  # ส่วนประกอบ UI
-│   │   ├── pages/       # หน้าเว็บ
-│   │   ├── hooks/       # Custom Hooks
-│   │   └── utils/       # เครื่องมือช่วย
-│   └── package.json
-├── supabase/            # ฐานข้อมูล & Auth
-│   ├── migrations/      # ประวัติการเปลี่ยนแปลง DB
-│   └── config.toml
-├── skills/              # AI Skills & MCP Tools
-│   ├── claude/
-│   ├── gemini/
-│   └── mcp/
-├── .github/workflows/   # CI/CD
-├── docs/                # เอกสารประกอบ
+├── backend/                 # FastAPI service
+│   ├── main.py              # entry point (uvicorn)
+│   ├── models.py            # SQLAlchemy models
+│   ├── Schemas.py           # Pydantic schemas
+│   ├── routers/             # workflows.py, jobs.py, ececution.py
+│   ├── services/            # scheduler.py, executor.py
+│   ├── src/                 # Nest/Prisma worker (auth, redis, prisma)
+│   ├── prisma/
+│   ├── container/, containers/
+│   ├── requirements.txt
+│   ├── Dockerfile
+│   ├── .env.example
+│   └── Readme.md            # รายละเอียด backend
+├── frontend/                # React component library / UI layer
+│   └── src/components/
+├── src/                     # React app หลัก (Vite)
+│   ├── App.tsx, main.tsx
+│   ├── pages/               # Login, Register, Home, Canvas, …
+│   ├── components/
+│   ├── hooks/, lib/, util/
+│   ├── api/, types/, tests/
+│   └── payment/
+├── skills/                  # AI skill registry
+│   ├── index.json           # registry (8 entries)
+│   ├── crystalcastlex-skill-suite/
+│   ├── fig-suite/, fig-best-practices-suite/
+│   ├── supabase-agent-suite/
+│   ├── python-dev/, ci-troubleshooter/
+│   └── workflow-permission-check/
+├── security/                # security suites
+│   ├── cwe1321/             # Prototype Pollution Protection (JS + Python)
+│   └── cwe1333/             # ReDoS detector (JS + Python)
+├── ci/                      # workflow repair bundle
+│   ├── install-repaired-workflows.sh
+│   └── repaired-workflows/
+├── knowledge-base/          # reference material
+│   ├── README.md            # index
+│   ├── mcp-tools/
+│   ├── steam-web-api/
+│   └── workflows/
+├── docs/                    # คู่มือ, cheatsheet, runbook
+├── .github/
+│   ├── workflows/           # 29 workflow files
+│   ├── actions/, jobs/, helpers/, rulesets/
+│   ├── PULL_REQUEST_TEMPLATE.md
+│   └── dependabot.yml
+├── docker-compose.yml
+├── ARCHITECTURE.md
+├── CHANGELOG.md
 └── README.md
- 
-plaintext
-  
+```
 
 ---
 
 ## ⚡ เริ่มต้นอย่างรวดเร็ว
 
 ### ข้อกำหนดเบื้องต้น
-- Python 3.12+
+
+- Python 3.12+ (CI รัน 3.10 / 3.11 / 3.12)
 - Node.js 20+ & npm
 - บัญชี Supabase (สำหรับฐานข้อมูล)
 
-### 3 ขั้นตอนเสร็จสิ้น
+### 1. โคลนรีโป
 
 ```bash
-# 1. โคลนรีโป
 git clone https://github.com/ZyntroAI/new-crystalcastle.git
 cd new-crystalcastle
+```
 
-# 2. ติดตั้ง Backend
-cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env
-# ✅ แก้ไข .env — กรอกค่า Supabase & API Keys
+### 2. Backend
 
-# 3. ติดตั้ง Frontend
-cd ../frontend
-npm install
-npm run dev
-# เปิด: http://localhost:5173
- 
- 
-พร้อมใช้งาน! 🎉
- 
- 
- 
-🔧 การติดตั้งแบบละเอียด
- 
-1. การตั้งค่า Backend
- 
-bash
-  
-# เข้าโฟลเดอร์
+```bash
 cd backend
 
-# สร้างสภาพแวดล้อม
 python -m venv venv
+source venv/bin/activate          # Windows: venv\Scripts\activate
 
-# เปิดใช้งาน
-# Linux/macOS:
-source venv/bin/activate
-
-# Windows PowerShell:
-venv\Scripts\Activate.ps1
-
-# ติดตั้งแพ็กเกจ
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# คัดลอกไฟล์คอนฟิก
-cp .env.example .env
- 
- 
-แก้ไข  .env :
- 
-env
-  
-# Supabase
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your-anon-key-here
+cp .env.example .env              # แล้วกรอกค่าจริง
+uvicorn main:app --reload
+```
 
-# ความปลอดภัย
-SECRET_KEY=generate-a-random-key-here
-ENVIRONMENT=development
+เปิดเอกสาร API อัตโนมัติที่ http://localhost:8000/docs
 
-# AI (ไม่บังคับ)
-ANTHROPIC_API_KEY=sk-ant-...
-GOOGLE_API_KEY=AIza...
- 
- 
-รันเซิร์ฟเวอร์:
- 
-bash
-  
-uvicorn app.main:app --reload
-# เปิดเอกสารอัตโนมัติ: http://localhost:8000/docs
- 
- 
- 
- 
-2. การตั้งค่า Frontend
- 
-bash
-  
-cd frontend
+### 3. Frontend
 
-# ติดตั้ง
+```bash
+cd ../                       # กลับไปที่ root ของรีโป
 npm install
-
-# คัดลอกคอนฟิก
-cp .env.example .env
- 
- 
-แก้ไข  .env :
- 
-env
-  
-VITE_API_URL=http://localhost:8000
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key-here
- 
- 
-รันโหมดพัฒนา:
- 
-bash
-  
 npm run dev
-# เปิด: http://localhost:5173
- 
- 
-สร้างแพ็กเกจสำหรับผลิต:
- 
-bash
-  
-npm run build
- 
- 
- 
- 
-3. การตั้งค่า Supabase
- 
-1. สร้างโปรเจกต์ที่ supabase.com
-2. คัดลอก  Project URL  และ  anon public  key → ใส่ใน  .env  ทั้ง Backend/Frontend
-3. เปิดใช้งาน Email Auth: Authentication → Settings → Enable Email
-4. รัน Migration (ถ้ามี):
- 
-bash
-  
-supabase db push
- 
- 
- 
- 
-🧪 ทดสอบ
- 
-Backend
- 
-bash
-  
+```
+
+---
+
+## 🔧 การพัฒนา
+
+### Backend
+
+Dependencies หลัก (`backend/requirements.txt`):
+
+| Package | Version |
+| --- | --- |
+| fastapi | 0.111.0 |
+| uvicorn[standard] | 0.30.1 |
+| sqlalchemy | 2.0.30 |
+| pydantic | 2.7.4 |
+| pydantic-settings | 2.3.3 |
+| apscheduler | 3.10.4 |
+| python-dotenv | 1.2.2 |
+| aiosqlite | 0.20.0 |
+
+Scheduler ถูกเปิดผ่าน `settings.SCHEDULER_ENABLED` ใน `backend/main.py` — เมื่อเปิด ระบบจะ
+`init_scheduler()` และ `start_scheduler()` ตอน startup
+
+> ⚠️ **หมายเหตุจากการตรวจสอบ (2026-09-24):** `backend/main.py` import `config`, `database`
+> และ `routers.execution` แต่ในรีโปยังไม่มีไฟล์ `backend/config.py`, `backend/database.py`
+> และไฟล์ router ชื่อ `ececution.py` (สะกดไม่ตรงกับที่ import) — backend จะรันไม่ขึ้นจนกว่าจะแก้
+> ให้ชื่อไฟล์ตรงกันและเพิ่มโมดูลที่ขาด
+
+### สคริปต์ช่วยงาน
+
+ที่ root ของรีโปมีสคริปต์นับและจัดการไฟล์:
+
+```bash
+npm run scripts:list        # list ไฟล์
+npm run scripts:stats       # สถิติ
+npm run scripts:count       # นับจำนวนไฟล์
+npm run scripts:count:json  # นับแบบ JSON
+```
+
+---
+
+## 🧪 ทดสอบ
+
+### Backend
+
+```bash
 cd backend
-pytest tests/ --cov=app --cov-report=term
- 
- 
-Frontend
- 
-bash
-  
-cd frontend
+pytest ../tests --cov=. --cov-report=term
+```
+
+### Frontend
+
+```bash
 npm run test
- 
- 
-ตรวจสอบโค้ด
- 
-bash
-  
+```
+
+### ตรวจคุณภาพโค้ด
+
+```bash
 # Backend
 ruff check .
 black --check .
 
 # Frontend
 npm run lint
- 
- 
- 
- 
-📁 เอกสารเพิ่มเติม
- 
-เอกสาร คำอธิบาย 
-ARCHITECTURE.md แผนภาพสถาปัตยกรรมระบบ 
-SECURITY.md นโยบายความปลอดภัย & การรายงานช่องโหว่ 
-CONTRIBUTING.md คู่มือผู้มีส่วนร่วม • มาตรฐานคอมมิต • กฎการพัฒนา 
- docs/  คู่มือการใช้งาน, Cheatsheet, คู่มือ AI Skills 
- 
- 
- 
-🛡️ ความปลอดภัย
- 
-- รัน CodeQL ทุก PR — ตรวจหาช่องโหว่อัตโนมัติ
-- ปักหมุด SHA ทุก GitHub Action — ป้องกันการโจมตี
-- Dependabot อัปเดต dependency อัตโนมัติ
-- ห้าม คอมมิต Secret/Key ใดๆ ลงรีโปสาธารณะ
-- อ่านรายละเอียด: SECURITY.md
- 
- 
- 
-🤝 การมีส่วนร่วม
- 
-1. Fork รีโป → สร้างสาขา ( git checkout -b feature/your-idea )
-2. คอมมิต ( git commit -m "feat: เพิ่มฟีเจอร์ใหม่" )
-3. ทดสอบให้ผ่าน → เปิด Pull Request
-4. รอตรวจสอบ & ผสานรวม ✅
- 
-มาตรฐานคอมมิต: Conventional Commits
- 
- 
- 
-📄 ใบอนุญาต
- 
-© 2026 ZyntroAI — สงวนสิทธิ์
- 
- 
-พัฒนาด้วย ❤️ โดยทีม ZyntroAI
-รายงานปัญหา • ถามตอบ & แนะนำ
-``` 
- 
- 
-📋 ไฟล์แนบ —  .env.example  (Backend)
- 
-env
-  
-# ==========================================
-# ZyntroAI New CrystalCastle — Backend Config
-# คัดลอกเป็น .env แล้วกรอกค่าจริง
-# ==========================================
+```
 
-# 🌐 สภาพแวดล้อม
-ENVIRONMENT=development
-DEBUG=true
+---
 
-# 🔐 ความปลอดภัย
-SECRET_KEY=change-this-to-random-string-in-production
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
+## 🔁 CI/CD และ Workflows
 
-# 🗄️ Supabase
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your-supabase-service-key
+รีโปมี **29 workflow files** ใต้ `.github/workflows/` ครอบคลุม CI, security, release และ automation:
 
-# 🤖 AI (ไม่บังคับ)
-ANTHROPIC_API_KEY=sk-ant-...
-GOOGLE_API_KEY=AIza...
+- **CI** — `ci.yml`, `FastAPI_CI.yaml`, `Python-CI.yml`, `CICD_Pipeline.yaml`, `test.yml`
+- **Security** — `codeql.yml`, `dependency-review.yml`, `permission-check-tests.yml`
+- **Release / Publish** — `release.yml`, `npm-publish.yml`, `npm-publish-github-packages.yml`
+- **Supabase** — `supabase-branch.yml`, `supabase-deploy.yml`, `supabase-notify.yml`
+- **Automation** — `dependabot-automerge.yml`, `auto-update-package.yml`, `open-issue.yml`
+- **Quality** — `rubric-scoring.yml`, `scorecsv.yml`, `pytest-markers.yml`, `stacked-pr-check.yml`
 
-# 📡 Server
-HOST=0.0.0.0
-PORT=8000
- 
- 
-📋 ไฟล์แนบ —  .env.example  (Frontend)
- 
-env
-  
-# ==========================================
-# ZyntroAI New CrystalCastle — Frontend Config
-# คัดลอกเป็น .env แล้วกรอกค่าจริง
-# ==========================================
+Workflow ที่ซ่อมแล้ว (พร้อมสำหรับปัญหา YAML/pin) อยู่ใน `ci/repaired-workflows/`
+พร้อมสคริปต์ติดตั้ง:
 
-# 🔗 API Backend
-VITE_API_URL=http://localhost:8000
+```bash
+bash ci/install-repaired-workflows.sh
+```
 
-# 🗄️ Supabase
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-public-key
- 
- 
- 
- 
-✅ คำสั่งเตรียมอัปโหลด
- 
-bash
-  
-# ไปที่โฟลเดอร์โปรเจกต์
-cd new-crystalcastle
+> ทุก GitHub Action ต้องปักหมุดด้วย commit SHA เต็ม 40 ตัวอักษร ไม่ใช่ tag
+> (ดู checklists ใน PR template) — การ push ไฟล์ใต้ `.github/workflows/` ต้องมี
+> `workflows` permission บน GitHub App
 
-# สร้างไฟล์ README ใหม่
-# วางเนื้อหาด้านบนเป็น README.md
+---
 
-# ตรวจสอบว่า .env ไม่ถูกคอมมิต
-echo ".env" >> .gitignore
+## 🧩 Skills Registry
 
-# อัปเดตไปยังรีโป
-git add README.md backend/.env.example frontend/.env.example
-git commit -m "docs: update complete README + installation guide
+`skills/index.json` เป็น registry กลางของ skills ทั้งหมด (8 entries):
 
-- Add full project overview & architecture
-- Step-by-step setup: Backend → Frontend → Supabase
-- Include .env.example files
-- Testing, contributing & security sections
-- Ready for new contributors"
+| Skill | Path | หน้าที่ |
+| --- | --- | --- |
+| crystalcastlex-skill-suite | `skills/crystalcastlex-skill-suite` | ชุด skill หลักของ CrystalCastleX |
+| cwe1321-protection-suite | `security/cwe1321` | ตรวจ/ป้องกัน Prototype Pollution |
+| cwe1333-redos-detector | `security/cwe1333` | ตรวจ ReDoS |
+| python-dev | `skills/python-dev` | มาตรฐานงาน Python |
+| supabase-agent-suite | `skills/supabase-agent-suite` | งาน Supabase |
+| fig-best-practices-suite | `skills/fig-best-practices-suite` | best practices ของ Fig |
+| fig-suite | `skills/fig-suite` | ชุด skill รวมของ Fig |
+| workflow-permission-check | `skills/workflow-permission-check` | ตรวจสิทธิ์เขียน workflow |
 
-git push origin main
- 
- 
- 
- 
+---
+
+## 🛡️ Security Suites
+
+### CWE-1321 — Prototype Pollution Protection
+
+`security/cwe1321/` — JS + Python
+
+- `js/sanitize.js`, `js/eslint-rules.json`, `js/semgrep-cwe1321-js.yml`, `js/codeql-query.ql`
+- `python/safe_parser.py`, `python/semgrep-cwe1321-py.yml`, `python/bandit.config`
+- Tests: `tests/sanitize.test.mjs`, `tests/test_safe_parser.py`
+- เอกสาร: `README.md`, `SKILL.md`, `TEST-REPORT.md`, `manifest.json`
+
+### CWE-1333 — ReDoS Detector
+
+`security/cwe1333/` — JS + Python
+
+- `js/index.js`, `js/lib/rules/detect-redos.js`, tests ใน `js/test/`
+- `python/redos_detector.py`, `tests/test_redos_detector.py`
+
+---
+
+## 📚 Knowledge Base
+
+`knowledge-base/` เป็นที่เก็บ reference material ที่นิ่งแล้ว มี index อยู่ที่
+[`knowledge-base/README.md`](./knowledge-base/README.md):
+
+- `mcp-tools/` — registry และหมวดหมู่ของ MCP tools (development, data, collaboration, marketing, ai-core)
+- `steam-web-api/` — infographic + สคริปต์สร้างรูป
+- `workflows/` — บันทึกเรื่อง Vite/Vitest Pages
+
+---
+
+## 📁 เอกสารเพิ่มเติม
+
+| เอกสาร | คำอธิบาย |
+| --- | --- |
+| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | สถาปัตยกรรมแพลตฟอร์ม (feature flags, telemetry, deploy) |
+| [`CHANGELOG.md`](./CHANGELOG.md) | ประวัติการเปลี่ยนแปลงจาก PR ที่ merge แล้ว (ใหม่สุดก่อน) |
+| [`TOOLS.md`](./TOOLS.md) | เครื่องมือที่ใช้ในโปรเจกต์ |
+| [`CONTRIBUTING.md`](./CONTRIBUTING.md) | คู่มือผู้ร่วมพัฒนา |
+| [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md) | จรรยาบรรณชุมชม (Contributor Covenant 2.1) |
+| [`SECURITY.md`](./SECURITY.md) | นโยบายความปลอดภัยและการรายงานช่องโหว่ |
+| `backend/Readme.md` | รายละเอียด backend / cron automation |
+| `docs/` | คู่มือการใช้งาน, cheatsheet, runbook ต่าง ๆ |
+
+---
+
+## ⚠️ ข้อควรระวังด้านความปลอดภัย
+
+**รีโปนี้เป็น public** — ข้อมูลทุกอย่างใน PR, issue และ commit จะมองเห็นได้จากอินเทอร์เน็ต
+
+สิ่งที่ตรวจพบและควรแก้:
+
+- ไฟล์ env บางไฟล์ถูก track อยู่ใน git ทั้งที่ควรอยู่ใน `.gitignore`:
+  `.env`, `.env.local`, `backend/.env`, `backend/CodeRabbit/.env`, `pdf-convert-ocr/.env`
+- ตรวจว่าไม่มี API key, token หรือ secret จริงอยู่ในไฟล์เหล่านั้น แล้ว rotate คีย์ที่อาจรั่ว
+- ลบไฟล์ออกจาก index ด้วย `git rm --cached <file>` และเพิ่มใน `.gitignore` เป็น PR แยก
+
+แนวปฏิบัติ:
+
+- ห้าม commit secret/key ใด ๆ ลงรีโป
+- ก่อนเปิด PR ทุกครั้ง ให้ยืนยันว่าไม่มีข้อมูลภายใน (checklist, อีเมล, ราคา, billing) ติดไปกับ PR body
+
+---
+
+## 🤝 การมีส่วนร่วม
+
+1. Fork รีโป → สร้างสาขา (`git checkout -b feat/your-idea`)
+2. Commit (`git commit -m "feat: ..."`) — ใช้ Conventional Commits (ดู `.Conventional_Commits.md`)
+3. ทดสอบให้ผ่าน → เปิด Pull Request (ใช้เทมเพลต `.github/PULL_REQUEST_TEMPLATE.md`)
+4. รอตรวจสอบ & ผ่านการรวม
+
+**ข้อกำหนดของสาขา** — รีโปนี้มี ref `docs` และ `fix` อยู่แล้ว การ push สาขาที่ขึ้นต้นด้วย
+`docs/...` หรือ `fix/...` จะถูกปฏิเสธด้วย `directory file conflict` ให้ใช้ prefix อื่น เช่น
+`feat/`, `chore/` หรือ `fig/`
+
+---
+
+## 📄 ใบอนุญาต
+
+MIT License — ดู [`LICENSE`](./LICENSE)
+
+© 2026 ZyntroAI
