@@ -1,10 +1,10 @@
 {
-  "name": "Full-Stack Node",
+  "name": "Full-Stack Node & .NET",
   "image": "mcr.microsoft.com/devcontainers/typescript-node:20",
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
     "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/postfinance/devcontainer-features/dotnet:1": {}
+    "ghcr.io/devcontainers/features/dotnet:1": {}
   },
   "customizations": {
     "vscode": {
@@ -12,19 +12,37 @@
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
         "bradlc.vscode-tailwindcss",
-        "ms-vscode.vscode-typescript-next"
+        "ms-vscode.vscode-typescript-next",
+        "ms-azuretools.vscode-docker",
+        "eamodio.gitlens",
+        "GitHub.copilot",
+        "formulahendry.auto-rename-tag"
       ],
       "settings": {
         "editor.formatOnSave": true,
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit"
+        },
+        "typescript.tsdk": "node_modules/typescript/lib"
       }
     }
   },
   "forwardPorts": [3000, 5173, 8080],
   "portsAttributes": {
-    "3000": { "label": "Next.js" },
-    "5173": { "label": "Vite" }
+    "3000": {
+      "label": "Next.js Frontend",
+      "onAutoForward": "notify"
+    },
+    "5173": {
+      "label": "Vite Frontend",
+      "onAutoForward": "notify"
+    },
+    "8080": {
+      "label": "Backend API",
+      "onAutoForward": "ignore"
+    }
   },
-  "postCreateCommand": "npm install",
+  "postCreateCommand": "corepack enable && npm install",
   "remoteUser": "node"
 }
