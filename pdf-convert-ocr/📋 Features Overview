@@ -1,0 +1,9 @@
+Module	Capability
+🧠 OCR Engine	English + Thai language support; System Tesseract (fastest) or pure JS fallback
+📄 Output	Searchable PDF with invisible text layer + raw text extract
+⚡ Performance	Parallel workers; multi-page PDF support; 7× faster with system Tesseract
+🌐 API	FastAPI + async job queue; OpenAPI/Swagger docs at /docs
+🖥️ Dashboard	React UI with drag & drop; real-time status via WebSocket
+👁️ Auto-Scan	Folder watcher — drop files → auto-process → webhook notifications
+🔔 Alerts	Browser sound + desktop popups + Email (SMTP) + Slack webhooks
+🐳 Deployment	Single container — Python + Node + Tesseract + Nginx included
