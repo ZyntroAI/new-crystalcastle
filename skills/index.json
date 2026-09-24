@@ -1,4 +1,15 @@
 {
+  "ci-troubleshooter": {
+    "path": "skills/ci-troubleshooter",
+    "depends": [],
+    "provides": [
+      "ci-troubleshooter",
+      "diagnose-ci-failure",
+      "scan-workflow-content",
+      "generate-fix-yml"
+    ],
+    "priority": 1
+  },
   "crystalcastlex-skill-suite": {
     "path": "skills/crystalcastlex-skill-suite",
     "depends": [],
@@ -36,35 +47,6 @@
     ],
     "priority": 1
   },
-  "python-dev": {
-    "path": "skills/python-dev",
-    "depends": [
-      "pyflakes",
-      "ipython"
-    ],
-    "provides": [
-      "static-analysis",
-      "lint",
-      "execute",
-      "debug",
-      "inspect",
-      "reproduce"
-    ],
-    "priority": 1
-  },
-  "supabase-agent-suite": {
-    "path": "skills/supabase-agent-suite",
-    "depends": [],
-    "provides": [
-      "supabase-agent-connect",
-      "supabase-agent-schema-inventory",
-      "supabase-agent-migrations",
-      "supabase-agent-concurrency",
-      "supabase-agent-security",
-      "supabase-agent-postgres-best-practices"
-    ],
-    "priority": 1
-  },
   "fig-best-practices-suite": {
     "path": "skills/fig-best-practices-suite",
     "depends": [
@@ -92,6 +74,35 @@
       "fig-research",
       "fig-automation",
       "fig-safety"
+    ],
+    "priority": 1
+  },
+  "python-dev": {
+    "path": "skills/python-dev",
+    "depends": [
+      "pyflakes",
+      "ipython"
+    ],
+    "provides": [
+      "static-analysis",
+      "lint",
+      "execute",
+      "debug",
+      "inspect",
+      "reproduce"
+    ],
+    "priority": 1
+  },
+  "supabase-agent-suite": {
+    "path": "skills/supabase-agent-suite",
+    "depends": [],
+    "provides": [
+      "supabase-agent-connect",
+      "supabase-agent-schema-inventory",
+      "supabase-agent-migrations",
+      "supabase-agent-concurrency",
+      "supabase-agent-security",
+      "supabase-agent-postgres-best-practices"
     ],
     "priority": 1
   },
