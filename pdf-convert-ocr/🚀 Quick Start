@@ -1,0 +1,11 @@
+git clone <repository-url>
+cd pdf-convert-ocr
+
+# Edit environment variables
+cp .env.example .env
+nano .env
+
+# Launch everything
+docker-compose up -d
+
+# Open dashboard → http://localhost
