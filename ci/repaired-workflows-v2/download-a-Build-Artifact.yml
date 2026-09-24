@@ -1,0 +1,16 @@
+# ARCHIVED - this file is not a workflow.
+#
+# This was a fragment copied out of the actions/download-artifact README
+# (a bare `- name:`/`uses:`/`with:` block with no `on:` and no `jobs:`), left
+# in .github/workflows/ where Actions cannot use it. Kept here for reference
+# and moved out of .github/workflows/ so it stops registering as a broken
+# workflow. The real usage, if wanted, is:
+#
+#   jobs:
+#     example:
+#       runs-on: ubuntu-latest
+#       steps:
+#         - uses: actions/download-artifact@<sha>  # v4
+#           with:
+#             name: my-artifact        # optional
+#             path: ./destination      # optional

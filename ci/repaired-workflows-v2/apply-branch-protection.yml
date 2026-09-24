@@ -1,0 +1,40 @@
+name: Apply Branch Protection Rules
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/rulesets/**']
+  workflow_dispatch:
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      administration: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Apply rulesets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(.github/rulesets/*.json)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No ruleset JSON files found in .github/rulesets/ - nothing to apply."
+            exit 0
+          fi
+          for f in "${{files[@]}}"; do
+            echo "Applying $f"
+            name=$(jq -r '.name' "$f")
+            id=$(gh api "repos/${{ github.repository }}/rulesets" \
+                   --jq ".[] | select(.name==\"$name\") | .id" 2>/dev/null || true)
+            if [ -n "$id" ]; then
+              gh api --method PUT "repos/${{ github.repository }}/rulesets/$id" --input "$f"
+            else
+              gh api --method POST "repos/${{ github.repository }}/rulesets" --input "$f"
+            fi
+          done

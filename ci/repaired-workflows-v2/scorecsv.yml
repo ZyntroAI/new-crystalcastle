@@ -1,0 +1,47 @@
+name: Score CSV
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'scripts/**'
+      - 'pages/**'
+      - '.github/workflows/scorecsv.yml'
+  workflow_dispatch:
+
+jobs:
+  score-csv:
+    runs-on: ubuntu-latest
+    name: Score CSV
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Generate rubric scores
+        run: |
+          if node -e "require('./package.json').scripts['rubric:evaluate']" 2>/dev/null; then
+            npm run rubric:evaluate
+          else
+            echo "No rubric:evaluate script in package.json - skipping."
+          fi
+
+      - name: Upload rubric artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: scores-csv
+          path: |
+            ./scores.csv
+            ./scores.json
+            ./report.html
+          if-no-files-found: warn
+          retention-days: 30
