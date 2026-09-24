@@ -25,9 +25,12 @@ aiosqlite==0.20.0
 
 # --- test tooling ---
 # Python-CI.yml and crystalcastle-coderabbit-test.yml both invoke pytest but
-# never install it, relying on this file to provide it.
+# never install it, relying on this file to provide it. The latter also passes
+# --cov=. --cov-report=term-missing, so pytest-cov has to be declared here too.
+# Note: pytest-cov 6.x requires Python >=3.9, which covers the full matrix.
 pytest==8.3.3
 pytest-asyncio==0.24.0
+pytest-cov==6.0.0
 httpx==0.27.2
 requests==2.32.3
 
