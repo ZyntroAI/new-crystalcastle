@@ -1,0 +1,49 @@
+name: Action Pin Check
+
+# Reports action references that are not pinned to a commit SHA.
+#
+# This check WARNS rather than fails. The repository carries a pre-existing
+# backlog of unpinned refs, and a gate that is red on its first run is a gate
+# people disable. Violations appear as annotations on the changed lines and as
+# a table in the job summary -- visible, reviewable, non-blocking.
+#
+# To make it blocking in a specific context, call the script with --strict
+# (exit 1 on violations) instead of changing this workflow, e.g. in a release
+# gate or a pre-commit hook:
+#     python3 ci/check-action-pins.py --strict
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/**'
+      - 'ci/check-action-pins.py'
+      - '.github/action-pin-allowlist'
+      - '.github/workflows/action-pin-guard.yml'
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+      - 'ci/check-action-pins.py'
+      - '.github/action-pin-allowlist'
+      - '.github/workflows/action-pin-guard.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  action-pins:
+    name: Report unpinned actions
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Warn mode: exits 0 even when unpinned refs are found, so this job
+      # never blocks a pull request. Add --strict to fail instead.
+      - name: Check action pins
+        shell: sh
+        run: python3 ci/check-action-pins.py --summary-file "$GITHUB_STEP_SUMMARY"

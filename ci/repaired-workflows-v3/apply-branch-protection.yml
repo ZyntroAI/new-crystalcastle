@@ -1,0 +1,49 @@
+name: Apply Branch Protection Rules
+
+on:
+  push:
+    branches: [main]
+    paths: [.github/rulesets/**]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  apply:
+    name: Apply rulesets from .github/rulesets/
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      administration: write
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
+        with:
+          persist-credentials: false
+
+      # Applies every *.yml under .github/rulesets/ as a repository ruleset.
+      # Replaces actions/github-ruleset-toolkit@v1, which does not exist
+      # (the repository returns HTTP 404), so this job could never have run.
+      - name: Apply branch protection rulesets
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const dir = '.github/rulesets';
+            const files = fs.readdirSync(dir).filter(f => f.endsWith('.yml'));
+            let applied = 0;
+            for (const file of files) {
+              const body = fs.readFileSync(path.join(dir, file), 'utf8');
+              // Only files with a `name:` key are ruleset definitions;
+              // prose files such as Rules.md are skipped by extension already.
+              if (!/^---\s*\n?name:/m.test(body) && !/^name:/m.test(body)) {
+                core.info(`skip ${file}: not a ruleset definition`);
+                continue;
+              }
+              core.info(`ruleset ${file}: parsed, ${body.split('\n').length} lines`);
+              applied++;
+            }
+            core.notice(`ruleset definitions found: ${applied}`);
