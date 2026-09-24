@@ -11,7 +11,18 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
     "preview": "vite preview",
-    "test": "echo \"No test suite configured; CI test step no-ops.\""
+    "test": "echo \"No test suite configured; CI test step no-ops.\"",
+    "scripts:list": "node scripts/file-manager.js list",
+    "scripts:stats": "node scripts/file-manager.js stats",
+    "scripts:count": "node scripts/count-files.js",
+    "scripts:count:detail": "node scripts/count-files.js --detail",
+    "scripts:count:json": "node scripts/count-files.js --json",
+    "scripts:clean": "node scripts/file-manager.js clean",
+    "scripts:organize": "node scripts/file-manager.js organize",
+    "scripts:verify": "node scripts/file-manager.js verify",
+    "scripts:empty": "node scripts/file-manager.js empty-dirs",
+    "scripts:smoke": "bash scripts/smoke-tests.sh",
+    "scripts:check": "npm run scripts:verify && npm run scripts:smoke"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.39",
@@ -124,20 +135,5 @@
   "engines": {
     "node": ">=22 <27",
     "npm": ">=10"
-  },
-  {
-  "scripts": {
-    "scripts:list": "node scripts/file-manager.js list",
-    "scripts:stats": "node scripts/file-manager.js stats",
-    "scripts:count": "node scripts/count-files.js",
-    "scripts:count:detail": "node scripts/count-files.js --detail",
-    "scripts:count:json": "node scripts/count-files.js --json",
-    "scripts:clean": "node scripts/file-manager.js clean",
-    "scripts:organize": "node scripts/file-manager.js organize",
-    "scripts:verify": "node scripts/file-manager.js verify",
-    "scripts:empty": "node scripts/file-manager.js empty-dirs",
-    "scripts:smoke": "bash scripts/smoke-tests.sh",
-    "scripts:check": "npm run scripts:verify && npm run scripts:smoke"
   }
-}
 }
