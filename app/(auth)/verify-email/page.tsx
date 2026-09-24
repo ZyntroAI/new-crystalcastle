@@ -2,12 +2,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { MailCheck, Loader2, CheckCircle2, XCircle, ArrowRight, RefreshCw } from 'lucide-react';
 
 export default function VerifyEmailPage() {
   const [status, setStatus] = useState<'verifying' | 'success' | 'error' | 'idle'>('idle');
-  const [token, setToken] = useState<string | null>(null);
+  const [, setToken] = useState<string | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

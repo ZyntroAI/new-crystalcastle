@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react'
 
+interface TaxProfile {
+  domain: string
+  country_code: string
+  currency_preference: string
+  tax_id?: string
+}
+
 export const GlobalTaxDashboard = () => {
-  const [profiles, setProfiles] = useState<any[]>([])
+  const [profiles, setProfiles] = useState<TaxProfile[]>([])
 
   useEffect(() => {
     fetch('/api/v1/global/tax/all-profiles')

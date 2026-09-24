@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, message: "If account exists, reset email sent" });
     }
 
-    const { token, expires } = createPasswordResetToken(user.id);
+    const { token, expires } = createPasswordResetToken();
     await prisma.user.update({
       where: { email },
       data: { resetToken: token, resetTokenExpires: expires },

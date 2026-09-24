@@ -24,4 +24,16 @@ export default [
     },
   },
   { files: ['**/*.{js,jsx}'], rules: { ...js.configs.recommended.rules } },
+  {
+    // Node-executed ES modules: standalone scripts and the runnable API
+    // examples. They legitimately use console, process, URL and fetch, so they
+    // need the Node globals rather than the browser set.
+    files: ['code-examples/**/*.js', 'development/scripts/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: { ...globals.node, ...globals.es2022 },
+    },
+    rules: { ...js.configs.recommended.rules },
+  },
 ]

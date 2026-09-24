@@ -10,13 +10,20 @@ interface Member {
   status: string
 }
 
+interface SubAccount {
+  id: string
+  name: string
+  domain: string
+  seats_allocated: number
+}
+
 interface Org {
   id: string
   name: string
   owner_domain: string
   seats: { total: number; used: number; available: number }
   members: Member[]
-  sub_accounts: any[]
+  sub_accounts: SubAccount[]
   plan: string
 }
 

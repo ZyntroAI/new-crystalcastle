@@ -2,7 +2,6 @@ import jwt from "jsonwebtoken";
 import { randomUUID } from "crypto";
 
 const EMAIL_VERIFICATION_SECRET = process.env.EMAIL_VERIFICATION_SECRET!;
-const PASSWORD_RESET_SECRET = process.env.PASSWORD_RESET_SECRET!;
 
 // ─── Generate Email Verification Token ───
 export function createVerificationToken(userId: string, email: string) {
@@ -26,7 +25,7 @@ export function verifyVerificationToken(token: string) {
 }
 
 // ─── Generate Password Reset Token ───
-export function createPasswordResetToken(userId: string) {
+export function createPasswordResetToken() {
   const token = randomUUID();
   const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
   return { token, expires };
