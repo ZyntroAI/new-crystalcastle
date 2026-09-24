@@ -1,0 +1,16 @@
+{
+  "name": "zyntroai-api-examples-javascript",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Runnable JavaScript examples for the ZyntroAI Cron Automation System API",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "health": "node health.js",
+    "workflows": "node workflows.js",
+    "jobs": "node jobs.js",
+    "logs": "node logs.js"
+  }
+}

@@ -114,3 +114,26 @@ Thumbs.db
 *.crt
 secrets/
 credentials/
+
+# === ZyntroAI docs bundle ===
+# Built site output — never commit
+site/
+
+# MkDocs virtualenv / caches
+.mkdocs-venv/
+.mkdocs-cache/
+
+# Secrets — never commit real values
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+secrets/
+credentials/
+
+# Code-example runtime output
+code-examples/**/node_modules/
+code-examples/**/dist/
+code-examples/**/.env

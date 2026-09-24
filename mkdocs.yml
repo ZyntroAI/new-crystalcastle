@@ -1,0 +1,97 @@
+site_name: ZyntroAI API Documentation
+site_description: API reference for the Cron Automation System — bilingual EN/TH
+site_author: ZyntroAI
+docs_dir: docs-site
+site_dir: site
+
+theme:
+  name: material
+  language: en
+  logo: assets/logo.svg
+  favicon: assets/favicon.svg
+  custom_dir: overrides
+  features:
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - content.code.annotate
+    - search.suggest
+    - search.highlight
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+plugins:
+  - search
+  - i18n:
+      docs_structure: folder
+      reconfigure_material: true
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true
+        - locale: th
+          name: ไทย
+          build: true
+          nav_translations:
+            Overview: ภาพรวม
+            Getting started: เริ่มต้นใช้งาน
+            Configuration: การตั้งค่า
+            API reference: เอกสารอ้างอิง API
+            Workflows: เวิร์กโฟลว์
+            Cron jobs: งาน Cron
+            Execution logs: บันทึกการทำงาน
+            Scheduling: การตั้งเวลาทำงาน
+            Troubleshooting: การแก้ไขปัญหา
+
+nav:
+  - Overview: index.md
+  - Getting started: getting-started.md
+  - Configuration: configuration.md
+  - API reference: api-reference.md
+  - Workflows: workflows.md
+  - Cron jobs: jobs.md
+  - Execution logs: execution-logs.md
+  - Scheduling: scheduling.md
+  - Troubleshooting: troubleshooting.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/solid/code
+      link: https://github.com/ZyntroAI
+
+copyright: Copyright &copy; 2026 ZyntroAI
