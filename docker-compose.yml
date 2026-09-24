@@ -1,0 +1,23 @@
+services:
+  ocr-cron:
+    build: .
+    command: >
+      sh -c "
+        while true; do
+          # 📊 Daily summary report at 8 AM
+          current_hour=\$(date +%H)
+          if [ \$current_hour -eq 8 ]; then
+            python -m src.api.scripts.daily-report
+          fi
+          
+          # 🧹 Clean old temp files every hour
+          node dist/cli/index.js cleanup --older-than 7d
+          
+          # 📈 Sync metrics every 15 min
+          curl -X POST http://localhost/api/v1/admin/sync-metrics
+          
+          sleep 3600
+        done
+      "
+    volumes:
+      - ocr-data:/data
