@@ -21,3 +21,5 @@ services:
       "
     volumes:
       - ocr-data:/data
+    paths-ignore:
+      - 'Projects/**'
