@@ -1,41 +1,20 @@
-## 📋 Pull Request
+## Description
+<!-- 2-3 sentences explaining WHAT changed and WHY. Frame it around behavior, not a restatement of filenames. -->
 
-**หัวข้อสั้นๆ:** [แทนที่ด้วยคำอธิบายสั้นๆ]
-**ประเภท:** ⬜ feat · ⬜ fix · ⬜ docs · ⬜ refactor · ⬜ test · ⬜ chore
+## Type of Change
+- [ ] Bug fix (non-breaking change fixing an issue)
+- [ ] New feature (non-breaking change adding functionality)
+- [ ] Breaking change (fix or feature causing existing behavior to change)
+- [ ] Refactor / Performance / Infrastructure
 
----
+## How to Review
+<!-- Guide the reviewer through the diff. Where should they start? Which parts require careful scrutiny? -->
+1. Start at `...` to understand the core logic.
+2. Verify that `...` handles edge cases.
 
-### 🎯 เปลี่ยนแปลงอะไร?
-สรุปสิ่งที่ทำใน PR นี้:
-- [ ] รายการที่ 1
-- [ ] รายการที่ 2
-- [ ] รายการที่ 3
+## Testing & Verification
+<!-- How did you verify this works? Check all that apply. -->
+- [ ] Unit / Integration Tests added or updated
+- [ ] Manual verification performed (describe steps below)
+- [ ] CI pipeline passing successfully
 
-### 🔗 เกี่ยวข้องกับ
-- Close: #หมายเลขปัญหา
-- Related: PR/ลิงก์อื่น (ถ้ามี)
-
-### 📝 รายละเอียด
-คำอธิบายเพิ่มเติม:
-- 
-
-### ✅ ตรวจสอบก่อนส่ง
-- [ ] โค้ดผ่านการทดสอบท้องถิ่นแล้ว
-- [ ] CI ทั้งหมดผ่าน ✅
-- [ ] ปฏิบัติตามมาตรฐาน Conventional Commits
-- [ ] ไม่มีข้อมูลลับ/คีย์ส่วนตัวถูกคอมมิต
-- [ ] เอกสารอัปเดตแล้ว (ถ้าจำเป็น)
-- [ ] ทุก GitHub Action ปักหมุด SHA แล้ว 🔒
-
-### 🧪 ผลทดสอบ
-- [ ] ✅ ผ่านทั้งหมด
-- [ ] ⚠️ ไม่เกี่ยวข้อง (เอกสาร/รูปภาพ)
-- [ ] ❌ มีปัญหา — อธิบาย:
-
-### 📸 ภาพหน้าจอ (ถ้ามี)
-วางภาพที่นี่:
-
----
-
-### 🤝 ขอความเห็น
-@ผู้รับผิดชอบ โปรดตรวจสอบครับ 🙏
