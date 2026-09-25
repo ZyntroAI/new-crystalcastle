@@ -16,6 +16,7 @@ inputs:
     description: Extra detail line
     required: false
     default: ""
+    paths-ignore: 'Projects/**'
 
 runs:
   using: composite
