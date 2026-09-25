@@ -8,26 +8,24 @@ on:
     branches:
       - main
       - develop
+    paths-ignore: 
+      - 'Projects/**'
   pull_request:
     branches:
       - main
       - develop
-    # ❌ ลบส่วน `paths:` ที่จำกัดออก — ทุกการเปลี่ยนแปลงรันทดสอบ
-    # ✅ ทั้งโค้ด + เอกสาร + งานเวิร์กโฟลว์ ได้รับการตรวจสอบ
+    paths-ignore: 
+      - 'Projects/**'  
+  permissions:
+    contents: read
+    checks: write
+    pull-requests: write
 
-# ========== สิทธิ์ — ขั้นต่ำตามหลักการ ✅ ==========
-permissions:
-  contents: read
-  checks: write
-  pull-requests: write
-
-# ========== ป้องกันรันซ้อนกัน ==========
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  concurrency:
+   group: ${{ github.workflow }}-$        {{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  # ========== งานทดสอบหลัก ==========
   test:
     name: Run Tests & Upload Coverage
     runs-on: ubuntu-latest
@@ -35,13 +33,13 @@ jobs:
 
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@b4ffde65f46336ab88eb53be80843a393cfff0ec2  # v4.1.1
+        uses: actions/checkout@4.1.1
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: 🐍 Set up Python 3.12
-        uses: actions/setup-python@0a5c61591373683505ea898e09a731b47b7dfca3  # v5.1.0
+        uses: actions/setup-python@v5.1.0
         with:
           python-version: '3.12'
           cache: 'pip'
@@ -70,37 +68,36 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}/backend
 
       - name: 📤 Upload coverage report
-        uses: actions/upload-artifact@5d5d22aed1cb2921de3f6166a28027556c436d6e  # v4.4.3
+        uses: actions/upload-artifact@4.4.3
         with:
           name: coverage-report
           path: backend/coverage.xml
           retention-days: 7
         if: always()
 
-  # ========== งานตรวจสอบเอกสาร (สำหรับ PR เอกสารล้วน) ==========
+  
   docs:
     name: Markdown & Docs Check
     runs-on: ubuntu-latest
     timeout-minutes: 3
-    # รันเฉพาะเมื่อเปลี่ยนแปลงไฟล์เอกสาร
     if: |
       contains(github.event.pull_request.files.*.filename, '.md') ||
       contains(github.event_name, 'push')
 
     steps:
       - name: 📥 Checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be80843a393cfff0ec2  # v4.1.1
+        uses: actions/checkout@4.1.1
         with:
           fetch-depth: 0
 
       - name: ✅ Markdown Lint
-        uses: actions/setup-node@0a44ba7841729822d5b4c32526952f6198b29bc  # v4.0.0
+        uses: actions/setup-node@v4.0.0
         with:
           node-version: '20'
       - run: npm install -g markdownlint-cli
       - run: markdownlint '**/*.md' --ignore node_modules
 
-  # ========== สรุปสถานะ ==========
+  
   summary:
     name: CI Status
     runs-on: ubuntu-latest
