@@ -1,0 +1,56 @@
+การทำ Dynamic Blocked IP Updates ใน eBPF firewall เป็นหัวข้อที่มีการวิจัยเชิงลึกมาก เพราะมันเชื่อมโยงระหว่าง kernel-level enforcement (XDP, TC, cgroup SKB, LSM hooks) และ user-space daemons ที่คอยอัปเดต deny list แบบ real-time โดยไม่ต้อง reload โปรแกรม eBPF ครับ
+
+───
+
+🔑 แนวทางหลักที่ใช้ในงานวิจัยและระบบจริง
+
+• XDP ingress filtering 
+◦ Attach eBPF program ที่ NIC driver → drop packet ก่อนเข้า kernel stack
+◦ ใช้ BPFMAPTYPEHASH หรือ BPFMAPTYPELPM_TRIE สำหรับ deny list
+◦ เหมาะกับ high-throughput เช่น DDoS mitigation
+
+• TC egress filtering 
+◦ Attach eBPF program ที่ Traffic Control layer → กรองแพ็กเก็ตออก
+◦ ใช้ร่วมกับ dynamic IP update ได้ดีในระดับ application firewall
+
+• cgroup SKB filtering 
+◦ จำกัด traffic ของ process ที่อยู่ใน cGroup เดียวกัน
+◦ ใช้ BPFMAPTYPE_HASH เพื่อบล็อก IP เฉพาะกลุ่ม process
+
+• LSM hooks 
+◦ ใช้ eBPF program hook ที่ Linux Security Module → บังคับ policy ระดับ system call
+◦ สามารถบล็อก connect() ไปยัง IP ที่อยู่ใน deny list
+
+───
+
+📌 Dynamic Update Workflow
+
+1. User-space daemon ทำ DNS lookup หรือรับ feed ของ IP blacklist
+2. เขียนค่าใหม่ลง eBPF map (bpfmapupdate_elem())
+3. eBPF program ใช้ map นี้ทันที → ไม่ต้อง reload kernel module
+4. ตั้ง scheduler ให้อัปเดตทุก 5 นาที หรือเมื่อมี incident
+
+───
+
+📊 ตัวอย่างการใช้งานจริง
+• GitHub ใช้ DNS proxy + cgroup SKB → ป้องกัน deployment scripts ติดต่อ github.com โดยตรง
+• Cloudflare ใช้ XDP + LPM trie → สำหรับ DDoS mitigation ที่ต้องอัปเดต blacklist แบบ real-time
+• Research papers เสนอ hybrid approach → ใช้ XDP สำหรับ ingress + TC สำหรับ egress เพื่อครอบคลุมทั้งสองทิศทาง
+
+───
+
+🎯 ข้อดี
+• Latency ต่ำมาก → drop packet ก่อนเข้า kernel stack
+• Throughput สูง → รองรับ traffic ระดับ 10–100 Gbps
+• Dynamic updates → deny list เปลี่ยนได้ real-time
+• Isolation → ใช้ cGroup แยก process ที่เสี่ยง
+
+───
+
+⚠️ ข้อควรระวัง
+• ต้องใช้ NIC driver ที่รองรับ XDP (ixgbe, i40e, mlx5)
+• Kernel ≥ 4.8 สำหรับ XDP, ≥ 5.8 สำหรับ cgroup SKB
+• Debug ยากขึ้นเมื่อ drop ที่ NIC level → ต้องมี logging ที่ดี
+• ถ้า deny list ใหญ่มาก → ใช้ LPM_TRIE แทน HASH เพื่อประสิทธิภาพ
+
+───
