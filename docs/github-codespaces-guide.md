@@ -1,0 +1,211 @@
+---
+Title: GitHub Codespaces — Complete Implementation Guide
+Subtitle: Cloud-hosted development environments for crystalcastle
+Kicker: Reference Guide
+Author: Nattapong Pornlumfah · v1.0
+Date: 2026-09-25
+Theme: professional
+Genre: reference
+Font: plex
+---
+
+# ☁️ GitHub Codespaces — Complete Implementation Guide
+
+## 1. What Is Codespaces?
+A **cloud-hosted, instant development environment** connected directly to your repo. It spins up a preconfigured container with your tools, runtimes, and dependencies — no local setup needed.
+
+**Key Benefits:**
+- Consistent environment for every contributor
+- Works from any device via browser or VS Code
+- Eliminates "works on my machine" issues
+- Snapshots & rebuildable environments
+- Prebuilds cut creation time from minutes to seconds
+
+---
+
+## 2. The Codespace Lifecycle (Critical Reference)
+| Stage | What Happens | Important Details |
+|---|---|---|
+| **Create** | Provisioned from branch, PR, or template | Can reuse existing or start fresh |
+| **Active** | Running — processes persist if you disconnect | No data loss on reconnect |
+| **Timeout** | Stops after inactivity (default: 30 min) | Customizable per user |
+| **Stop / Restart** | Preserves all work & changes | Only storage costs apply when stopped |
+| **Rebuild** | Refreshes dev container; `/workspaces` preserved | Use after `devcontainer.json` changes |
+| **Delete** | Permanent removal — **push changes first** | Auto-delete after 30 days inactivity (configurable) |
+
+> ⚠️ **Golden Rule:** Always `git commit && git push` before deleting — work inside is ephemeral unless pushed.
+
+---
+
+## 3. Project Setup — devcontainer.json
+This single file defines your entire environment.
+
+### Minimal Template
+```json
+{
+  "name": "Python + Node Dev",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    },
+    "ghcr.io/devcontainers/features/terraform:1": {
+      "version": "1.7"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "openFiles": [
+        "README.md",
+        "pyproject.toml"
+      ]
+    }
+  },
+  "postCreateCommand": "pip install -r requirements.txt"
+}
+```
+
+### Key Configuration Sections
+| Section | Purpose | Reference |
+|---|---|---|
+| `features` | Add languages, tools, runtimes in one line | Doc #3 |
+| `image` | Base OS/environment — official or custom | Doc #3 |
+| `customizations.vscode.openFiles` | Auto-open files on first launch | Doc #6 |
+| `postCreateCommand` | Run setup scripts after container creation | Doc #2 |
+| `onCreateCommand` | Run only at creation time (not rebuilds) | Doc #2 |
+
+### Adding Features — Quick Steps
+1. Edit `.devcontainer/devcontainer.json`
+2. Use VS Code → Command Palette → **Codespaces: Add Dev Container Config**
+3. Select features from the Marketplace UI
+4. Commit → changes apply to **new** codespaces; rebuild existing ones
+
+---
+
+## 4. Prebuilds — Drastically Accelerate Spin-Up
+### How They Work
+- GitHub Actions pre-builds your container snapshot ahead of time
+- When you create a codespace → download ready-made snapshot instead of building from scratch
+- Complex repos: **from >5 min → <30 sec**
+
+### Configure
+- Go to repo → **Settings → Codespaces → Prebuilds**
+- Select branches + regions to prebuild
+- Workflow triggers:
+  - On every push to matching branch
+  - On schedule
+  - On `devcontainer.json` change → **immediate rebuild**
+- Concurrency: **one build at a time per config**; rapid pushes cancel queued runs
+
+### Access Other Repos During Prebuild
+Same owner → grant via `devcontainer.json` permissions  
+Different owner → use **`CODESPACES_PREBUILD_TOKEN`** (PAT with `repo` scope) as a repository secret
+
+---
+
+## 5. Private Registry & Package Access
+Seamless access patterns:
+
+| Registry | Setup |
+|---|---|
+| **GitHub Container Registry (ghcr.io)** | Auto-authenticated — no extra config needed |
+| **DockerHub / Private registry** | Set secrets: `*_CONTAINER_REGISTRY_SERVER`, `*_CONTAINER_REGISTRY_USER`, `*_CONTAINER_REGISTRY_PASSWORD` |
+| **AWS ECR** | Provide AWS key/secret or short-lived token; GitHub handles login |
+| **Azure ACR / GCP GCR** | Use same secret pattern above |
+
+> Docker-in-Docker login happens **after** `onCreateCommand` → use `postCreateCommand` for pulling private images.
+
+---
+
+## 6. Customization — Machine, Shell, Editor
+### Machine Types
+- Ranges: 2-core → 32-core; pricing ~$0.18/core-hour
+- Change: Codespaces list → `...` → **Change machine type**
+- Persists across restarts; applies immediately on new codespaces
+
+### Shell & Environment
+- Default images include `bash`, `zsh`, `fish`
+- Set default via VS Code Settings JSON → `terminal.integrated.defaultProfile.linux`
+- Dotfiles repo = persistent config across all codespaces
+- Over SSH: use `chsh` or `postCreateCommand` to set shell
+
+### Host Image Channel
+- **Stable** = default, production-grade
+- **Beta** = early VM kernel/OS updates; test compatibility before promotion
+- Switch: Profile → Settings → Codespaces → Host Image Preference
+
+---
+
+## 7. Organization & Billing
+### Ownership Models
+| Model | Who Pays | Who Controls |
+|---|---|---|
+| **User-owned** | Individual developer | User manages their own codespaces |
+| **Organization-owned** | Org account | Admin can set policies, limits, retention, audit logs |
+
+### Cost Controls
+- **Free plan:** 2,000 CI minutes / month + limited codespace compute
+- **Team/Enterprise:** higher limits + spend controls
+- **Stopped codespaces** = storage only (~$0.07/GB/month)
+- **Active codespaces** = compute + storage
+- Auto-delete inactive: configurable from 7–30+ days
+
+### Policies Available
+- Restrict machine types
+- Enforce minimum specs
+- Limit retention period
+- Disable public ports
+- Set default timeout
+- Restrict base images
+
+---
+
+## 8. Quick Start — Your First Codespace
+```bash
+# 1. Navigate to your repo on GitHub
+# 2. Click "Code" → "Create codespace on main"
+# 3. Wait ~30s (or <10s with prebuilds)
+# 4. Environment opens in browser VS Code
+# 5. Edit, commit, push — just like local
+
+# Rebuild after devcontainer changes:
+# Command Palette → "Codespaces: Rebuild Container"
+```
+
+---
+
+## 9. Troubleshooting Common Issues
+| Symptom | Fix |
+|---|---|
+| Slow creation | Enable prebuilds for your branch |
+| `devcontainer.json` changes not applied | Rebuild container; existing codespaces don't auto-update |
+| Prebuild fails on external repo access | Grant PAT via `CODESPACES_PREBUILD_TOKEN` |
+| Private image pull fails | Check `postCreateCommand` timing; verify secrets |
+| Codespace won't start | Try different machine type; switch host image channel (stable/beta) |
+| Can't push from codespace | Confirm token permissions; repo visibility matches access level |
+
+---
+
+## 10. Adoption Roadmap — ZyntroAI Recommendation
+```
+Phase 1 — Foundation
+├── Create/convert .devcontainer/devcontainer.json
+├── Define features (Python, Node, tools, versions)
+├── Set openFiles for onboarding
+└── Test codespace creation → iterate
+
+Phase 2 — Speed
+├── Enable prebuilds on main + active branches
+├── Configure prebuild exclusions
+└── Verify <60s spin-up
+
+Phase 3 — Scale
+├── Set org ownership + billing
+├── Define policies (machine types, retention, timeout)
+├── Add docs: CONTRIBUTING.md → "Open in Codespaces" badge
+└── Migrate new contributors to codespaces-first workflow
+```
+
+---
+
+Would you like me to generate a **ready-to-commit `devcontainer.json`** tailored to your Python/Node stack? Just confirm your tool versions and I'll output the complete file. 🚀
