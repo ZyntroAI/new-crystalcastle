@@ -1,369 +1,266 @@
-ได้เลยครับ! นี่คือ README ฉบับสมบูรณ์ + คู่มือการติดตั้ง พร้อมนำไปวางใช้ทันทีครับ ✅📝🚀
- 
- 
- 
-📄 README.md — ZyntroAI/new-crystalcastle
- 
-markdown
-  
+<div align="center">
+
 # 🏰 New CrystalCastle — ZyntroAI
 
-> **AI-Native Full-Stack Platform** • FastAPI • React • Supabase • Claude/Gemini • MCP Protocol  
-> Production-ready • Secure • Scalable • Agent-Ready
+**Monorepo แพลตฟอร์ม AI-native: FastAPI · React · Supabase · AI Agent Skills**
+
+[![Repo](https://img.shields.io/badge/GitHub-ZyntroAI%2Fnew--crystalcastle-blue?style=flat-square&logo=github)](https://github.com/ZyntroAI/new-crystalcastle)
+[![Python](https://img.shields.io/badge/Python-3.12+-3776AB?style=flat-square&logo=python)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
+
+[เริ่มต้นอย่างรวดเร็ว](#-เริ่มต้นอย่างรวดเร็ว) •
+[การกำหนดค่า](#-การกำหนดค่า) •
+[โครงสร้าง](#-โครงสร้าง) •
+[เอกสาร](#-เอกสาร) •
+[การมีส่วนร่วม](#-การมีส่วนร่วม)
+
+</div>
 
 ---
 
 ## 📋 สารบัญ
 
 - [ภาพรวม](#-ภาพรวม)
-- [สถาปัตยกรรม](#-สถาปัตยกรรม)
+- [โครงสร้าง](#-โครงสร้าง)
 - [เริ่มต้นอย่างรวดเร็ว](#-เริ่มต้นอย่างรวดเร็ว)
-- [การติดตั้งแบบละเอียด](#-การติดตั้งแบบละเอียด)
 - [การกำหนดค่า](#-การกำหนดค่า)
-- [การพัฒนา](#-การพัฒนา)
 - [ทดสอบ](#-ทดสอบ)
-- [เอกสารเพิ่มเติม](#-เอกสารเพิ่มเติม)
+- [เอกสาร](#-เอกสาร)
 - [ความปลอดภัย](#-ความปลอดภัย)
+- [การมีส่วนร่วม](#-การมีส่วนร่วม)
 - [ใบอนุญาต](#-ใบอนุญาต)
 
 ---
 
 ## 🌟 ภาพรวม
 
-**New CrystalCastle** เป็นแพลตฟอร์มแอปพลิเคชันเต็มรูปแบบที่ออกแบบมาเพื่อรองรับ AI Agent และระบบอัจฉริยะ:
+**New CrystalCastle** เป็น monorepo ที่รวม backend (FastAPI), ส่วน UI (React),
+ฐานข้อมูล (Supabase), ชุด AI Agent Skills และเอกสารทางวิศวกรรมไว้ในที่เดียว
 
-- ✅ **Backend**: FastAPI + Python 3.12 — รวดเร็ว ปลอดภัย มีเอกสารอัตโนมัติ
-- ✅ **Frontend**: React + TypeScript + Tailwind CSS + ShadCN UI — สวย ตอบสนอง ได้มาตรฐาน
-- ✅ **ฐานข้อมูล & Auth**: Supabase (PostgreSQL) — พร้อม Row Level Security
-- ✅ **AI/Agent**: รองรับ Claude, Gemini, MCP Protocol — เรียกเครื่องมือภายนอกได้
-- ✅ **DevOps**: GitHub Actions • CodeQL • Dependabot — ตรวจสอบอัตโนมัติทุกคอมมิต
+| ส่วน | เทคโนโลยี | ตำแหน่ง |
+|---|---|---|
+| **Backend** | FastAPI + Python 3.12 (มีบริการฝั่ง Node เสริม) | `backend/` |
+| **Frontend** | React + TypeScript + Vite + Tailwind + shadcn/ui | `src/`, `frontend/` |
+| **ฐานข้อมูล & Auth** | Supabase (PostgreSQL · migrations · functions) | `supabase/` |
+| **AI Skills** | ชุดสกิล + registry (`index.json`) | `skills/` |
+| **Security** | CWE protection suites | `security/` |
+| **Docs & Knowledge** | เอกสารทางวิศวกรรมและคลังอ้างอิง | `docs/`, `knowledge-base/` |
+| **CI/CD** | GitHub Actions (30 workflows) | `.github/workflows/` |
 
 ---
 
-## 🏗️ สถาปัตยกรรม
+## 🏗️ โครงสร้าง
 
- 
- 
+```
 new-crystalcastle/
-├── backend/              # FastAPI Backend
-│   ├── app/             # โค้ดหลัก
-│   │   ├── api/         # API Endpoints
-│   │   ├── core/        # คอนฟิก & ความปลอดภัย
-│   │   ├── models/      # โมเดลข้อมูล
-│   │   └── services/    # ธุรกิจลอจิก
-│   ├── tests/           # ชุดทดสอบ
-│   └── requirements.txt
-├── frontend/            # React Frontend
+├── backend/                 # FastAPI (Python) + บริการฝั่ง Node
+│   ├── main.py              # entry point: app = FastAPI(...)
+│   ├── routers/             # jobs · workflows ฯลฯ
+│   ├── services/            # business logic
+│   ├── models.py · Schemas.py
+│   ├── requirements.txt
+│   ├── server.js            # บริการฝั่ง Node
+│   ├── containers/          # manifests สำหรับ Kubernetes
+│   └── prisma/
+├── frontend/                # คอมโพเนนต์ React (Tailwind + shadcn/ui)
 │   ├── src/
-│   │   ├── components/  # ส่วนประกอบ UI
-│   │   ├── pages/       # หน้าเว็บ
-│   │   ├── hooks/       # Custom Hooks
-│   │   └── utils/       # เครื่องมือช่วย
-│   └── package.json
-├── supabase/            # ฐานข้อมูล & Auth
-│   ├── migrations/      # ประวัติการเปลี่ยนแปลง DB
-│   └── config.toml
-├── skills/              # AI Skills & MCP Tools
-│   ├── claude/
-│   ├── gemini/
-│   └── mcp/
-├── .github/workflows/   # CI/CD
-├── docs/                # เอกสารประกอบ
+│   └── api/
+├── src/                     # แอป Vite/React หลัก (รันจาก root)
+├── supabase/                # migrations · functions · config.toml
+├── skills/                  # skill registry + ชุดสกิล
+├── security/                # cwe1321 · cwe1333
+├── knowledge-base/          # mcp-tools · steam-web-api
+├── docs/                    # เอกสารทางวิศวกรรม (73 ไฟล์)
+├── scripts/                 # สคริปต์จัดการ/ตรวจสอบ repo
+├── .github/workflows/       # CI/CD pipelines
+├── .env.example             # เทมเพลตคอนฟิกรวม
 └── README.md
- 
-plaintext
-  
+```
 
 ---
 
 ## ⚡ เริ่มต้นอย่างรวดเร็ว
 
 ### ข้อกำหนดเบื้องต้น
-- Python 3.12+
-- Node.js 20+ & npm
-- บัญชี Supabase (สำหรับฐานข้อมูล)
 
-### 3 ขั้นตอนเสร็จสิ้น
+- Python 3.12+
+- Node.js 20+ และ npm
+- บัญชี Supabase — สร้างฟรีที่ [supabase.com](https://supabase.com)
+
+### 1️⃣ Backend (FastAPI)
 
 ```bash
-# 1. โคลนรีโป
-git clone https://github.com/ZyntroAI/new-crystalcastle.git
-cd new-crystalcastle
-
-# 2. ติดตั้ง Backend
 cd backend
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env
-# ✅ แก้ไข .env — กรอกค่า Supabase & API Keys
-
-# 3. ติดตั้ง Frontend
-cd ../frontend
-npm install
-npm run dev
-# เปิด: http://localhost:5173
- 
- 
-พร้อมใช้งาน! 🎉
- 
- 
- 
-🔧 การติดตั้งแบบละเอียด
- 
-1. การตั้งค่า Backend
- 
-bash
-  
-# เข้าโฟลเดอร์
-cd backend
-
-# สร้างสภาพแวดล้อม
-python -m venv venv
-
-# เปิดใช้งาน
-# Linux/macOS:
-source venv/bin/activate
-
-# Windows PowerShell:
-venv\Scripts\Activate.ps1
-
-# ติดตั้งแพ็กเกจ
-pip install --upgrade pip
+source venv/bin/activate          # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
-# คัดลอกไฟล์คอนฟิก
 cp .env.example .env
- 
- 
-แก้ไข  .env :
- 
-env
-  
-# Supabase
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your-anon-key-here
+# แก้ไข .env — ใส่ค่า SUPABASE_URL, SUPABASE_ANON_KEY, GROQ_API_KEY ของคุณ
 
-# ความปลอดภัย
-SECRET_KEY=generate-a-random-key-here
-ENVIRONMENT=development
+uvicorn main:app --reload
+```
 
-# AI (ไม่บังคับ)
-ANTHROPIC_API_KEY=sk-ant-...
-GOOGLE_API_KEY=AIza...
- 
- 
-รันเซิร์ฟเวอร์:
- 
-bash
-  
-uvicorn app.main:app --reload
-# เปิดเอกสารอัตโนมัติ: http://localhost:8000/docs
- 
- 
- 
- 
-2. การตั้งค่า Frontend
- 
-bash
-  
-cd frontend
+API รันที่ `http://localhost:8000` และเอกสารอัตโนมัติที่ `http://localhost:8000/docs`
 
-# ติดตั้ง
+### 2️⃣ Frontend (React / Vite)
+
+```bash
+# รันจาก root ของ repo
 npm install
 
-# คัดลอกคอนฟิก
 cp .env.example .env
- 
- 
-แก้ไข  .env :
- 
-env
-  
-VITE_API_URL=http://localhost:8000
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key-here
- 
- 
-รันโหมดพัฒนา:
- 
-bash
-  
+# แก้ไข .env — ใส่ NEXT_PUBLIC_SUPABASE_URL และ NEXT_PUBLIC_SUPABASE_ANON_KEY
+
 npm run dev
-# เปิด: http://localhost:5173
- 
- 
-สร้างแพ็กเกจสำหรับผลิต:
- 
-bash
-  
-npm run build
- 
- 
- 
- 
-3. การตั้งค่า Supabase
- 
-1. สร้างโปรเจกต์ที่ supabase.com
-2. คัดลอก  Project URL  และ  anon public  key → ใส่ใน  .env  ทั้ง Backend/Frontend
-3. เปิดใช้งาน Email Auth: Authentication → Settings → Enable Email
-4. รัน Migration (ถ้ามี):
- 
-bash
-  
-supabase db push
- 
- 
- 
- 
-🧪 ทดสอบ
- 
-Backend
- 
-bash
-  
-cd backend
-pytest tests/ --cov=app --cov-report=term
- 
- 
-Frontend
- 
-bash
-  
-cd frontend
-npm run test
- 
- 
-ตรวจสอบโค้ด
- 
-bash
-  
-# Backend
-ruff check .
-black --check .
+```
 
-# Frontend
-npm run lint
- 
- 
- 
- 
-📁 เอกสารเพิ่มเติม
- 
-เอกสาร คำอธิบาย 
-ARCHITECTURE.md แผนภาพสถาปัตยกรรมระบบ 
-SECURITY.md นโยบายความปลอดภัย & การรายงานช่องโหว่ 
-CONTRIBUTING.md คู่มือผู้มีส่วนร่วม • มาตรฐานคอมมิต • กฎการพัฒนา 
- docs/  คู่มือการใช้งาน, Cheatsheet, คู่มือ AI Skills 
- 
- 
- 
-🛡️ ความปลอดภัย
- 
-- รัน CodeQL ทุก PR — ตรวจหาช่องโหว่อัตโนมัติ
-- ปักหมุด SHA ทุก GitHub Action — ป้องกันการโจมตี
-- Dependabot อัปเดต dependency อัตโนมัติ
-- ห้าม คอมมิต Secret/Key ใดๆ ลงรีโปสาธารณะ
-- อ่านรายละเอียด: SECURITY.md
- 
- 
- 
-🤝 การมีส่วนร่วม
- 
-1. Fork รีโป → สร้างสาขา ( git checkout -b feature/your-idea )
-2. คอมมิต ( git commit -m "feat: เพิ่มฟีเจอร์ใหม่" )
-3. ทดสอบให้ผ่าน → เปิด Pull Request
-4. รอตรวจสอบ & ผสานรวม ✅
- 
-มาตรฐานคอมมิต: Conventional Commits
- 
- 
- 
-📄 ใบอนุญาต
- 
-© 2026 ZyntroAI — สงวนสิทธิ์
- 
- 
-พัฒนาด้วย ❤️ โดยทีม ZyntroAI
-รายงานปัญหา • ถามตอบ & แนะนำ
-``` 
- 
- 
-📋 ไฟล์แนบ —  .env.example  (Backend)
- 
-env
-  
-# ==========================================
-# ZyntroAI New CrystalCastle — Backend Config
-# คัดลอกเป็น .env แล้วกรอกค่าจริง
-# ==========================================
+Vite dev server เปิดที่ `http://localhost:5173`
 
-# 🌐 สภาพแวดล้อม
-ENVIRONMENT=development
-DEBUG=true
+### 3️⃣ Supabase
 
-# 🔐 ความปลอดภัย
-SECRET_KEY=change-this-to-random-string-in-production
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
+1. เข้า [supabase.com/dashboard](https://supabase.com/dashboard) → สร้างโปรเจกต์ใหม่
+2. ไปที่ **Project Settings → API** แล้วคัดลอกค่า:
+   - `Project URL` → `SUPABASE_URL` (backend) และ `NEXT_PUBLIC_SUPABASE_URL` (root)
+   - `anon public` → `SUPABASE_ANON_KEY` และ `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `service_role` → ใช้เฉพาะฝั่ง backend เท่านั้น ห้ามใส่ในฝั่ง frontend
+3. เปิดใช้งาน **Authentication → Providers → Email**
+4. นำเข้า schema จาก `supabase/migrations/`
 
-# 🗄️ Supabase
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your-supabase-service-key
+---
 
-# 🤖 AI (ไม่บังคับ)
-ANTHROPIC_API_KEY=sk-ant-...
-GOOGLE_API_KEY=AIza...
+## ⚙️ การกำหนดค่า
 
-# 📡 Server
-HOST=0.0.0.0
+repo นี้ใช้ `.env.example` สองไฟล์ — คัดลอกเป็น `.env` แล้วเติมค่าจริง
+
+### `backend/.env.example`
+
+```env
+# Server
 PORT=8000
- 
- 
-📋 ไฟล์แนบ —  .env.example  (Frontend)
- 
-env
-  
-# ==========================================
-# ZyntroAI New CrystalCastle — Frontend Config
-# คัดลอกเป็น .env แล้วกรอกค่าจริง
-# ==========================================
+NODE_ENV=development
+TRUST_PROXY_HOPS=1
 
-# 🔗 API Backend
-VITE_API_URL=http://localhost:8000
+# GitHub App
+GITHUB_APP_ID=
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+GITHUB_WEBHOOK_SECRET=
+GITHUB_PRIVATE_KEY_PATH=
 
-# 🗄️ Supabase
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-public-key
- 
- 
- 
- 
-✅ คำสั่งเตรียมอัปโหลด
- 
-bash
-  
-# ไปที่โฟลเดอร์โปรเจกต์
-cd new-crystalcastle
+# Supabase Auth
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=
 
-# สร้างไฟล์ README ใหม่
-# วางเนื้อหาด้านบนเป็น README.md
+# Groq AI
+GROQ_API_KEY=
 
-# ตรวจสอบว่า .env ไม่ถูกคอมมิต
-echo ".env" >> .gitignore
+# CORS
+ALLOWED_ORIGINS=http://localhost:3000,https://your-domain.com
+```
 
-# อัปเดตไปยังรีโป
-git add README.md backend/.env.example frontend/.env.example
-git commit -m "docs: update complete README + installation guide
+### `.env.example` (root)
 
-- Add full project overview & architecture
-- Step-by-step setup: Backend → Frontend → Supabase
-- Include .env.example files
-- Testing, contributing & security sections
-- Ready for new contributors"
+```env
+# Application
+APP_NAME="New Crystal Castle"
+APP_ENV=production
+NODE_ENV=production
+NEXT_PUBLIC_APP_URL=https://your-domain.com
+NEXT_PUBLIC_API_URL=https://your-domain.com/api
+API_URL=https://your-domain.com/api
 
-git push origin main
- 
- 
- 
- 
+# Auth & Security
+API_KEY=
+API_SECRET=
+JWT_SECRET=changeme_very_long_random_secret_here
+REFRESH_TOKEN_SECRET=changeme_very_long_random_refresh_secret_here
+DOLA_JWT_SECRET=
+
+# Database
+DATABASE_URL=
+
+# AI Provider
+AI_PROVIDER=openai
+
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+```
+
+> ⚠️ ห้าม commit ไฟล์ `.env` — อยู่ใน `.gitignore` แล้ว
+
+---
+
+## 🧪 ทดสอบ
+
+```bash
+# Frontend / root
+npm run lint          # eslint . --quiet
+npm run typecheck     # tsc -p ./jsconfig.json
+npm run build         # vite build
+
+# ชุดสคริปต์จัดการ/ตรวจ repo
+npm run scripts:verify    # ตรวจโครงสร้างไฟล์
+npm run scripts:smoke     # smoke tests
+npm run scripts:check     # verify + smoke
+```
+
+ชุดทดสอบฝั่ง backend อยู่ใน `backend/test/` และรันผ่าน `pytest` ภายในโฟลเดอร์ `backend/`
+
+---
+
+## 📚 เอกสาร
+
+| ไฟล์ / โฟลเดอร์ | เนื้อหา |
+|---|---|
+| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | สถาปัตยกรรมแพลตฟอร์ม · feature flags · telemetry & billing |
+| [`CONTRIBUTING.md`](./CONTRIBUTING.md) | แนวทาง contribute · มาตรฐาน branch และ commit |
+| [`SECURITY.md`](./SECURITY.md) | นโยบายความปลอดภัย · การแจ้งช่องโหว่ |
+| [`CHANGELOG.md`](./CHANGELOG.md) | ประวัติการเปลี่ยนแปลง (อ้างเลข PR) |
+| [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md) | หลักปฏิบัติของชุมชน |
+| [`docs/`](./docs) | เอกสารทางวิศวกรรม (workflows · pytest · signing commits ฯลฯ) |
+| [`knowledge-base/`](./knowledge-base) | คลังอ้างอิงที่นิ่งแล้ว (mcp-tools · steam-web-api) |
+| [`skills/`](./skills) | ชุด AI Agent Skills และ registry (`index.json`) |
+| [`security/`](./security) | CWE protection suites (cwe1321 · cwe1333) |
+
+ไฟล์ README ของแต่ละส่วน (`backend/Readme.md`, `supabase/Readme.md`, `knowledge-base/README.md`, `scripts/README.md`) อธิบายรายละเอียดเฉพาะส่วนนั้น ๆ
+
+---
+
+## 🛡️ ความปลอดภัย
+
+- 🔐 ไฟล์ `.env` ถูก ignore ไว้ใน `.gitignore` — ห้าม commit คีย์ใด ๆ
+- 🔁 ทุก GitHub Action ในเวิร์กโฟลว์ถูก pin ด้วย commit SHA
+- 🔍 มี CodeQL และ dependency review ใน CI
+- 🧰 มีชุดป้องกันช่องโหว่ใน `security/` (CWE-1321, CWE-1333)
+- 📣 พบช่องโหว่? → อ่านขั้นตอนใน [`SECURITY.md`](./SECURITY.md)
+
+---
+
+## 🤝 การมีส่วนร่วม
+
+```bash
+# 1. สร้าง branch
+git checkout -b fig/your-feature
+
+# 2. commit ตามมาตรฐาน Conventional Commits
+git commit -m "feat: คำอธิบายสั้น ๆ"
+
+# 3. push แล้วเปิด PR เข้า main
+git push -u origin fig/your-feature
+```
+
+ทุกการเปลี่ยนแปลงเข้า `main` ผ่าน Pull Request เท่านั้น — รายละเอียดเพิ่มเติมดูที่ [`CONTRIBUTING.md`](./CONTRIBUTING.md)
+
+---
+
+## 📄 ใบอนุญาต
+
+MIT License — © 2026 ZyntroAI · ดูรายละเอียดที่ [`LICENSE`](./LICENSE)
+
+<div align="center">
+
+**ZyntroAI** — [GitHub](https://github.com/ZyntroAI) · [Issues](https://github.com/ZyntroAI/new-crystalcastle/issues) · [Discussions](https://github.com/ZyntroAI/new-crystalcastle/discussions)
+
+</div>
