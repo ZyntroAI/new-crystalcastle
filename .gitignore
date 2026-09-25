@@ -1,21 +1,18 @@
-# ============================================
-# Dependencies
-# ============================================
+Dola*
+*.csv
 node_modules/
 .pnp
 .pnp.js
 
-# Environment files — NEVER commit secrets
 .env
 .env.local
 .env.*.local
 .env.production
 .env.staging
 .env.development
+.env.example*
 
-# ============================================
-# Build Outputs
-# ============================================
+
 dist/
 build/
 .next/
@@ -27,9 +24,6 @@ build/
 .vercel/
 *.tsbuildinfo
 
-# ============================================
-# Testing & Coverage
-# ============================================
 coverage/
 *.lcov
 coverage*.json
@@ -41,19 +35,14 @@ cypress/screenshots/
 playwright-report/
 test-results/
 
-# ============================================
-# Logs
-# ============================================
+
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# ============================================
-# Python
-# ============================================
-__pycache__/
+*.py
 *.py[cod]
 *$py.class
 *.so
@@ -65,10 +54,7 @@ ENV/
 .mypy_cache/
 .ruff_cache/
 
-# ============================================
-# Editors & IDEs
-# ============================================
-# VS Code — keep shared config
+
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
@@ -85,9 +71,7 @@ ENV/
 # Local history
 .history/
 
-# ============================================
-# OS Generated
-# ============================================
+
 .DS_Store
 .DS_Store?
 ._*
@@ -96,9 +80,7 @@ ENV/
 ehthumbs.db
 Thumbs.db
 
-# ============================================
-# Archives & Packages
-# ============================================
+
 *.7z
 *.dmg
 *.gz
