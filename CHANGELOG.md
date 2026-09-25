@@ -30,6 +30,17 @@ Repo layout notes live in [`README.md`](./README.md); architecture in
   All 19 local paths and links declared in the new README were checked against
   the working tree and resolve on disk.
 
+  The same review found the paste pattern in five more tracked documents, each
+  ending with a chat closing question ('ต้องการให้ผม...ไหมครับ?') rather than
+  document content. Removed in follow-up direct pushes to `main` (no PR):
+  `ARCHITECTURE.md` (371 lines of the document re-emitted in chat reply format,
+  plus the chat opener on line 1), `CONTRIBUTING.md` (chat residue after the
+  `gh pr create` block), `docs/github-enterprise/README.md` (opener + tail),
+  `Fast-CI.md`, `docs/DOC-GOOGLE-OAUTH-001.md`, `docs/---.txt`, and
+  `supabase/Readme.md` (trailing footers). `docs/Skill_spec.md` still carries
+  the question text at three points inside its body and was left for a
+  separate structural pass.
+
 - **PR #223** — docs(codespaces): add GitHub Codespaces implementation guide.
 
   Adds `docs/GitHub Codespaces — Complete Implementation Guide.txt` (204 lines):
