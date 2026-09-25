@@ -107,7 +107,7 @@ Thumbs.db
 *.rar
 *.tar
 *.zip
-
+*how*.md
 # Secret / credential files
 *.pem
 *.key
