@@ -10,6 +10,27 @@ Repo layout notes live in [`README.md`](./README.md); architecture in
 
 ## [2026-09-25]
 
+### Fixed
+
+- **PR #225** — docs(codespaces): align the Codespaces guide with repo standards.
+
+  Addresses the four follow-ups recorded against PR #223:
+
+  - **Renamed** `docs/GitHub Codespaces — Complete Implementation Guide.txt`
+    → `docs/github-codespaces-guide.md` — kebab-case and `.md` per
+    `01-standards.md`; removes the spaces and em dash that broke
+    `git ls-files | xargs`.
+  - **Added the standard document header** (Title / Subtitle / Kicker / Author /
+    Date / Theme / Genre / Font) matching `docs/APP-API-GUIDELINES.md`, and
+    dropped the generation prose and stray separator above the H1.
+  - **Corrected the `customizations` namespace** —
+    `customizations.codespaces.openFiles` → `customizations.vscode.openFiles`,
+    in both the config example and the section-reference table. As written the
+    example silently did nothing.
+  - **Normalized line endings** CRLF → LF to match the rest of `docs/`.
+
+## [2026-09-25]
+
 ### Added
 
 - **PR #226** — docs: rewrite `README.md` to match the real repo tree.
@@ -43,7 +64,7 @@ Repo layout notes live in [`README.md`](./README.md); architecture in
 
 - **PR #223** — docs(codespaces): add GitHub Codespaces implementation guide.
 
-  Adds `docs/GitHub Codespaces — Complete Implementation Guide.txt` (204 lines):
+  Adds `docs/GitHub Codespaces — Complete Implementation Guide.txt` (204 lines; renamed to `docs/github-codespaces-guide.md` in PR #225):
   the Codespaces lifecycle (create → stop → rebuild → delete), the rule that a
   Codespace must be pushed before it is deleted, `devcontainer.json`, prebuilds,
   cost control, and secrets handling.
