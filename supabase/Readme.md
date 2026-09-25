@@ -264,5 +264,3 @@ supabase/migrations/*.sql.tmp
 
 ## 🚀 พร้อมใช้งาน
 วางไฟล์ใน `.github/workflows/` → ตั้งค่า Secrets → Push ไฟล์ `supabase/migrations/` ครับ 🎉
-
-ต้องการให้ผมเพิ่ม **ขั้นตอนรันทดสอบข้อมูล/API บน Preview DB** หรือ **สร้างเทมเพลต Migration เริ่มต้น** ให้เลยไหมครับ? 🧪🗄️
