@@ -3,9 +3,12 @@ name: Python CI
 on:
   push:
     branches: [main]
+  paths-ignore:
+    - 'Projects/**'
   pull_request:
     branches: [main]
-
+  paths-ignore:
+    - 'Projects/**'
 jobs:
   test:
     runs-on: ubuntu-latest
