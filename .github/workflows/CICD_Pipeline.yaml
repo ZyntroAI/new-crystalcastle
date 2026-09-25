@@ -2,9 +2,13 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+   branches: [ main ]
+   paths-ignore: 
+    - 'Projects/**'
   pull_request:
     branches: [ main ]
+    paths-ignore: 
+     - 'Projects/**'
 
 jobs:
   test:
