@@ -1,5 +1,9 @@
 name: WhatsApp PR Automation
 on:
+  push:
+   branches: [ main ]
+   paths-ignore:
+    - 'Projects/**'
   workflow_dispatch:
     inputs:
       user_choice: { required: true }
