@@ -8,6 +8,27 @@ grouped by merge date. Each entry cites its pull request number.
 Repo layout notes live in [`README.md`](./README.md); architecture in
 [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 
+## [2026-09-25]
+
+### Added
+
+- **PR #223** — docs(codespaces): add GitHub Codespaces implementation guide.
+
+  Adds `docs/GitHub Codespaces — Complete Implementation Guide.txt` (204 lines):
+  the Codespaces lifecycle (create → stop → rebuild → delete), the rule that a
+  Codespace must be pushed before it is deleted, `devcontainer.json`, prebuilds,
+  cost control, and secrets handling.
+
+  Merged as-is; the review comment on the PR records four follow-ups that were
+  deliberately not folded into this merge — the file should be kebab-case and
+  `.md` per `01-standards.md`, it still lacks the standard document header
+  (code / date / status), the `customizations.codespaces.openFiles` example is
+  superseded by `customizations.vscode.openFiles`, and the file is CRLF where
+  the rest of `docs/` is LF. The PR title and body were corrected before merge:
+  both had described a `.github/pull_request_template.md` change while the diff
+  added the Codespaces guide, and the original title `Add files via upload` was
+  replaced with a conventional-commit subject.
+
 ## [2026-09-23]
 
 ### Fixed
@@ -473,7 +494,8 @@ latest 2026-09-11 (PR #146)._
  
 🚀 คำสั่งสร้าง & คอมมิต
  
-bash  
+bash
+  
 # บันทึกไฟล์
 cat > CHANGELOG.md << 'EOF'
 # 📝 CHANGELOG — ZyntroAI / New CrystalCastle
