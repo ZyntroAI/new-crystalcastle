@@ -34,9 +34,22 @@ Repo layout notes live in [`README.md`](./README.md); architecture in
   re-running produces a byte-identical file — and is added with `git add -f`
   because the repo's `.gitignore` ignores `*.py` globally.
 
-  One broken file is left in place and flagged in `INDEX.md` under
-  "Known-broken files": `docs/README.md` is still a pasted AI chat reply
-  rather than an index, and was not overwritten without approval.
+  `docs/README.md` was then rewritten. It had been a **155-line pasted AI chat
+  transcript** — opening *"Here's a complete, bilingual README.md…"*, closing by
+  offering to commit itself, and describing a repository structure this repo
+  does not have. The replacement is an **89-line curated entry point** that
+  points at `INDEX.md` as the single canonical listing instead of repeating it
+  (two hand-maintained indexes drift apart — the exact defect removed here),
+  summarises what kinds of material live in `docs/` by file type, and carries
+  no hardcoded file count. Both originals remain in git history.
+
+  Three tools accompany the generated docs: `scripts/python/build_docs_readme.py`
+  (drafts or `--write`), `scripts/ci/lint-docs-readme.py` (link resolution,
+  front-matter contract, stale-transcript and no-drift guards, run **before**
+  writing), and `scripts/ci/test-docs-index.py` (**11 assertions** over both
+  generated docs). The index generator no longer flags `README.md` as broken;
+  it now sits in the "Replaced files" table beside `summary.md`, and the
+  now-empty "Known-broken files" section was removed.
 
 ## [2026-09-25]
 
