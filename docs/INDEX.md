@@ -13,7 +13,7 @@ Font: plex
 
 This is the canonical index for `docs/` — it replaced the former `docs/summary.md`.
 
-Generated from the live `docs/` tree — **62 files** and **7 directories**.
+Generated from the live `docs/` tree — **65 files** and **7 directories**.
 
 > Regenerate with `python3 scripts/python/gen_docs_index.py` after adding or removing docs.
 
@@ -32,6 +32,7 @@ Generated from the live `docs/` tree — **62 files** and **7 directories**.
 | [`# 🛡️ กฎตรวจจับ ReDoS + บูรณาการเข้.txt`](%23%20%F0%9F%9B%A1%EF%B8%8F%20%E0%B8%81%E0%B8%8E%E0%B8%95%E0%B8%A3%E0%B8%A7%E0%B8%88%E0%B8%88%E0%B8%B1%E0%B8%9A%20ReDoS%20%2B%20%E0%B8%9A%E0%B8%B9%E0%B8%A3%E0%B8%93%E0%B8%B2%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B9%80%E0%B8%82%E0%B9%89.txt) | # 🛡️ กฎตรวจจับ ReDoS + บูรณาการเข้.txt |
 | [`### สรุปประเด็นหลักจากหน้า 🚀 Autom.txt`](%23%23%23%20%E0%B8%AA%E0%B8%A3%E0%B8%B8%E0%B8%9B%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B9%80%E0%B8%94%E0%B9%87%E0%B8%99%E0%B8%AB%E0%B8%A5%E0%B8%B1%E0%B8%81%E0%B8%88%E0%B8%B2%E0%B8%81%E0%B8%AB%E0%B8%99%E0%B9%89%E0%B8%B2%20%F0%9F%9A%80%20Autom.txt) | ### สรุปประเด็นหลักจากหน้า 🚀 Autom.txt |
 | [`---.txt`](---.txt) | .txt |
+| [`825273238_1740729570490747_2423484467625210777_n.webp`](825273238_1740729570490747_2423484467625210777_n.webp) | 825273238 1740729570490747 2423484467625210777 n.webp |
 | [`APP-API-GUIDELINES.md`](APP-API-GUIDELINES.md) | APP API GUIDELINES.md |
 | [`BRAVE`](BRAVE) | BRAVE |
 | [`CICDPIPELINE`](CICDPIPELINE) | CICDPIPELINE |
@@ -80,7 +81,9 @@ Generated from the live `docs/` tree — **62 files** and **7 directories**.
 | [`sudo-mode.md`](sudo-mode.md) | sudo mode.md |
 | [`task-flow-sequencing.md`](task-flow-sequencing.md) | task flow sequencing.md — ⭐ **new** |
 | [`tsx.md`](tsx.md) | tsx.md |
+| [`zyntroai-skill-library-v2.1.html`](zyntroai-skill-library-v2.1.html) | zyntroai skill library v2.1.html |
 | [`การทำงานกับไฟล์ที่ไม่ใช่โค้ดใน GitH.txt`](%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%97%E0%B8%B3%E0%B8%87%E0%B8%B2%E0%B8%99%E0%B8%81%E0%B8%B1%E0%B8%9A%E0%B9%84%E0%B8%9F%E0%B8%A5%E0%B9%8C%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B9%84%E0%B8%A1%E0%B9%88%E0%B9%83%E0%B8%8A%E0%B9%88%E0%B9%82%E0%B8%84%E0%B9%89%E0%B8%94%E0%B9%83%E0%B8%99%20GitH.txt) | การทำงานกับไฟล์ที่ไม่ใช่โค้ดใน GitH.txt |
+| [`คู่มือสรุปการทำ Mocking & Testing Pipeline ใน FastAPI`](%E0%B8%84%E0%B8%B9%E0%B9%88%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%AA%E0%B8%A3%E0%B8%B8%E0%B8%9B%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%97%E0%B8%B3%20Mocking%20%26%20Testing%20Pipeline%20%E0%B9%83%E0%B8%99%20FastAPI) | คู่มือสรุปการทำ Mocking & Testing Pipeline ใน FastAPI |
 | [`เอกสารสำคัญที่มักขาด & ควรเพิ่ม (มาตรฐาน ZyntroAI)`](%E0%B9%80%E0%B8%AD%E0%B8%81%E0%B8%AA%E0%B8%B2%E0%B8%A3%E0%B8%AA%E0%B8%B3%E0%B8%84%E0%B8%B1%E0%B8%8D%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%A1%E0%B8%B1%E0%B8%81%E0%B8%82%E0%B8%B2%E0%B8%94%20%26%20%E0%B8%84%E0%B8%A7%E0%B8%A3%E0%B9%80%E0%B8%9E%E0%B8%B4%E0%B9%88%E0%B8%A1%20%28%E0%B8%A1%E0%B8%B2%E0%B8%95%E0%B8%A3%E0%B8%90%E0%B8%B2%E0%B8%99%20ZyntroAI%29) | เอกสารสำคัญที่มักขาด & ควรเพิ่ม (มาตรฐาน ZyntroAI) |
 | [`📋 รายงานวิเคราะห์ Pull Request #242`](%F0%9F%93%8B%20%E0%B8%A3%E0%B8%B2%E0%B8%A2%E0%B8%87%E0%B8%B2%E0%B8%99%E0%B8%A7%E0%B8%B4%E0%B9%80%E0%B8%84%E0%B8%A3%E0%B8%B2%E0%B8%B0%E0%B8%AB%E0%B9%8C%20Pull%20Request%20%23242) | 📋 รายงานวิเคราะห์ Pull Request #242 |
 

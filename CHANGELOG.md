@@ -25,11 +25,11 @@ Repo layout notes live in [`README.md`](./README.md); architecture in
   (CI/CD, this week) is committed to a date.
 
   Replaces the two broken index files in `docs/` with `docs/INDEX.md`, a
-  generated index of the real tree — **62 files + 7 directories**, all
-  **69** internal links verified to resolve. `docs/summary.md` was removed via
+  generated index of the real tree — **65 files + 7 directories**, all
+  **72** internal links verified to resolve. `docs/summary.md` was removed via
   `git rm` (19 lines listing 13 files, **12 of which did not exist**:
   `VERSIONS.md`, `RELEASE_NOTES.md`, `DOCS.md`, `CICDPIPELINE.md`, …); its
-  content remains in git history at `0b216f8`. The generator,
+  content remains in git history at the parent commit. The generator,
   `scripts/python/gen_docs_index.py`, is deterministic and idempotent —
   re-running produces a byte-identical file — and is added with `git add -f`
   because the repo's `.gitignore` ignores `*.py` globally.
