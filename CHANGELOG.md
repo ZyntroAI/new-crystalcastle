@@ -8,6 +8,49 @@ grouped by merge date. Each entry cites its pull request number.
 Repo layout notes live in [`README.md`](./README.md); architecture in
 [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 
+## [2026-09-26]
+
+### Added
+
+- **PR #228** — docs: task-flow sequencing decision — CI/CD first, plus a real
+  index for `docs/`.
+
+  Adds `docs/task-flow-sequencing.md`, recording CI/CD as the first task flow
+  to implement (`docs` → `compliance` → `OCR` follow). CI/CD is not the
+  largest of the four, but it is the only one that unblocks the other three:
+  shortest feedback loop, shared build/test/publish pipeline, and value
+  measurable from the first gated commit. The deferred flows are deferred on
+  blockers, not priority — `compliance` awaits policy-owner sign-off on the
+  control set, `OCR` awaits its dataset and ingestion spec. Only Wave 1
+  (CI/CD, this week) is committed to a date.
+
+  Replaces the two broken index files in `docs/` with `docs/INDEX.md`, a
+  generated index of the real tree — **65 files + 7 directories**, all
+  **72** internal links verified to resolve. `docs/summary.md` was removed via
+  `git rm` (19 lines listing 13 files, **12 of which did not exist**:
+  `VERSIONS.md`, `RELEASE_NOTES.md`, `DOCS.md`, `CICDPIPELINE.md`, …); its
+  content remains in git history at the parent commit. The generator,
+  `scripts/python/gen_docs_index.py`, is deterministic and idempotent —
+  re-running produces a byte-identical file — and is added with `git add -f`
+  because the repo's `.gitignore` ignores `*.py` globally.
+
+  `docs/README.md` was then rewritten. It had been a **155-line pasted AI chat
+  transcript** — opening *"Here's a complete, bilingual README.md…"*, closing by
+  offering to commit itself, and describing a repository structure this repo
+  does not have. The replacement is an **89-line curated entry point** that
+  points at `INDEX.md` as the single canonical listing instead of repeating it
+  (two hand-maintained indexes drift apart — the exact defect removed here),
+  summarises what kinds of material live in `docs/` by file type, and carries
+  no hardcoded file count. Both originals remain in git history.
+
+  Three tools accompany the generated docs: `scripts/python/build_docs_readme.py`
+  (drafts or `--write`), `scripts/ci/lint-docs-readme.py` (link resolution,
+  front-matter contract, stale-transcript and no-drift guards, run **before**
+  writing), and `scripts/ci/test-docs-index.py` (**11 assertions** over both
+  generated docs). The index generator no longer flags `README.md` as broken;
+  it now sits in the "Replaced files" table beside `summary.md`, and the
+  now-empty "Known-broken files" section was removed.
+
 ## [2026-09-25]
 
 ### Fixed
@@ -28,8 +71,6 @@ Repo layout notes live in [`README.md`](./README.md); architecture in
     in both the config example and the section-reference table. As written the
     example silently did nothing.
   - **Normalized line endings** CRLF → LF to match the rest of `docs/`.
-
-## [2026-09-25]
 
 ### Added
 
@@ -433,5 +474,6 @@ Repo layout notes live in [`README.md`](./README.md); architecture in
 
 ______________________________________________________________________
 
-_Generated from 125 merged pull requests; earliest entry 2026-07-31 (PR #1),
-latest 2026-09-25 (PR #226)._
+_Generated from 124 cited pull requests; earliest entry 2026-07-31 (PR #1),
+latest 2026-09-26 (PR #228)._
+
