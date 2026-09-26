@@ -1,6 +1,6 @@
 # 📚 Knowledge Base — ดัชนีรวม
 
-**อัปเดต:** 2026-09-24 • **หมวด:** 3 • **สถานะ:** ✅ พร้อมใช้งาน
+**อัปเดต:** 2026-09-26 • **หมวด:** 4 • **สถานะ:** ✅ พร้อมใช้งาน
 
 คลังความรู้ของ repo นี้ — เอกสารอ้างอิง แคตตาล็อกเครื่องมือ และสื่อประกอบ (ไดอะแกรม/อินโฟกราฟิก)
 จัดเป็นโฟลเดอร์ตามหัวข้อ แต่ละโฟลเดอร์มี `README.md` ของตัวเองเป็นดัชนีย่อย
@@ -40,6 +40,24 @@ Root Canal (รักษารากฟัน): *ขจัดจุดอ่อ�
 - 📄 `vite-vitest-pages.md` — บันเดิลครบชุด รวม config และไฟล์ workflow
 - ⚙️ `../vite.pages.config.ts` — Vite build config ที่ไฟล์นี้ใช้งาน
 
+### 🤖 Dola AI — Integrated Stack
+**[ดูรายละเอียดเต็ม →](dola-ai/README.md)** — สแต็กที่รวม GitHub workflow, AI model orchestration
+Obsidian knowledge management และ FastAPI backend เข้าเป็นระบบเดียว เพื่อ automate งานใน SDLC
+ครอบคลุม 5 บทบาทของ Dola AI (PR Manager, Issue Triager, Release Manager, Docs Maintainer, Oncall Bot)
+พร้อมกลยุทธ์เลือกโมเดล, useScope hook, กรอบความปลอดภัย API 6 ชั้น, Thread Model สำหรับ distributed tracing,
+การเชื่อม Obsidian REST API และขั้นตอน deployment
+
+- 📄 `README.md` — ดัชนีหลัก + แผนผังสแต็ก
+- 📄 `architecture.md` — สถาปัตยกรรมและ 5 บทบาท
+- 📄 `model-routing.md` — กฎการเลือกโมเดล
+- 📄 `use-scope-hook.md` — React state management
+- 📄 `api-security.md` — กรอบความปลอดภัย 6 ชั้น
+- 📄 `thread-model.md` — distributed tracing
+- 📄 `obsidian-integration.md` — เชื่อม Obsidian REST API
+- 📄 `deployment.md` — Docker / CI-CD / monitoring
+
+---
+
 ---
 
 ## 🔍 ค้นหาด่วน
@@ -53,6 +71,10 @@ Root Canal (รักษารากฟัน): *ขจัดจุดอ่อ�
 | แนวปฏิบัติ REST API ประสิทธิภาพสูง | [steam-web-api/README.md](steam-web-api/README.md) |
 | อินโฟกราฟิกสำหรับรายงาน/สไลด์ | [steam-web-api/](steam-web-api/) |
 | Workflow Vite + Vitest สำหรับเว็บหลายหน้า | [workflows/vite-vitest-pages.md](workflows/vite-vitest-pages.md) |
+| Dola AI — สถาปัตยกรรมและบทบาท | [dola-ai/architecture.md](dola-ai/architecture.md) |
+| เลือกโมเดล AI ให้งาน | [dola-ai/model-routing.md](dola-ai/model-routing.md) |
+| ความปลอดภัย API / secret | [dola-ai/api-security.md](dola-ai/api-security.md) |
+| เชื่อม Obsidian | [dola-ai/obsidian-integration.md](dola-ai/obsidian-integration.md) |
 
 ---
 
@@ -83,8 +105,17 @@ knowledge-base/
    ├─ steam-web-api-root-canal-infographic.{html,png}
    ├─ build_infographic.py            #    สคริปต์สร้างใหม่
    └─ NotoSansThai.ttf                #    ฟอนต์ที่ฝังใน HTML (OFL 1.1)
-└─ workflows/                         # ⚙️ Workflow Vite + Vitest Pages
-   └─ vite-vitest-pages.md            #    บันเดิลครบชุด (config + CI)
+├─ workflows/                         # ⚙️ Workflow Vite + Vitest Pages
+│  └─ vite-vitest-pages.md            #    บันเดิลครบชุด (config + CI)
+└─ dola-ai/                          # 🤖 Dola AI — Integrated Stack
+   ├─ README.md                       #    ดัชนีหลัก + แผนผัง
+   ├─ architecture.md                 #    สถาปัตยกรรม & 5 บทบาท
+   ├─ model-routing.md                #    กฎการเลือกโมเดล
+   ├─ use-scope-hook.md               #    React state management
+   ├─ api-security.md                 #    กรอบความปลอดภัย 6 ชั้น
+   ├─ thread-model.md                 #    distributed tracing
+   ├─ obsidian-integration.md         #    Obsidian REST API
+   └─ deployment.md                   #    Docker / CI-CD
 ```
 
 > **หมายเหตุ:** `docs/` เก็บเอกสารงานที่ยังดำเนินอยู่ (guidelines, runbook, agreement)
