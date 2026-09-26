@@ -104,14 +104,7 @@ Generated from the live `docs/` tree — **65 files** and **7 directories**.
 | File | Replaced by | Reason |
 |---|---|---|
 | `docs/summary.md` | **this file** (`docs/INDEX.md`) | Listed 13 files, 12 of which did not exist (`VERSIONS.md`, `RELEASE_NOTES.md`, `DOCS.md`, `CICDPIPELINE.md`, …). Removed in favour of a generated index. |
-
-## ⚠️ Known-broken files
-
-Still present, but not functional. Left in place pending a decision.
-
-| File | Problem |
-|---|---|
-| `docs/README.md` | Pasted AI chat reply, not an index — opens *"Here's a complete, bilingual README.md…"* and closes by offering to commit itself |
+| `docs/README.md` | Curated entry point — rewritten | Was a 155-line pasted AI chat transcript that opened *"Here's a complete, bilingual README.md…"*, closed by offering to commit itself, and described a repository structure this repo does not have. Content preserved in git history. |
 
 ---
 

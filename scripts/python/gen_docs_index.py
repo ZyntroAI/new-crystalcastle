@@ -94,15 +94,10 @@ A("|---|---|---|")
 A("| `docs/summary.md` | **this file** (`docs/INDEX.md`) | Listed 13 files, "
   "12 of which did not exist (`VERSIONS.md`, `RELEASE_NOTES.md`, `DOCS.md`, "
   "`CICDPIPELINE.md`, …). Removed in favour of a generated index. |")
-A("")
-A("## ⚠️ Known-broken files")
-A("")
-A("Still present, but not functional. Left in place pending a decision.")
-A("")
-A("| File | Problem |")
-A("|---|---|")
-A("| `docs/README.md` | Pasted AI chat reply, not an index — opens *\"Here's a "
-  "complete, bilingual README.md…\"* and closes by offering to commit itself |")
+A("| `docs/README.md` | Curated entry point — rewritten | Was a 155-line pasted "
+  "AI chat transcript that opened *\"Here's a complete, bilingual README.md…\"*, "
+  "closed by offering to commit itself, and described a repository structure "
+  "this repo does not have. Content preserved in git history. |")
 A("")
 A("---")
 A("")
