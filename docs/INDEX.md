@@ -2,7 +2,7 @@
 Title: Documentation Index
 Subtitle: Every document under docs/ — generated from the directory tree
 Kicker: Index
-Author: Nattapong Pornlumfah · v1.0
+Author: Nattapong Pornlumfah · v1.1
 Date: 2026-09-26
 Theme: professional
 Genre: reference
@@ -11,7 +11,9 @@ Font: plex
 
 # 📚 Documentation Index
 
-Generated from the live `docs/` tree — **63 files** and **7 directories**.
+This is the canonical index for `docs/` — it replaced the former `docs/summary.md`.
+
+Generated from the live `docs/` tree — **62 files** and **7 directories**.
 
 > Regenerate with `python3 scripts/python/gen_docs_index.py` after adding or removing docs.
 
@@ -76,7 +78,6 @@ Generated from the live `docs/` tree — **63 files** and **7 directories**.
 | [`redos-rules.py`](redos-rules.py) | redos rules.py |
 | [`signing-commits.md`](signing-commits.md) | signing commits.md |
 | [`sudo-mode.md`](sudo-mode.md) | sudo mode.md |
-| [`summary.md`](summary.md) | summary.md |
 | [`task-flow-sequencing.md`](task-flow-sequencing.md) | task flow sequencing.md — ⭐ **new** |
 | [`tsx.md`](tsx.md) | tsx.md |
 | [`การทำงานกับไฟล์ที่ไม่ใช่โค้ดใน GitH.txt`](%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%97%E0%B8%B3%E0%B8%87%E0%B8%B2%E0%B8%99%E0%B8%81%E0%B8%B1%E0%B8%9A%E0%B9%84%E0%B8%9F%E0%B8%A5%E0%B9%8C%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B9%84%E0%B8%A1%E0%B9%88%E0%B9%83%E0%B8%8A%E0%B9%88%E0%B9%82%E0%B8%84%E0%B9%89%E0%B8%94%E0%B9%83%E0%B8%99%20GitH.txt) | การทำงานกับไฟล์ที่ไม่ใช่โค้ดใน GitH.txt |
@@ -95,15 +96,19 @@ Generated from the live `docs/` tree — **63 files** and **7 directories**.
 | [`src/`](src%2F) | 1 |
 | [`คู่มือการใช้งาน-actions/`](%E0%B8%84%E0%B8%B9%E0%B9%88%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B9%83%E0%B8%8A%E0%B9%89%E0%B8%87%E0%B8%B2%E0%B8%99-actions%2F) | 1 |
 
-## ⚠️ Known-broken index files
+## 🔁 Replaced files
 
-These files are *named* like an index but do not function as one. Left
-untouched pending a decision — noted here so the gap is visible.
+| File | Replaced by | Reason |
+|---|---|---|
+| `docs/summary.md` | **this file** (`docs/INDEX.md`) | Listed 13 files, 12 of which did not exist (`VERSIONS.md`, `RELEASE_NOTES.md`, `DOCS.md`, `CICDPIPELINE.md`, …). Removed in favour of a generated index. |
+
+## ⚠️ Known-broken files
+
+Still present, but not functional. Left in place pending a decision.
 
 | File | Problem |
 |---|---|
 | `docs/README.md` | Pasted AI chat reply, not an index — opens *"Here's a complete, bilingual README.md…"* and closes by offering to commit itself |
-| `docs/summary.md` | Lists 13 files; 12 do not exist (`VERSIONS.md`, `RELEASE_NOTES.md`, `DOCS.md`, `CICDPIPELINE.md`, …) |
 
 ---
 
