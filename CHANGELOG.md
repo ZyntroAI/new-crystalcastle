@@ -8,6 +8,36 @@ grouped by merge date. Each entry cites its pull request number.
 Repo layout notes live in [`README.md`](./README.md); architecture in
 [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 
+## [2026-09-26]
+
+### Added
+
+- **PR #228** — docs: task-flow sequencing decision — CI/CD first, plus a real
+  index for `docs/`.
+
+  Adds `docs/task-flow-sequencing.md`, recording CI/CD as the first task flow
+  to implement (`docs` → `compliance` → `OCR` follow). CI/CD is not the
+  largest of the four, but it is the only one that unblocks the other three:
+  shortest feedback loop, shared build/test/publish pipeline, and value
+  measurable from the first gated commit. The deferred flows are deferred on
+  blockers, not priority — `compliance` awaits policy-owner sign-off on the
+  control set, `OCR` awaits its dataset and ingestion spec. Only Wave 1
+  (CI/CD, this week) is committed to a date.
+
+  Replaces the two broken index files in `docs/` with `docs/INDEX.md`, a
+  generated index of the real tree — **62 files + 7 directories**, all
+  **69** internal links verified to resolve. `docs/summary.md` was removed via
+  `git rm` (19 lines listing 13 files, **12 of which did not exist**:
+  `VERSIONS.md`, `RELEASE_NOTES.md`, `DOCS.md`, `CICDPIPELINE.md`, …); its
+  content remains in git history at `0b216f8`. The generator,
+  `scripts/python/gen_docs_index.py`, is deterministic and idempotent —
+  re-running produces a byte-identical file — and is added with `git add -f`
+  because the repo's `.gitignore` ignores `*.py` globally.
+
+  One broken file is left in place and flagged in `INDEX.md` under
+  "Known-broken files": `docs/README.md` is still a pasted AI chat reply
+  rather than an index, and was not overwritten without approval.
+
 ## [2026-09-25]
 
 ### Fixed
@@ -28,8 +58,6 @@ Repo layout notes live in [`README.md`](./README.md); architecture in
     in both the config example and the section-reference table. As written the
     example silently did nothing.
   - **Normalized line endings** CRLF → LF to match the rest of `docs/`.
-
-## [2026-09-25]
 
 ### Added
 
@@ -433,5 +461,6 @@ Repo layout notes live in [`README.md`](./README.md); architecture in
 
 ______________________________________________________________________
 
-_Generated from 125 merged pull requests; earliest entry 2026-07-31 (PR #1),
-latest 2026-09-25 (PR #226)._
+_Generated from 124 cited pull requests; earliest entry 2026-07-31 (PR #1),
+latest 2026-09-26 (PR #228)._
+
