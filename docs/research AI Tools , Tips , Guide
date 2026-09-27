@@ -1,0 +1,103 @@
+🧠 AI Tools: Complete Guide + Pro Tips (2026)
+ 
+A practical, categorized overview with best-use cases, selection guide, and proven techniques to avoid hallucinations & boost efficiency.
+ 
+ 
+ 
+🗂️ Top AI Tools by Category
+ 
+🤖 General-Purpose Assistants
+ 
+- ChatGPT (OpenAI) 🟢: Best all-rounder; strong reasoning, multi-step tasks, large ecosystem. ✅ Free tier available.
+- Claude (Anthropic) 🟠: Long documents (200k+ tokens), high-quality writing, less hallucination.
+- Gemini (Google) 🔵: Live Google Search, great with multimodal (image/video), integrates Workspace.
+ 
+🔍 Research & Fact-Finding
+ 
+- Perplexity AI: Cited answers, web search built-in, no hallucinations; best for quick verified info.
+- NotebookLM: Analyze your files only (PDF/docs/notes); grounded, no outside data.
+- Elicit / Consensus: Academic/research focus; papers, summaries, evidence-based answers.
+ 
+💻 Coding & Dev
+ 
+- GitHub Copilot: Inline completion, VS Code/IDE integration.
+- Cursor: AI-native IDE; full-project refactor, chat, agent mode.
+- DeepSeek: Open-source, strong reasoning, long context .
+ 
+🎨 Creativity & Media
+ 
+- Images: Midjourney (quality), DALL-E 3, Ideogram (text-in-image), Adobe Firefly (safe commercial).
+- Video: Runway, Pika, Kling AI.
+- Audio/Voice: ElevenLabs (TTS), Whisper (transcription), Suno AI (music).
+ 
+✍️ Writing & Docs
+ 
+- Drafting: Claude / ChatGPT.
+- Polishing: Grammarly, Hemingway Editor.
+- Docs/Notes: Notion AI, NotebookLM.
+ 
+ 
+ 
+✅ How to Choose the Right Tool
+ 
+Need Best Pick Why 
+Verified answers + sources Perplexity Cites every claim 
+50+ page file analysis Claude Huge context window 
+Code/debug/dev Cursor / Copilot IDE-native 
+Work with your own docs NotebookLM No outside data 
+Google/Office workflow Gemini / Copilot Deep integration 
+Budget/free Gemini / Claude / ChatGPT free Capable without pay 
+ 
+ 
+ 
+💡 Pro Tips for Better AI Output
+ 
+1️⃣ Prompt Engineering Basics
+ 
+- Be specific: Role + Goal + Context + Format + Constraints .
+plaintext  
+Act as senior dev → Write clean Python → Use given schema → Output JSON only → No extra text
+ 
+- Structure: Use RAPS — Role, Audience, Purpose, Scope.
+- Give examples: Show what good output looks like .
+- Break big tasks: Step-by-step instead of one giant request .
+ 
+2️⃣ Avoid Hallucinations & Errors
+ 
+- Demand citations: “Include URL/source; flag unknowns”.
+- Cross-check: Compare Perplexity + Claude + search results.
+- Limit scope: Don’t overfeed; focus on your domain/data .
+- Ask for reasoning: “Show your sources and logic step-by-step” .
+ 
+3️⃣ Efficiency & Workflow Hacks
+ 
+- Start free: Try free tiers first; upgrade only when limits hit.
+- Upload context: Provide files/data instead of long copy-paste.
+- Iterate: First draft → refine → fix gaps → finalize .
+- Check privacy: For sensitive work, choose enterprise/self-hosted options.
+ 
+4️⃣ Advanced Strategies
+ 
+- Chain tools: Research → Perplexity → Draft → Claude → Edit → Grammarly.
+- Self-review: Give AI a checklist: “Verify all numbers, cite sources”.
+- Save prompts: Build a library for repeated tasks .
+ 
+ 
+ 
+⚠️ Common Pitfalls to Avoid
+ 
+❌ Blind trust: Always verify facts, code, calculations .
+❌ Overly broad prompts: “Write about AI” = vague; “Write 3-paragraph summary of 2026 AI trends with 3 examples” = good.
+❌ Wrong tool for job: Don’t use ChatGPT for deep file analysis; use NotebookLM.
+❌ Ignoring limits: Know context window (Claude large > GPT > Gemini).
+ 
+ 
+ 
+🚀 Quick Start Plan
+ 
+1. Start: Gemini or ChatGPT free — general use.
+2. Research: Add Perplexity + NotebookLM.
+3. Code: Add GitHub Copilot or Cursor.
+4. Practice: Write clear prompts → verify → refine → build routine .
+ 
+Want me to turn this into a 1-page cheat sheet PDF/markdown or give you prompt templates for research, writing, or coding?
