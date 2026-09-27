@@ -1,0 +1,3356 @@
+🚀 Full Integration Suite — ทั้ง 6 ฟีเจอร์
+
+จะทำให้ครบทั้ง 6 อย่างครับ โดยแบ่งเป็นไฟล์แยกเพื่อความสะอาด ✨
+
+---
+
+📁 โครงสร้างไฟล์ที่เพิ่ม
+
+```
+terabox-api-docs/
+├── 📄 index.html                    ← อัปเดต
+├── 📄 styles.css                    ← อัปเดต
+├── 📄 app.js                        ← อัปเดต
+├── 📄 config.js                     ← อัปเดต
+├── 📄 docs-integration.js           ← อัปเดต
+│
+├── 🔐 oauth2-client.js              ← 🆕 OAuth2
+├── 📡 sse-client.js                 ← 🆕 SSE
+├── 🎨 response-formatter.js         ← 🆕 JSON viewer
+├── 🧪 openapi-form-generator.js     ← 🆕 Auto form
+├── 📊 analytics-dashboard.js        ← 🆕 Analytics
+├── 🔄 service-worker.js             ← 🆕 PWA offline
+├── 📄 manifest.json                 ← 🆕 PWA manifest
+└── 📄 offline.html                  ← 🆕 หน้า offline
+```
+
+---
+
+🔐 1. oauth2-client.js — OAuth2 Flow
+
+```javascript
+/* =====================================================
+   🔐 TeraBox OAuth2 Client
+   รองรับ Authorization Code + PKCE
+   ===================================================== */
+(function (global) {
+  'use strict';
+
+  const CFG = global.TeraBoxConfig;
+  if (!CFG) return;
+
+  const OAUTH = CFG.oauth2 || {};
+
+  // =====================================================
+  // 🔧 PKCE Helpers
+  // =====================================================
+  function base64UrlEncode(buffer) {
+    return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+  }
+
+  function generateRandomString(length = 64) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+    const arr = new Uint8Array(length);
+    crypto.getRandomValues(arr);
+    return Array.from(arr, b => chars[b % chars.length]).join('');
+  }
+
+  async function generateCodeChallenge(verifier) {
+    const data = new TextEncoder().encode(verifier);
+    const hash = await crypto.subtle.digest('SHA-256', data);
+    return base64UrlEncode(hash);
+  }
+
+  // =====================================================
+  // 💾 Storage
+  // =====================================================
+  const storage = {
+    set(key, value) {
+      try { localStorage.setItem(`oauth_${key}`, JSON.stringify(value)); } catch {}
+    },
+    get(key) {
+      try {
+        const raw = localStorage.getItem(`oauth_${key}`);
+        return raw ? JSON.parse(raw) : null;
+      } catch { return null; }
+    },
+    remove(key) {
+      try { localStorage.removeItem(`oauth_${key}`); } catch {}
+    },
+    clear() {
+      ['access_token', 'refresh_token', 'id_token', 'token_expiry', 'verifier', 'state', 'user']
+        .forEach(k => this.remove(k));
+    },
+  };
+
+  // =====================================================
+  // 🎯 State
+  // =====================================================
+  const state = {
+    tokens: null,
+    user: null,
+    listeners: new Set(),
+  };
+
+  const events = new EventTarget();
+  const emit = (name, detail) => events.dispatchEvent(new CustomEvent(name, { detail }));
+
+  // =====================================================
+  // 🔐 OAuth2 Flow
+  // =====================================================
+
+  /**
+   * เริ่ม OAuth2 login flow (redirect ไปยัง authorization server)
+   */
+  async function login(options = {}) {
+    if (!OAUTH.authorizationEndpoint || !OAUTH.clientId) {
+      throw new Error('OAuth2 ไม่ได้ตั้งค่า — กรุณาตั้งใน config.js');
+    }
+
+    const verifier = generateRandomString(64);
+    const challenge = await generateCodeChallenge(verifier);
+    const stateParam = generateRandomString(32);
+
+    storage.set('verifier', verifier);
+    storage.set('state', stateParam);
+
+    if (options.redirectAfterLogin) {
+      storage.set('redirect_after', options.redirectAfterLogin);
+    }
+
+    const params = new URLSearchParams({
+      client_id: OAUTH.clientId,
+      redirect_uri: OAUTH.redirectUri || `${location.origin}/oauth/callback`,
+      response_type: 'code',
+      scope: (OAUTH.scopes || ['read', 'write']).join(' '),
+      state: stateParam,
+      code_challenge: challenge,
+      code_challenge_method: 'S256',
+      ...(options.extraParams || {}),
+    });
+
+    const url = `${OAUTH.authorizationEndpoint}?${params}`;
+    console.log('🔐 Redirecting to OAuth2:', url);
+
+    // Redirect (หรือ popup ถ้าต้องการ)
+    if (options.usePopup) {
+      return openPopup(url);
+    }
+    location.href = url;
+  }
+
+  /**
+   * เปิด popup สำหรับ OAuth2
+   */
+  function openPopup(url) {
+    return new Promise((resolve, reject) => {
+      const w = 600, h = 700;
+      const left = (screen.width - w) / 2;
+      const top = (screen.height - h) / 2;
+
+      const popup = window.open(
+        url, 'oauth2_popup',
+        `width=${w},height=${h},left=${left},top=${top},resizable=yes,scrollbars=yes`
+      );
+
+      if (!popup) {
+        reject(new Error('Popup ถูกบล็อก — กรุณาอนุญาต popup'));
+        return;
+      }
+
+      // Poll ว่า popup ปิดหรือยัง
+      const timer = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(timer);
+          // ตรวจสอบว่า login สำเร็จหรือไม่
+          if (state.tokens) resolve(state.tokens);
+          else reject(new Error('ผู้ใช้ปิด popup'));
+        }
+      }, 500);
+
+      // Listen message จาก popup
+      const handler = (e) => {
+        if (e.origin !== location.origin) return;
+        if (e.data?.type === 'oauth2_callback') {
+          window.removeEventListener('message', handler);
+          clearInterval(timer);
+          popup.close();
+
+          if (e.data.error) reject(new Error(e.data.error));
+          else resolve(handleCallback(e.data.code, e.data.state));
+        }
+      };
+      window.addEventListener('message', handler);
+    });
+  }
+
+  /**
+   * จัดการ callback (เรียกเมื่อ OAuth2 redirect กลับมา)
+   */
+  async function handleCallback(code, stateParam) {
+    // ตรวจสอบ state (CSRF protection)
+    const savedState = storage.get('state');
+    if (savedState && savedState !== stateParam) {
+      throw new Error('State ไม่ตรง — อาจถูก CSRF attack');
+    }
+
+    const verifier = storage.get('verifier');
+    if (!verifier) {
+      throw new Error('ไม่พบ code_verifier — กรุณา login ใหม่');
+    }
+
+    // แลก code → token
+    const tokens = await exchangeCodeForTokens(code, verifier);
+
+    storage.set('access_token', tokens.access_token);
+    if (tokens.refresh_token) storage.set('refresh_token', tokens.refresh_token);
+    if (tokens.id_token) storage.set('id_token', tokens.id_token);
+    if (tokens.expires_in) {
+      storage.set('token_expiry', Date.now() + tokens.expires_in * 1000);
+    }
+
+    state.tokens = tokens;
+
+    // โหลดข้อมูล user
+    try {
+      state.user = await fetchUserInfo(tokens.access_token);
+      storage.set('user', state.user);
+    } catch (e) {
+      console.warn('ไม่สามารถโหลด user info:', e);
+    }
+
+    // เคลียร์ verifier + state
+    storage.remove('verifier');
+    storage.remove('state');
+
+    emit('login', { tokens, user: state.user });
+    console.log('✅ OAuth2 login สำเร็จ');
+
+    return tokens;
+  }
+
+  /**
+   * แลก code เป็น tokens
+   */
+  async function exchangeCodeForTokens(code, verifier) {
+    const res = await fetch(OAUTH.tokenEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: OAUTH.redirectUri || `${location.origin}/oauth/callback`,
+        client_id: OAUTH.clientId,
+        code_verifier: verifier,
+      }),
+    });
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.error_description || `Token endpoint error: ${res.status}`);
+    }
+
+    return res.json();
+  }
+
+  /**
+   * Refresh token
+   */
+  async function refresh() {
+    const refreshToken = storage.get('refresh_token');
+    if (!refreshToken) {
+      throw new Error('ไม่พบ refresh_token');
+    }
+
+    const res = await fetch(OAUTH.tokenEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+        client_id: OAUTH.clientId,
+      }),
+    });
+
+    if (!res.ok) {
+      // Refresh ไม่ได้ → logout
+      logout();
+      throw new Error('Refresh token หมดอายุ — กรุณา login ใหม่');
+    }
+
+    const tokens = await res.json();
+    storage.set('access_token', tokens.access_token);
+    if (tokens.refresh_token) storage.set('refresh_token', tokens.refresh_token);
+    if (tokens.expires_in) {
+      storage.set('token_expiry', Date.now() + tokens.expires_in * 1000);
+    }
+
+    state.tokens = tokens;
+    emit('refresh', { tokens });
+    return tokens;
+  }
+
+  /**
+   * โหลด user info
+   */
+  async function fetchUserInfo(accessToken) {
+    if (!OAUTH.userInfoEndpoint) return null;
+    const res = await fetch(OAUTH.userInfoEndpoint, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) throw new Error(`UserInfo error: ${res.status}`);
+    return res.json();
+  }
+
+  /**
+   * Logout
+   */
+  function logout(options = {}) {
+    storage.clear();
+    state.tokens = null;
+    state.user = null;
+    emit('logout');
+
+    if (options.redirect !== false && OAUTH.endSessionEndpoint) {
+      const params = new URLSearchParams({
+        post_logout_redirect_uri: OAUTH.postLogoutRedirectUri || location.origin,
+        ...(state.tokens?.id_token ? { id_token_hint: state.tokens.id_token } : {}),
+      });
+      location.href = `${OAUTH.endSessionEndpoint}?${params}`;
+    }
+  }
+
+  /**
+   * ตรวจสอบว่ามี token ที่ยังไม่หมดอายุหรือไม่
+   */
+  function isAuthenticated() {
+    const token = storage.get('access_token');
+    if (!token) return false;
+    const expiry = storage.get('token_expiry');
+    if (!expiry) return true;
+    return Date.now() < expiry - 30000; // 30s buffer
+  }
+
+  /**
+   * ดึง access token ที่พร้อมใช้ (auto-refresh ถ้าจำเป็น)
+   */
+  async function getValidAccessToken() {
+    const expiry = storage.get('token_expiry');
+    if (expiry && Date.now() > expiry - 60000) {
+      // ใกล้หมดอายุ → refresh
+      try {
+        await refresh();
+      } catch {
+        return null;
+      }
+    }
+    return storage.get('access_token');
+  }
+
+  /**
+   * Auto-detect callback (เรียกที่ init)
+   */
+  async function handleRedirectCallback() {
+    const params = new URLSearchParams(location.search);
+    const code = params.get('code');
+    const stateParam = params.get('state');
+    const error = params.get('error');
+
+    if (error) {
+      emit('login:error', { error, description: params.get('error_description') });
+      // ล้าง query
+      history.replaceState(null, '', location.pathname);
+      throw new Error(`OAuth2 error: ${error}`);
+    }
+
+    if (!code) return null;
+
+    try {
+      const tokens = await handleCallback(code, stateParam);
+
+      // Redirect กลับ
+      const redirect = storage.get('redirect_after') || location.pathname;
+      storage.remove('redirect_after');
+      history.replaceState(null, '', redirect);
+
+      return tokens;
+    } catch (err) {
+      history.replaceState(null, '', location.pathname);
+      throw err;
+    }
+  }
+
+  // =====================================================
+  // 🌐 Public API
+  // =====================================================
+  const OAuth2 = {
+    login,
+    logout,
+    refresh,
+    isAuthenticated,
+    getValidAccessToken,
+    handleRedirectCallback,
+
+    get user() { return state.user || storage.get('user'); },
+    get tokens() { return state.tokens; },
+
+    // Events
+    on: (name, cb) => events.addEventListener(name, cb),
+    off: (name, cb) => events.removeEventListener(name, cb),
+
+    // Utilities
+    _pkce: { generateRandomString, generateCodeChallenge },
+    _storage: storage,
+  };
+
+  global.TeraBoxOAuth2 = OAuth2;
+})(window);
+```
+
+---
+
+📡 2. sse-client.js — Server-Sent Events
+
+```javascript
+/* =====================================================
+   📡 TeraBox SSE Client (แทน WebSocket)
+   ===================================================== */
+(function (global) {
+  'use strict';
+
+  const CFG = global.TeraBoxConfig;
+  if (!CFG) return;
+
+  const SSE = CFG.sse || {};
+  const SSE_URL = SSE.url || `${CFG.apiBaseUrl}/docs/events`;
+
+  const state = {
+    eventSource: null,
+    reconnectAttempts: 0,
+    reconnectTimer: null,
+    listeners: new Map(),    // eventName → Set<callback>
+    lastEventId: null,
+    connected: false,
+  };
+
+  const MAX_RECONNECT = SSE.maxReconnectAttempts || 10;
+  const BASE_RECONNECT = SSE.baseReconnectDelay || 1000;
+
+  // =====================================================
+  // 🔌 Connect
+  // =====================================================
+  function connect(options = {}) {
+    if (state.eventSource?.readyState === EventSource.OPEN) {
+      console.log('📡 SSE already connected');
+      return;
+    }
+
+    // สร้าง URL พร้อม token
+    const url = new URL(SSE_URL);
+    if (CFG.auth?.getToken) {
+      const token = CFG.auth.getToken();
+      if (token) url.searchParams.set('token', token);
+    }
+    if (options.topics) {
+      url.searchParams.set('topics', options.topics.join(','));
+    }
+    if (state.lastEventId) {
+      url.searchParams.set('lastEventId', state.lastEventId);
+    }
+
+    console.log('📡 Connecting SSE:', url.toString());
+
+    try {
+      state.eventSource = new EventSource(url.toString());
+
+      // ─── Open ───
+      state.eventSource.onopen = () => {
+        state.connected = true;
+        state.reconnectAttempts = 0;
+        emit('open');
+        console.log('✅ SSE connected');
+      };
+
+      // ─── Message (default event) ───
+      state.eventSource.onmessage = (e) => {
+        handleEvent('message', e);
+      };
+
+      // ─── Error ───
+      state.eventSource.onerror = (e) => {
+        state.connected = false;
+        emit('error', e);
+
+        if (state.eventSource.readyState === EventSource.CLOSED) {
+          console.warn('⚠️ SSE closed — จะลองเชื่อมต่อใหม่');
+          scheduleReconnect();
+        } else {
+          console.warn('⚠️ SSE error (auto-reconnecting)');
+        }
+      };
+
+      // ─── Custom events ───
+      // Listen to ทุก named events ที่ subscribe ไว้
+      const allEvents = [
+        'notification', 'message', 'upload:progress',
+        'file:created', 'file:updated', 'file:deleted',
+        'search:indexed', 'system:alert', 'docs:update',
+      ];
+      allEvents.forEach(name => {
+        state.eventSource.addEventListener(name, (e) => handleEvent(name, e));
+      });
+
+    } catch (err) {
+      console.error('SSE connect error:', err);
+      scheduleReconnect();
+    }
+  }
+
+  // =====================================================
+  // 🔄 Reconnect
+  // =====================================================
+  function scheduleReconnect() {
+    if (state.reconnectTimer) return;
+    if (state.reconnectAttempts >= MAX_RECONNECT) {
+      emit('reconnect:failed', { attempts: state.reconnectAttempts });
+      console.error('❌ SSE reconnect attempts exceeded');
+      return;
+    }
+
+    // Exponential backoff + jitter
+    const delay = Math.min(
+      BASE_RECONNECT * Math.pow(2, state.reconnectAttempts) + Math.random() * 1000,
+      30000
+    );
+
+    state.reconnectAttempts++;
+    emit('reconnect:scheduled', { attempt: state.reconnectAttempts, delay });
+
+    state.reconnectTimer = setTimeout(() => {
+      state.reconnectTimer = null;
+      connect();
+    }, delay);
+  }
+
+  // =====================================================
+  // 📨 Handle Event
+  // =====================================================
+  function handleEvent(name, e) {
+    let data = e.data;
+    try { data = JSON.parse(data); } catch { /* keep as text */ }
+
+    if (e.lastEventId) state.lastEventId = e.lastEventId;
+
+    const payload = {
+      type: name,
+      data,
+      id: e.lastEventId,
+      timestamp: new Date().toISOString(),
+    };
+
+    emit(name, payload);
+    emit('*', payload);  // wildcard listener
+
+    // Call specific listeners
+    const listeners = state.listeners.get(name);
+    if (listeners) {
+      listeners.forEach(cb => {
+        try { cb(payload); } catch (err) { console.error(err); }
+      });
+    }
+  }
+
+  // =====================================================
+  // 🔌 Disconnect
+  // =====================================================
+  function disconnect() {
+    if (state.reconnectTimer) {
+      clearTimeout(state.reconnectTimer);
+      state.reconnectTimer = null;
+    }
+    if (state.eventSource) {
+      state.eventSource.close();
+      state.eventSource = null;
+    }
+    state.connected = false;
+    state.reconnectAttempts = 0;
+    emit('close');
+    console.log('📡 SSE disconnected');
+  }
+
+  // =====================================================
+  // 🎯 Public API
+  // =====================================================
+  const events = new EventTarget();
+  const emit = (name, detail) => events.dispatchEvent(new CustomEvent(name, { detail }));
+
+  const SSEClient = {
+    connect,
+    disconnect,
+
+    /**
+     * Subscribe to a specific event
+     * @example
+     *   SSEClient.subscribe('notification', (e) => console.log(e.data));
+     */
+    subscribe(eventName, callback) {
+      if (!state.listeners.has(eventName)) {
+        state.listeners.set(eventName, new Set());
+      }
+      state.listeners.get(eventName).add(callback);
+
+      // Auto-connect ถ้ายังไม่เชื่อม
+      if (!state.connected) connect();
+
+      // Return unsubscribe
+      return () => {
+        const set = state.listeners.get(eventName);
+        if (set) {
+          set.delete(callback);
+          if (set.size === 0) state.listeners.delete(eventName);
+        }
+      };
+    },
+
+    get connected() { return state.connected; },
+    get lastEventId() { return state.lastEventId; },
+
+    // Events
+    on: (name, cb) => events.addEventListener(name, cb),
+    off: (name, cb) => events.removeEventListener(name, cb),
+
+    // For testing
+    _state: state,
+  };
+
+  global.TeraBoxSSE = SSEClient;
+})(window);
+```
+
+---
+
+🎨 3. response-formatter.js — สวยกว่า JSON ดิบ
+
+```javascript
+/* =====================================================
+   🎨 JSON Response Formatter
+   แสดงผลแบบ tree + syntax highlight + collapse
+   ===================================================== */
+(function (global) {
+  'use strict';
+
+  // =====================================================
+  // 🎨 Render JSON
+  // =====================================================
+  function renderJSON(data, options = {}) {
+    const opts = {
+      collapse: options.collapse ?? 2,
+      showTypes: options.showTypes ?? true,
+      showLineNumbers: false,
+      maxDepth: options.maxDepth ?? 20,
+      ...options,
+    };
+
+    const tree = buildTree(data, opts, 0);
+    return `
+      <div class="json-viewer" data-collapse-depth="${opts.collapse}">
+        ${renderTreeNode(tree, 0, opts)}
+      </div>
+    `;
+  }
+
+  function buildTree(data, opts, depth) {
+    const type = getType(data);
+
+    if (type === 'object' || type === 'array') {
+      const entries = type === 'array'
+        ? data.map((v, i) => [i, v])
+        : Object.entries(data);
+
+      return {
+        type,
+        size: entries.length,
+        children: depth >= opts.maxDepth
+          ? null
+          : entries.map(([k, v]) => ({
+              key: k,
+              value: buildTree(v, opts, depth + 1),
+            })),
+      };
+    }
+
+    return { type, value: data };
+  }
+
+  function getType(v) {
+    if (v === null) return 'null';
+    if (Array.isArray(v)) return 'array';
+    return typeof v;
+  }
+
+  // =====================================================
+  // 🌳 Render Tree Node
+  // =====================================================
+  function renderTreeNode(node, depth, opts) {
+    if (node.type === 'object' || node.type === 'array') {
+      if (node.children === null) {
+        return `<span class="json-collapsed">… ${node.size} ${node.type === 'array' ? 'items' : 'keys'}</span>`;
+      }
+
+      const open = node.type === 'array' ? '[' : '{';
+      const close = node.type === 'array' ? ']' : '}';
+      const isCollapsed = depth >= opts.collapse;
+
+      const childrenHTML = node.children.map((child, i) => {
+        const isLast = i === node.children.length - 1;
+        const keyHTML = node.type === 'array'
+          ? `<span class="json-index">${child.key}</span>`
+          : `<span class="json-key">"${escapeHtml(child.key)}"</span>`;
+
+        return `
+          <div class="json-line">
+            ${keyHTML}<span class="json-colon">:</span>
+            ${renderTreeNode(child.value, depth + 1, opts)}${isLast ? '' : '<span class="json-comma">,</span>'}
+          </div>
+        `;
+      }).join('');
+
+      return `
+        <div class="json-node ${isCollapsed ? 'collapsed' : ''}" data-depth="${depth}">
+          <span class="json-toggle" onclick="this.parentElement.classList.toggle('collapsed')"></span>
+          <span class="json-brace">${open}</span>
+          <span class="json-size">${node.size} ${node.type === 'array' ? 'items' : 'keys'}</span>
+          <div class="json-children">${childrenHTML}</div>
+          <span class="json-brace">${close}</span>
+        </div>
+      `;
+    }
+
+    // Primitive
+    return renderPrimitive(node.value, node.type, opts);
+  }
+
+  function renderPrimitive(value, type, opts) {
+    let display, cls;
+
+    switch (type) {
+      case 'string':
+        display = `"${escapeHtml(value)}"`;
+        cls = 'json-string';
+        // URL → clickable
+        if (/^https?:\/\//.test(value)) {
+          display = `<a href="${escapeHtml(value)}" target="_blank" rel="noopener" class="json-link">"${escapeHtml(truncate(value, 80))}"</a>`;
+        }
+        // ISO Date → humanize
+        if (/^\d{4}-\d{2}-\d{2}T/.test(value)) {
+          display = `<span class="json-date" title="${escapeHtml(value)}">"${escapeHtml(value)}"</span>`;
+        }
+        break;
+      case 'number':
+        display = String(value);
+        cls = 'json-number';
+        break;
+      case 'boolean':
+        display = String(value);
+        cls = value ? 'json-bool-true' : 'json-bool-false';
+        break;
+      case 'null':
+        display = 'null';
+        cls = 'json-null';
+        break;
+      default:
+        display = String(value);
+        cls = 'json-value';
+    }
+
+    const typeHint = opts.showTypes
+      ? `<span class="json-type" title="${type}">${type[0]}</span>`
+      : '';
+
+    return `<span class="${cls}">${display}</span>${typeHint}`;
+  }
+
+  // =====================================================
+  // 🌐 Render HTTP Headers
+  // =====================================================
+  function renderHeaders(headers) {
+    const entries = Object.entries(headers || {});
+    if (entries.length === 0) return '';
+
+    return `
+      <div class="http-headers">
+        <div class="http-headers-title">📨 Response Headers</div>
+        <div class="http-headers-list">
+          ${entries.map(([k, v]) => `
+            <div class="http-header-row">
+              <span class="http-header-key">${escapeHtml(k)}</span>
+              <span class="http-header-value">${escapeHtml(v)}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // =====================================================
+  // 📊 Render Response Summary
+  // =====================================================
+  function renderSummary(response) {
+    const { status, latency, size } = response;
+    const statusClass = status < 300 ? 'ok' : status < 400 ? 'warn' : 'err';
+
+    return `
+      <div class="response-summary">
+        <div class="response-chip ${statusClass}">
+          <span class="response-chip-label">Status</span>
+          <span class="response-chip-value">${status}</span>
+        </div>
+        <div class="response-chip">
+          <span class="response-chip-label">Time</span>
+          <span class="response-chip-value">${latency}ms</span>
+        </div>
+        ${size != null ? `
+        <div class="response-chip">
+          <span class="response-chip-label">Size</span>
+          <span class="response-chip-value">${formatBytes(size)}</span>
+        </div>` : ''}
+      </div>
+    `;
+  }
+
+  // =====================================================
+  // 🎯 Public API — Full Response Renderer
+  // =====================================================
+  function renderResponse(response, options = {}) {
+    const { status, latency, headers, data, size } = response;
+
+    const dataHTML = typeof data === 'string'
+      ? `<pre class="raw-response"><code>${escapeHtml(data)}</code></pre>`
+      : renderJSON(data, options);
+
+    return `
+      <div class="response-viewer">
+        ${renderSummary({ status, latency, size })}
+        <div class="response-tabs">
+          <button class="response-tab active" data-tab="body">📄 Body</button>
+          <button class="response-tab" data-tab="headers">📨 Headers</button>
+          <button class="response-tab" data-tab="raw">⌨️ Raw</button>
+        </div>
+        <div class="response-tab-content active" data-tab-content="body">
+          ${dataHTML}
+        </div>
+        <div class="response-tab-content" data-tab-content="headers">
+          ${renderHeaders(headers)}
+        </div>
+        <div class="response-tab-content" data-tab-content="raw">
+          <pre class="raw-response"><code>${escapeHtml(JSON.stringify(data, null, 2))}</code></pre>
+        </div>
+      </div>
+    `;
+  }
+
+  // =====================================================
+  // 🛠️ Helpers
+  // =====================================================
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, m => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[m]));
+  }
+
+  function truncate(str, n) {
+    return str.length > n ? str.slice(0, n) + '…' : str;
+  }
+
+  function formatBytes(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  }
+
+  // =====================================================
+  // 🎯 Tab switching (delegate)
+  // =====================================================
+  document.addEventListener('click', (e) => {
+    const tab = e.target.closest('.response-tab');
+    if (!tab) return;
+    const viewer = tab.closest('.response-viewer');
+    if (!viewer) return;
+
+    const tabName = tab.dataset.tab;
+    viewer.querySelectorAll('.response-tab').forEach(t => t.classList.remove('active'));
+    viewer.querySelectorAll('.response-tab-content').forEach(c => c.classList.remove('active'));
+    tab.classList.add('active');
+    viewer.querySelector(`[data-tab-content="${tabName}"]`)?.classList.add('active');
+  });
+
+  global.TeraBoxFormatter = {
+    renderResponse,
+    renderJSON,
+    renderHeaders,
+    renderSummary,
+    escapeHtml,
+    formatBytes,
+  };
+})(window);
+```
+
+---
+
+🧪 4. openapi-form-generator.js — Auto Form จาก Spec
+
+```javascript
+/* =====================================================
+   🧪 OpenAPI → Auto Form Generator
+   สร้างฟอร์ม try-it-out อัตโนมัติจาก spec
+   ===================================================== */
+(function (global) {
+  'use strict';
+
+  // =====================================================
+  // 🎯 Generate Form HTML
+  // =====================================================
+  function generateForm(endpoint, method, spec) {
+    const operation = findOperation(spec, endpoint, method);
+    if (!operation) {
+      return `<div class="form-empty">⚠️ ไม่พบ operation สำหรับ <code>${method} ${endpoint}</code></div>`;
+    }
+
+    const parts = [];
+
+    // ─── Path params ───
+    const pathParams = (operation.parameters || []).filter(p => p.in === 'path');
+    if (pathParams.length) {
+      parts.push(renderParamGroup('🛣️ Path', 'path', pathParams));
+    }
+
+    // ─── Query params ───
+    const queryParams = (operation.parameters || []).filter(p => p.in === 'query');
+    if (queryParams.length) {
+      parts.push(renderParamGroup('🔍 Query', 'query', queryParams));
+    }
+
+    // ─── Headers ───
+    const headerParams = (operation.parameters || []).filter(p => p.in === 'header');
+    if (headerParams.length) {
+      parts.push(renderParamGroup('📨 Headers', 'header', headerParams));
+    }
+
+    // ─── Request body ───
+    const bodySchema = operation.requestBody?.content?.['application/json']?.schema;
+    if (bodySchema) {
+      const resolved = resolveSchema(bodySchema, spec);
+      parts.push(renderBodyGroup(resolved, spec));
+    }
+
+    // ─── Multipart ───
+    const formSchema = operation.requestBody?.content?.['multipart/form-data']?.schema;
+    if (formSchema) {
+      const resolved = resolveSchema(formSchema, spec);
+      parts.push(renderMultipartGroup(resolved, spec));
+    }
+
+    if (parts.length === 0) {
+      return `<div class="form-empty">✨ ไม่มีพารามิเตอร์ — ยิงได้เลย</div>`;
+    }
+
+    return `
+      <form class="auto-form" data-endpoint="${escapeHtml(endpoint)}" data-method="${method}">
+        ${parts.join('')}
+        <div class="auto-form-actions">
+          <button type="submit" class="btn btn-primary">▶ ส่งคำขอ</button>
+          <button type="reset" class="btn btn-ghost">↺ รีเซ็ต</button>
+        </div>
+      </form>
+    `;
+  }
+
+  // =====================================================
+  // 📋 Param Group
+  // =====================================================
+  function renderParamGroup(title, inType, params) {
+    return `
+      <fieldset class="auto-form-group" data-in="${inType}">
+        <legend>${title}</legend>
+        ${params.map(p => renderParamField(p)).join('')}
+      </fieldset>
+    `;
+  }
+
+  function renderParamField(param) {
+    const schema = param.schema || {};
+    const required = param.required ? 'required' : '';
+    const requiredBadge = param.required ? '<span class="required">*</span>' : '';
+    const name = param.name;
+    const id = `field-${param.in}-${name}`;
+    const value = schema.default ?? schema.example ?? '';
+    const placeholder = schema.example || param.description || '';
+
+    let input;
+
+    // Enum → select
+    if (schema.enum) {
+      input = `
+        <select name="${escapeHtml(name)}" id="${id}" ${required}>
+          ${schema.enum.map(v => `
+            <option value="${escapeHtml(v)}" ${v === value ? 'selected' : ''}>${escapeHtml(v)}</option>
+          `).join('')}
+        </select>
+      `;
+    }
+    // Boolean → checkbox
+    else if (schema.type === 'boolean') {
+      input = `
+        <label class="auto-form-checkbox">
+          <input type="checkbox" name="${escapeHtml(name)}" id="${id}" ${value === true ? 'checked' : ''}>
+          <span>${escapeHtml(placeholder || name)}</span>
+        </label>
+      `;
+    }
+    // Number / integer
+    else if (schema.type === 'number' || schema.type === 'integer') {
+      input = `
+        <input
+          type="number"
+          name="${escapeHtml(name)}"
+          id="${id}"
+          value="${escapeHtml(String(value))}"
+          placeholder="${escapeHtml(placeholder)}"
+          step="${schema.type === 'integer' ? '1' : 'any'}"
+          ${schema.minimum != null ? `min="${schema.minimum}"` : ''}
+          ${schema.maximum != null ? `max="${schema.maximum}"` : ''}
+          ${required}
+        >
+      `;
+    }
+    // String
+    else {
+      input = `
+        <input
+          type="text"
+          name="${escapeHtml(name)}"
+          id="${id}"
+          value="${escapeHtml(String(value))}"
+          placeholder="${escapeHtml(placeholder)}"
+          ${schema.maxLength ? `maxlength="${schema.maxLength}"` : ''}
+          ${required}
+        >
+      `;
+    }
+
+    return `
+      <div class="auto-form-field">
+        <label for="${id}">
+          <code>${escapeHtml(name)}</code>
+          ${requiredBadge}
+          <span class="auto-form-type">${escapeHtml(schema.type || 'string')}</span>
+        </label>
+        ${input}
+        ${param.description ? `<div class="auto-form-hint">${escapeHtml(param.description)}</div>` : ''}
+      </div>
+    `;
+  }
+
+  // =====================================================
+  // 📦 Body Group (JSON editor)
+  // =====================================================
+  function renderBodyGroup(schema, spec) {
+    const example = generateExample(schema, spec);
+
+    return `
+      <fieldset class="auto-form-group" data-in="body">
+        <legend>📦 Request Body <span class="auto-form-type">${escapeHtml(schema.type || 'object')}</span></legend>
+        <div class="auto-form-field">
+          <label><code>JSON</code></label>
+          <textarea
+            name="__body__"
+            class="auto-form-json-editor"
+            rows="10"
+            spellcheck="false"
+          >${escapeHtml(JSON.stringify(example, null, 2))}</textarea>
+          <div class="auto-form-actions-inline">
+            <button type="button" class="btn btn-ghost btn-sm" data-format-json>✨ จัดรูปแบบ</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-validate-json>✓ ตรวจสอบ</button>
+          </div>
+        </div>
+      </fieldset>
+    `;
+  }
+
+  // =====================================================
+  // 📁 Multipart Group
+  // =====================================================
+  function renderMultipartGroup(schema, spec) {
+    const props = schema.properties || {};
+    const required = schema.required || [];
+
+    return `
+      <fieldset class="auto-form-group" data-in="multipart">
+        <legend>📁 Form Data (multipart)</legend>
+        ${Object.entries(props).map(([name, propSchema]) => {
+          const isRequired = required.includes(name);
+          const id = `field-multipart-${name}`;
+          const isFile = propSchema.format === 'binary' || propSchema.type === 'string' && propSchema.format === 'binary';
+
+          const input = isFile
+            ? `<input type="file" name="${escapeHtml(name)}" id="${id}" ${isRequired ? 'required' : ''}>`
+            : `<input type="text" name="${escapeHtml(name)}" id="${id}" placeholder="${escapeHtml(propSchema.example || '')}" ${isRequired ? 'required' : ''}>`;
+
+          return `
+            <div class="auto-form-field">
+              <label for="${id}">
+                <code>${escapeHtml(name)}</code>
+                ${isRequired ? '<span class="required">*</span>' : ''}
+                <span class="auto-form-type">${escapeHtml(propSchema.type || 'string')}</span>
+              </label>
+              ${input}
+            </div>
+          `;
+        }).join('')}
+      </fieldset>
+    `;
+  }
+
+  // =====================================================
+  // 🌱 Generate Example from Schema
+  // =====================================================
+  function generateExample(schema, spec, depth = 0) {
+    if (depth > 10) return null;
+    if (!schema) return null;
+
+    // Resolve $ref
+    if (schema.$ref) {
+      schema = resolveRef(schema.$ref, spec);
+    }
+
+    // Use example if available
+    if (schema.example !== undefined) return schema.example;
+    if (schema.default !== undefined) return schema.default;
+    if (schema.enum?.length) return schema.enum[0];
+
+    switch (schema.type) {
+      case 'object':
+      case undefined:
+        if (schema.properties) {
+          const obj = {};
+          Object.entries(schema.properties).forEach(([k, v]) => {
+            obj[k] = generateExample(v, spec, depth + 1);
+          });
+          return obj;
+        }
+        return {};
+
+      case 'array':
+        return schema.items ? [generateExample(schema.items, spec, depth + 1)] : [];
+
+      case 'string':
+        if (schema.format === 'date') return new Date().toISOString().split('T')[0];
+        if (schema.format === 'date-time') return new Date().toISOString();
+        if (schema.format === 'email') return 'user@example.com';
+        if (schema.format === 'uuid') return crypto.randomUUID();
+        if (schema.format === 'uri') return 'https://example.com';
+        return 'string';
+
+      case 'number':
+      case 'integer':
+        return schema.minimum ?? 0;
+
+      case 'boolean':
+        return false;
+
+      default:
+        return null;
+    }
+  }
+
+  // =====================================================
+  // 📚 Find Operation in Spec
+  // =====================================================
+  function findOperation(spec, endpoint, method) {
+    if (!spec?.paths) return null;
+
+    // Exact match
+    if (spec.paths[endpoint]?.[method.toLowerCase()]) {
+      return spec.paths[endpoint][method.toLowerCase()];
+    }
+
+    // Fuzzy match: แทน {xxx} ด้วย regex
+    const normalizedEndpoint = endpoint.replace(/\{[^}]+\}/g, '{param}');
+    for (const [path, methods] of Object.entries(spec.paths)) {
+      const normalizedPath = path.replace(/\{[^}]+\}/g, '{param}');
+      if (normalizedPath === normalizedEndpoint) {
+        return methods[method.toLowerCase()];
+      }
+    }
+
+    return null;
+  }
+
+  function resolveRef(ref, spec) {
+    if (!ref.startsWith('#/')) return null;
+    const parts = ref.slice(2).split('/');
+    let obj = spec;
+    for (const p of parts) {
+      obj = obj?.[p];
+      if (!obj) return null;
+    }
+    return obj;
+  }
+
+  function resolveSchema(schema, spec) {
+    if (schema.$ref) return resolveRef(schema.$ref, spec) || schema;
+    return schema;
+  }
+
+  // =====================================================
+  // 🎯 Form Data Extractor
+  // =====================================================
+  function extractFormData(form) {
+    const data = {
+      method: form.dataset.method,
+      endpoint: form.dataset.endpoint,
+      path: {},
+      query: {},
+      headers: {},
+      body: null,
+      formData: null,
+    };
+
+    const fd = new FormData(form);
+
+    // Body JSON
+    const bodyText = form.querySelector('[name="__body__"]')?.value;
+    if (bodyText) {
+      try { data.body = JSON.parse(bodyText); }
+      catch { data.body = bodyText; }
+    }
+
+    // Multipart
+    const fileInputs = form.querySelectorAll('[data-in="multipart"] input[type="file"]');
+    if (fileInputs.length > 0) {
+      data.formData = new FormData();
+      form.querySelectorAll('[data-in="multipart"] input, [data-in="multipart"] select, [data-in="multipart"] textarea').forEach(el => {
+        if (el.type === 'file') {
+          if (el.files[0]) data.formData.append(el.name, el.files[0]);
+        } else if (el.value) {
+          data.formData.append(el.name, el.value);
+        }
+      });
+    }
+
+    // Path / Query / Headers
+    fd.forEach((value, name) => {
+      if (name === '__body__') return;
+      const el = form.elements[name];
+      if (!el) return;
+      const inType = el.closest('[data-in]')?.dataset.in;
+      if (inType === 'multipart') return;
+      if (inType) data[inType][name] = value;
+    });
+
+    // Handle checkboxes (unchecked ไม่ขึ้นใน FormData)
+    form.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      const inType = cb.closest('[data-in]')?.dataset.in;
+      if (inType && inType !== 'multipart') {
+        data[inType][cb.name] = cb.checked;
+      }
+    });
+
+    return data;
+  }
+
+  // =====================================================
+  // 🎨 Tab helper — inline actions
+  // =====================================================
+  document.addEventListener('click', (e) => {
+    const formatBtn = e.target.closest('[data-format-json]');
+    if (formatBtn) {
+      const textarea = formatBtn.closest('.auto-form-field').querySelector('.auto-form-json-editor');
+      try {
+        const parsed = JSON.parse(textarea.value);
+        textarea.value = JSON.stringify(parsed, null, 2);
+      } catch (err) {
+        alert('❌ JSON ไม่ถูกต้อง: ' + err.message);
+      }
+    }
+
+    const validateBtn = e.target.closest('[data-validate-json]');
+    if (validateBtn) {
+      const textarea = validateBtn.closest('.auto-form-field').querySelector('.auto-form-json-editor');
+      try {
+        JSON.parse(textarea.value);
+        validateBtn.textContent = '✅ ถูกต้อง';
+        setTimeout(() => validateBtn.textContent = '✓ ตรวจสอบ', 1500);
+      } catch (err) {
+        alert('❌ JSON ไม่ถูกต้อง: ' + err.message);
+      }
+    }
+  });
+
+  // =====================================================
+  // 🛠️ Helpers
+  // =====================================================
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, m => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[m]));
+  }
+
+  global.TeraBoxFormGenerator = {
+    generateForm,
+    extractFormData,
+    generateExample,
+    findOperation,
+  };
+})(window);
+```
+
+---
+
+📊 5. analytics-dashboard.js — Analytics ในตัว
+
+```javascript
+/* =====================================================
+   📊 Analytics Dashboard
+   แสดง stats ของ try-it-out, endpoints, errors
+   ===================================================== */
+(function (global) {
+  'use strict';
+
+  const CFG = global.TeraBoxConfig;
+  if (!CFG) return;
+
+  const STORAGE_KEY = 'terabox_analytics_events';
+  const MAX_EVENTS = 500;
+
+  // =====================================================
+  // 💾 Event Store (localStorage)
+  // =====================================================
+  const store = {
+    events: load(),
+
+    add(event) {
+      this.events.push({
+        ...event,
+        id: crypto.randomUUID(),
+        timestamp: event.timestamp || Date.now(),
+      });
+      if (this.events.length > MAX_EVENTS) {
+        this.events = this.events.slice(-MAX_EVENTS);
+      }
+      save(this.events);
+      emit('event', event);
+    },
+
+    clear() {
+      this.events = [];
+      save(this.events);
+      emit('clear');
+    },
+
+    getAll() { return this.events; },
+
+    filter({ since, type, endpoint } = {}) {
+      return this.events.filter(e => {
+        if (since && e.timestamp < since) return false;
+        if (type && e.type !== type) return false;
+        if (endpoint && e.endpoint !== endpoint) return false;
+        return true;
+      });
+    },
+  };
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch { return []; }
+  }
+
+  function save(events) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(events)); } catch {}
+  }
+
+  const events = new EventTarget();
+  const emit = (name, detail) => events.dispatchEvent(new CustomEvent(name, { detail }));
+
+  // =====================================================
+  // 📊 Compute Stats
+  // =====================================================
+  function computeStats(timeframe = 'session') {
+    const now = Date.now();
+    const cutoff = {
+      session: 0,
+      hour: now - 3600 * 1000,
+      day: now - 86400 * 1000,
+      week: now - 7 * 86400 * 1000,
+      all: 0,
+    }[timeframe] ?? 0;
+
+    const events = store.filter({ since: cutoff });
+
+    const total = events.length;
+    const successes = events.filter(e => e.success).length;
+    const errors = total - successes;
+
+    const latencies = events.filter(e => e.latency != null).map(e => e.latency);
+    const avgLatency = latencies.length
+      ? Math.round(latencies.reduce((a, b) => a + b, 0) / latencies.length)
+      : 0;
+    const p95 = percentile(latencies, 95);
+    const p50 = percentile(latencies, 50);
+
+    // Group by endpoint
+    const byEndpoint = groupBy(events, 'endpoint');
+
+    // Group by method
+    const byMethod = groupBy(events, 'method');
+
+    // Group by status
+    const byStatus = groupBy(events, e => `${Math.floor(e.status / 100)}xx`);
+
+    // Timeline (last 24h, bucketed by hour)
+    const timeline = timelineBuckets(events, 24);
+
+    return {
+      total,
+      successes,
+      errors,
+      successRate: total ? (successes / total * 100).toFixed(1) : '0',
+      avgLatency,
+      p50,
+      p95,
+      byEndpoint,
+      byMethod,
+      byStatus,
+      timeline,
+      timeframe,
+    };
+  }
+
+  function percentile(arr, p) {
+    if (!arr.length) return 0;
+    const sorted = [...arr].sort((a, b) => a - b);
+    const idx = Math.ceil((p / 100) * sorted.length) - 1;
+    return sorted[Math.max(0, idx)];
+  }
+
+  function groupBy(arr, keyFn) {
+    const key = typeof keyFn === 'string' ? (e) => e[keyFn] : keyFn;
+    return arr.reduce((acc, item) => {
+      const k = key(item) || 'unknown';
+      acc[k] = (acc[k] || 0) + 1;
+      return acc;
+    }, {});
+  }
+
+  function timelineBuckets(events, hours) {
+    const now = Date.now();
+    const bucket = 3600 * 1000;
+    const buckets = Array(hours).fill(0).map((_, i) => ({
+      time: now - (hours - i - 1) * bucket,
+      count: 0,
+      errors: 0,
+    }));
+
+    events.forEach(e => {
+      const idx = Math.floor((e.timestamp - (now - hours * bucket)) / bucket);
+      if (idx >= 0 && idx < hours) {
+        buckets[idx].count++;
+        if (!e.success) buckets[idx].errors++;
+      }
+    });
+
+    return buckets;
+  }
+
+  // =====================================================
+  // 🎨 Render Dashboard
+  // =====================================================
+  function renderDashboard(targetSelector, options = {}) {
+    const container = typeof targetSelector === 'string'
+      ? document.querySelector(targetSelector)
+      : targetSelector;
+    if (!container) return;
+
+    const stats = computeStats(options.timeframe || 'day');
+
+    container.innerHTML = `
+      <div class="analytics-dashboard">
+        <div class="analytics-head">
+          <h3>📊 Analytics</h3>
+          <div class="analytics-actions">
+            <select class="analytics-timeframe">
+              <option value="session">เซสชันนี้</option>
+              <option value="hour">ชั่วโมงที่ผ่านมา</option>
+              <option value="day" selected>24 ชั่วโมง</option>
+              <option value="week">7 วันที่ผ่านมา</option>
+              <option value="all">ทั้งหมด</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" data-analytics-export>📥 Export</button>
+            <button class="btn btn-ghost btn-sm" data-analytics-clear>🗑️ ล้าง</button>
+          </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="analytics-stats">
+          ${renderStatCard('📞', 'คำขอทั้งหมด', stats.total)}
+          ${renderStatCard('✅', 'สำเร็จ', stats.successes, 'ok')}
+          ${renderStatCard('❌', 'ผิดพลาด', stats.errors, stats.errors > 0 ? 'err' : '')}
+          ${renderStatCard('📈', 'Success Rate', stats.successRate + '%',
+            parseFloat(stats.successRate) > 95 ? 'ok' : 'warn')}
+          ${renderStatCard('⚡', 'Avg Latency', stats.avgLatency + 'ms',
+            stats.avgLatency < 300 ? 'ok' : stats.avgLatency < 800 ? 'warn' : 'err')}
+          ${renderStatCard('⏱️', 'p95 Latency', stats.p95 + 'ms',
+            stats.p95 < 500 ? 'ok' : stats.p95 < 1500 ? 'warn' : 'err')}
+        </div>
+
+        <!-- Timeline -->
+        <div class="analytics-section">
+          <h4>📈 Requests (24h)</h4>
+          <div class="analytics-timeline">
+            ${renderTimeline(stats.timeline)}
+          </div>
+        </div>
+
+        <!-- Endpoints -->
+        <div class="analytics-section">
+          <h4>🎯 Top Endpoints</h4>
+          <div class="analytics-list">
+            ${renderTopList(stats.byEndpoint, stats.total)}
+          </div>
+        </div>
+
+        <!-- Methods -->
+        <div class="analytics-section">
+          <h4>🔧 Methods</h4>
+          <div class="analytics-chips">
+            ${Object.entries(stats.byMethod).map(([m, c]) => `
+              <div class="analytics-chip">
+                <span class="method method-${m.toLowerCase()}">${m}</span>
+                <span class="analytics-chip-count">${c}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Status Codes -->
+        <div class="analytics-section">
+          <h4>📊 Status Codes</h4>
+          <div class="analytics-chips">
+            ${Object.entries(stats.byStatus).sort().map(([s, c]) => {
+              const cls = s.startsWith('2') ? 'ok' : s.startsWith('3') ? 'warn' : 'err';
+              return `
+                <div class="analytics-chip ${cls}">
+                  <span>${s}</span>
+                  <span class="analytics-chip-count">${c}</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Bind events
+    container.querySelector('.analytics-timeframe')?.addEventListener('change', (e) => {
+      renderDashboard(container, { timeframe: e.target.value });
+    });
+
+    container.querySelector('[data-analytics-export]')?.addEventListener('click', () => {
+      exportData();
+    });
+
+    container.querySelector('[data-analytics-clear]')?.addEventListener('click', () => {
+      if (confirm('ล้างข้อมูล analytics ทั้งหมด?')) {
+        store.clear();
+        renderDashboard(container, options);
+      }
+    });
+  }
+
+  function renderStatCard(icon, label, value, variant = '') {
+    return `
+      <div class="analytics-stat ${variant}">
+        <div class="analytics-stat-icon">${icon}</div>
+        <div class="analytics-stat-value">${value}</div>
+        <div class="analytics-stat-label">${label}</div>
+      </div>
+    `;
+  }
+
+  function renderTimeline(buckets) {
+    const max = Math.max(...buckets.map(b => b.count), 1);
+    return `
+      <div class="timeline-chart">
+        ${buckets.map(b => {
+          const height = (b.count / max) * 100;
+          const hasErrors = b.errors > 0;
+          return `
+            <div class="timeline-bar-wrap" title="${new Date(b.time).toLocaleString('th-TH')} · ${b.count} requests${hasErrors ? ` · ${b.errors} errors` : ''}">
+              <div class="timeline-bar ${hasErrors ? 'has-errors' : ''}" style="height: ${Math.max(height, 2)}%"></div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+      <div class="timeline-labels">
+        <span>${new Date(buckets[0].time).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}</span>
+        <span>ตอนนี้</span>
+      </div>
+    `;
+  }
+
+  function renderTopList(byKey, total) {
+    const entries = Object.entries(byKey)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
+
+    if (entries.length === 0) {
+      return '<div class="analytics-empty">ยังไม่มีข้อมูล</div>';
+    }
+
+    return entries.map(([key, count]) => {
+      const pct = total ? (count / total * 100).toFixed(1) : 0;
+      return `
+        <div class="analytics-list-item">
+          <code>${escapeHtml(key)}</code>
+          <div class="analytics-list-bar-wrap">
+            <div class="analytics-list-bar" style="width: ${pct}%"></div>
+          </div>
+          <span class="analytics-list-count">${count}</span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // =====================================================
+  // 📥 Export
+  // =====================================================
+  function exportData() {
+    const data = {
+      exportedAt: new Date().toISOString(),
+      version: CFG.version || '1.1.0',
+      stats: computeStats('all'),
+      events: store.getAll(),
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `terabox-analytics-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // =====================================================
+  // 📊 Auto-track — listen to TeraBoxDocs events
+  // =====================================================
+  function attachToDocs() {
+    const D = global.TeraBoxDocs;
+    if (!D) {
+      setTimeout(attachToDocs, 100);
+      return;
+    }
+
+    D.on('try:success', ({ url, method, status, latency }) => {
+      store.add({
+        type: 'api_call',
+        endpoint: extractEndpoint(url),
+        method,
+        status,
+        latency,
+        success: status >= 200 && status < 400,
+      });
+    });
+
+    D.on('try:error', ({ url, method, error, latency }) => {
+      store.add({
+        type: 'api_call',
+        endpoint: extractEndpoint(url),
+        method,
+        status: 0,
+        latency,
+        success: false,
+        error: error.message,
+      });
+    });
+
+    D.on('spec:loaded', ({ source }) => {
+      store.add({ type: 'spec_loaded', source });
+    });
+
+    D.on('health', ({ healthy, latency }) => {
+      store.add({ type: 'health_check', success: healthy, latency });
+    });
+
+    console.log('📊 Analytics attached');
+  }
+
+  function extractEndpoint(url) {
+    try {
+      const u = new URL(url);
+      return u.pathname.replace(/\/api\/v1/, '');
+    } catch { return url; }
+  }
+
+  // =====================================================
+  // 🌐 Public API
+  // =====================================================
+  global.TeraBoxAnalytics = {
+    track: (event) => store.add(event),
+    computeStats,
+    renderDashboard,
+    export: exportData,
+    clear: () => store.clear(),
+    getEvents: () => store.getAll(),
+    on: (name, cb) => events.addEventListener(name, cb),
+    off: (name, cb) => events.removeEventListener(name, cb),
+  };
+
+  attachToDocs();
+})(window);
+```
+
+---
+
+🔄 6. service-worker.js — PWA Offline
+
+```javascript
+/* =====================================================
+   🔄 Service Worker — PWA Offline Support
+   ===================================================== */
+
+const VERSION = 'v1.1.0';
+const STATIC_CACHE = `terabox-static-${VERSION}`;
+const RUNTIME_CACHE = `terabox-runtime-${VERSION}`;
+const API_CACHE = `terabox-api-${VERSION}`;
+
+// ไฟล์ที่ต้อง cache ล่วงหน้า
+const STATIC_ASSETS = [
+  '/',
+  '/index.html',
+  '/offline.html',
+  '/styles.css',
+  '/app.js',
+  '/config.js',
+  '/docs-integration.js',
+  '/oauth2-client.js',
+  '/sse-client.js',
+  '/response-formatter.js',
+  '/openapi-form-generator.js',
+  '/analytics-dashboard.js',
+  '/manifest.json',
+  '/openapi.yaml',
+];
+
+// =====================================================
+// 🔧 INSTALL
+// =====================================================
+self.addEventListener('install', (event) => {
+  console.log('[SW] Installing...', VERSION);
+
+  event.waitUntil(
+    caches.open(STATIC_CACHE).then((cache) => {
+      return cache.addAll(STATIC_ASSETS).catch(err => {
+        console.warn('[SW] บางไฟล์ cache ไม่สำเร็จ:', err);
+      });
+    }).then(() => self.skipWaiting())
+  );
+});
+
+// =====================================================
+// 🚀 ACTIVATE
+// =====================================================
+self.addEventListener('activate', (event) => {
+  console.log('[SW] Activating...', VERSION);
+
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys
+          .filter(key => !key.includes(VERSION))
+          .map(key => {
+            console.log('[SW] Deleting old cache:', key);
+            return caches.delete(key);
+          })
+      );
+    }).then(() => self.clients.claim())
+  );
+});
+
+// =====================================================
+// 🌐 FETCH
+// =====================================================
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Skip: non-GET, chrome-extension, ws, cross-origin auth
+  if (request.method !== 'GET') return;
+  if (url.protocol === 'chrome-extension:') return;
+  if (url.pathname.startsWith('/oauth/')) return;
+
+  // ─── 1. API requests → Network first, cache fallback ───
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(networkFirstApi(request));
+    return;
+  }
+
+  // ─── 2. OpenAPI spec → Network first, cache fallback ───
+  if (url.pathname.endsWith('.json') || url.pathname.endsWith('.yaml')) {
+    event.respondWith(networkFirstApi(request));
+    return;
+  }
+
+  // ─── 3. Navigate → Network first, cache fallback to offline.html ───
+  if (request.mode === 'navigate') {
+    event.respondWith(networkFirstNavigate(request));
+    return;
+  }
+
+  // ─── 4. Static assets → Cache first ───
+  event.respondWith(cacheFirst(request));
+});
+
+// =====================================================
+// 🎯 Strategies
+// =====================================================
+
+// Cache first (static)
+async function cacheFirst(request) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(RUNTIME_CACHE);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (err) {
+    // Offline fallback
+    return new Response('', { status: 503, statusText: 'Offline' });
+  }
+}
+
+// Network first for API
+async function networkFirstApi(request) {
+  try {
+    const response = await fetch(request);
+    if (response.ok || response.status < 500) {
+      const cache = await caches.open(API_CACHE);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (err) {
+    const cached = await caches.match(request);
+    if (cached) {
+      // แนบ header บอกว่ามาจาก cache
+      const headers = new Headers(cached.headers);
+      headers.set('X-From-Cache', 'true');
+      headers.set('X-Cached-At', cached.headers.get('date') || '');
+      return new Response(cached.body, {
+        status: cached.status,
+        statusText: cached.statusText,
+        headers,
+      });
+    }
+    return new Response(JSON.stringify({
+      error: 'offline',
+      message: 'ไม่มีการเชื่อมต่อ — ไม่มีข้อมูลใน cache',
+    }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+}
+
+// Network first for navigate
+async function networkFirstNavigate(request) {
+  try {
+    const response = await fetch(request);
+    const cache = await caches.open(STATIC_CACHE);
+    cache.put(request, response.clone());
+    return response;
+  } catch (err) {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+    return caches.match('/offline.html');
+  }
+}
+
+// =====================================================
+// 💬 MESSAGE — Clear cache on demand
+// =====================================================
+self.addEventListener('message', (event) => {
+  const { type, payload } = event.data || {};
+
+  if (type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+
+  if (type === 'CLEAR_CACHE') {
+    event.waitUntil(
+      caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
+        .then(() => event.source?.postMessage({ type: 'CACHE_CLEARED' }))
+    );
+  }
+
+  if (type === 'CACHE_STATS') {
+    event.waitUntil(
+      caches.keys().then(async keys => {
+        const stats = {};
+        for (const key of keys) {
+          const cache = await caches.open(key);
+          const reqs = await cache.keys();
+          stats[key] = reqs.length;
+        }
+        event.source?.postMessage({ type: 'CACHE_STATS_RESULT', payload: stats });
+      })
+    );
+  }
+});
+
+// =====================================================
+// 🔄 BACKGROUND SYNC
+// =====================================================
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-pending-requests') {
+    event.waitUntil(syncPendingRequests());
+  }
+});
+
+async function syncPendingRequests() {
+  // ดึง pending requests จาก IndexedDB (ในกรณีมี)
+  console.log('[SW] Background sync triggered');
+}
+```
+
+---
+
+📄 7. manifest.json — PWA Manifest
+
+```json
+{
+  "name": "TeraBox REST API Docs",
+  "short_name": "TeraBox Docs",
+  "description": "คู่มือ TeraBox REST API · ครบทุกช่องทาง",
+  "version": "1.1.0",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#3b82f6",
+  "background_color": "#0a0e1a",
+  "lang": "th",
+  "dir": "ltr",
+  "categories": ["developer", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%233b82f6'/%3E%3Cstop offset='100%25' stop-color='%23764ba2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='192' height='192' rx='40' fill='url(%23g)'/%3E%3Ctext x='96' y='130' font-family='sans-serif' font-size='96' font-weight='bold' fill='%23fff' text-anchor='middle'%3E📘%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%233b82f6'/%3E%3Cstop offset='100%25' stop-color='%23764ba2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='96' fill='url(%23g)'/%3E%3Ctext x='256' y='340' font-family='sans-serif' font-size='256' font-weight='bold' fill='%23fff' text-anchor='middle'%3E📘%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "ช่องทางการส่งคำขอ",
+      "short_name": "Channels",
+      "url": "/#channels",
+      "icons": [{ "src": "/favicon.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "สถานะการเชื่อมต่อ",
+      "short_name": "Status",
+      "url": "/#connection",
+      "icons": [{ "src": "/favicon.svg", "sizes": "192x192" }]
+    }
+  ]
+}
+```
+
+---
+
+📄 8. offline.html — หน้า Offline
+
+```html
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ออฟไลน์ · TeraBox Docs</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "IBM Plex Sans", sans-serif;
+    background: #0a0e1a;
+    color: #e6edf7;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    text-align: center;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(59,130,246,0.15), transparent 60%);
+  }
+  .container { max-width: 480px; }
+  .icon {
+    font-size: 80px;
+    margin-bottom: 24px;
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #e6edf7 0%, #8b98ad 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  p {
+    color: #8b98ad;
+    margin-bottom: 32px;
+    line-height: 1.6;
+  }
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 24px;
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ef4444;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  button {
+    padding: 12px 28px;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+  }
+  button:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+  }
+  button:active { transform: translateY(0); }
+  .info {
+    margin-top: 32px;
+    padding: 16px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    font-size: 13px;
+    color: #8b98ad;
+    text-align: left;
+  }
+  .info strong { color: #e6edf7; }
+  code {
+    background: rgba(255,255,255,0.05);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #3b82f6;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">📡</div>
+
+    <div class="status">
+      <span class="dot"></span>
+      ไม่มีการเชื่อมต่อ
+    </div>
+
+    <h1>ออฟไลน์อยู่</h1>
+    <p>
+      ไม่สามารถเชื่อมต่อกับ TeraBox API ได้ในขณะนี้<br>
+      เอกสารที่เคยเข้าชมจะยังใช้งานได้จาก cache
+    </p>
+
+    <button onclick="location.reload()">🔄 ลองอีกครั้ง</button>
+
+    <div class="info">
+      <strong>💡 คำแนะนำ:</strong>
+      <ul style="margin-top: 8px; margin-left: 20px; line-height: 1.8;">
+        <li>ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต</li>
+        <li>ลองเปิดหน้าอื่นที่เคยเข้าชม</li>
+        <li>หากใช้ VPN/LTE ลองสลับเครือข่าย</li>
+        <li>ตรวจสอบสถานะ API ที่ <code>/health</code></li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    // Auto-reload เมื่อกลับมา online
+    window.addEventListener('online', () => {
+      console.log('🌐 กลับมาออนไลน์');
+      setTimeout(() => location.reload(), 500);
+    });
+
+    // แสดงสถานะ
+    function updateStatus() {
+      if (navigator.onLine) location.reload();
+    }
+    setInterval(updateStatus, 5000);
+  </script>
+</body>
+</html>
+```
+
+---
+
+📄 9. index.html — เพิ่ม Headers + Scripts
+
+ใน <head>:
+
+```html
+<!-- PWA Manifest -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#3b82f6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<!-- ย้าย CSS ก่อน -->
+<link rel="stylesheet" href="styles.css">
+```
+
+ก่อนปิด </body> (เรียงลำดับสำคัญ!):
+
+```html
+<!-- 1. Config (ต้องมาก่อนทุกอย่าง) -->
+<script src="config.js"></script>
+
+<!-- 2. Utilities -->
+<script src="response-formatter.js"></script>
+<script src="openapi-form-generator.js"></script>
+
+<!-- 3. Clients -->
+<script src="oauth2-client.js"></script>
+<script src="sse-client.js"></script>
+
+<!-- 4. Integration Layer -->
+<script src="docs-integration.js"></script>
+
+<!-- 5. Main App -->
+<script src="app.js"></script>
+
+<!-- 6. Analytics (ต้องหลัง Docs) -->
+<script src="analytics-dashboard.js"></script>
+
+<!-- 7. PWA Registration -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+        .then(reg => console.log('✅ SW registered:', reg.scope))
+        .catch(err => console.warn('❌ SW error:', err));
+    });
+  }
+</script>
+```
+
+---
+
+📄 10. เพิ่ม Sections ใน index.html
+
+เพิ่มต่อจาก <section id="connection">:
+
+```html
+<!-- ═══════════════════════════════════════════════════════
+     🔐 OAUTH2 LOGIN
+     ═══════════════════════════════════════════════════════ -->
+<section id="oauth" class="section">
+  <div class="section-head">
+    <span class="section-num">🔐</span>
+    <h2>เข้าสู่ระบบ OAuth2</h2>
+  </div>
+
+  <p class="lead">Login ผ่าน TeraBox โดยตรง · รองรับ PKCE + auto-refresh</p>
+
+  <div class="oauth-card" id="oauthCard">
+    <div class="oauth-empty" id="oauthEmpty">
+      <div class="oauth-icon">🔓</div>
+      <h3>ยังไม่ได้เข้าสู่ระบบ</h3>
+      <p>เข้าสู่ระบบเพื่อเข้าใช้งาน API ที่ต้องยืนยันตัวตน</p>
+      <button class="btn btn-primary" id="oauthLoginBtn">🔐 เข้าสู่ระบบด้วย TeraBox</button>
+      <button class="btn btn-ghost" id="oauthPopupBtn">↗️ เปิดใน Popup</button>
+    </div>
+
+    <div class="oauth-user hidden" id="oauthUser">
+      <img class="oauth-avatar" id="oauthAvatar" alt="">
+      <div class="oauth-info">
+        <div class="oauth-name" id="oauthName">—</div>
+        <div class="oauth-email" id="oauthEmail">—</div>
+      </div>
+      <button class="btn btn-ghost" id="oauthLogoutBtn">🚪 ออกจากระบบ</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     📡 LIVE EVENTS (SSE)
+     ═══════════════════════════════════════════════════════ -->
+<section id="live" class="section">
+  <div class="section-head">
+    <span class="section-num">📡</span>
+    <h2>Live Events (SSE)</h2>
+    <span id="sseBadge" class="badge badge-live">
+      <span class="dot-live"></span> กำลังเชื่อมต่อ...
+    </span>
+  </div>
+
+  <p class="lead">รับ events แบบ real-time จากระบบ · แทน WebSocket</p>
+
+  <div class="sse-controls">
+    <label class="sse-topic">
+      <input type="checkbox" value="notification" checked>
+      <span>🔔 Notification</span>
+    </label>
+    <label class="sse-topic">
+      <input type="checkbox" value="file:created" checked>
+      <span>📁 File created</span>
+    </label>
+    <label class="sse-topic">
+      <input type="checkbox" value="upload:progress">
+      <span>⬆️ Upload progress</span>
+    </label>
+    <label class="sse-topic">
+      <input type="checkbox" value="system:alert">
+      <span>⚠️ System alert</span>
+    </label>
+    <button class="btn btn-ghost btn-sm" id="sseClearBtn">🗑️ ล้าง</button>
+  </div>
+
+  <div class="sse-log" id="sseLog">
+    <div class="sse-empty">ยังไม่มี events...</div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     🧪 AUTO-GENERATED TRY-IT-OUT
+     ═══════════════════════════════════════════════════════ -->
+<section id="autoform" class="section">
+  <div class="section-head">
+    <span class="section-num">🧪</span>
+    <h2>Auto-form จาก OpenAPI</h2>
+    <span class="badge badge-new">สาธิต</span>
+  </div>
+
+  <p class="lead">เลือก endpoint แล้วฟอร์มจะสร้างอัตโนมัติจาก spec</p>
+
+  <div class="autoform-selector">
+    <select id="autoformEndpoint" class="autoform-select">
+      <option value="">— เลือก endpoint —</option>
+    </select>
+    <select id="autoformMethod" class="autoform-select-method">
+      <option>GET</option>
+      <option>POST</option>
+      <option>PUT</option>
+      <option>PATCH</option>
+      <option>DELETE</option>
+    </select>
+  </div>
+
+  <div id="autoformContainer" class="autoform-container">
+    <div class="form-empty">เลือก endpoint เพื่อสร้างฟอร์ม</div>
+  </div>
+
+  <div id="autoformResponse" class="hidden" style="margin-top: 20px;"></div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     📊 ANALYTICS DASHBOARD
+     ═══════════════════════════════════════════════════════ -->
+<section id="analytics" class="section">
+  <div class="section-head">
+    <span class="section-num">📊</span>
+    <h2>Analytics Dashboard</h2>
+  </div>
+
+  <div id="analyticsDashboard"></div>
+</section>
+```
+
+---
+
+📄 11. เพิ่ม CSS
+
+เพิ่มใน styles.css ต่อท้าย:
+
+```css
+/* =====================================================
+   🔐 OAUTH2
+   ===================================================== */
+.oauth-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  text-align: center;
+  margin: 24px 0;
+}
+
+.oauth-empty .oauth-icon {
+  font-size: 56px;
+  margin-bottom: 16px;
+  opacity: 0.6;
+}
+.oauth-empty h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+  color: var(--fg);
+}
+.oauth-empty p {
+  color: var(--fg-muted);
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+.oauth-empty .btn {
+  margin: 0 6px;
+}
+
+.oauth-user {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  text-align: left;
+}
+.oauth-user.hidden { display: none; }
+
+.oauth-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--primary);
+  flex-shrink: 0;
+  border: 2px solid var(--primary);
+}
+
+.oauth-info { flex: 1; }
+.oauth-name {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--fg);
+  margin-bottom: 2px;
+}
+.oauth-email {
+  font-size: 13px;
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+}
+
+/* =====================================================
+   📡 SSE
+   ===================================================== */
+.sse-controls {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 16px 0;
+}
+
+.sse-topic {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s;
+}
+.sse-topic:hover {
+  border-color: var(--primary);
+  background: var(--bg-elev);
+}
+.sse-topic input { display: none; }
+.sse-topic input:checked + span { color: var(--primary); font-weight: 600; }
+.sse-topic:has(input:checked) {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  border-color: var(--primary);
+}
+
+.sse-log {
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.sse-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--fg-dim);
+  font-style: italic;
+}
+
+.sse-event {
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--bg-card);
+  margin-bottom: 6px;
+  border-left: 3px solid var(--primary);
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.sse-event-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 11px;
+}
+
+.sse-event-type {
+  color: var(--primary);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sse-event-time {
+  color: var(--fg-dim);
+  font-size: 10px;
+}
+
+.sse-event-body {
+  color: var(--fg);
+  word-break: break-all;
+  white-space: pre-wrap;
+  font-size: 12px;
+}
+
+/* =====================================================
+   🎨 JSON VIEWER
+   ===================================================== */
+.json-viewer {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 12px 16px;
+  background: var(--bg-code);
+  border-radius: var(--radius);
+  overflow-x: auto;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.json-node { position: relative; }
+
+.json-toggle {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 4px;
+  cursor: pointer;
+  position: relative;
+}
+.json-toggle::before {
+  content: '▼';
+  position: absolute;
+  font-size: 8px;
+  color: var(--fg-muted);
+  transition: transform 0.15s;
+}
+.json-node.collapsed > .json-toggle::before { transform: rotate(-90deg); }
+
+.json-node.collapsed > .json-children,
+.json-node.collapsed > .json-brace:last-child { display: none; }
+
+.json-brace { color: var(--fg-muted); }
+.json-comma { color: var(--fg-muted); }
+.json-colon { color: var(--fg-muted); margin: 0 4px; }
+
+.json-key { color: #93c5fd; font-weight: 600; }
+.json-index { color: var(--fg-muted); }
+.json-string { color: var(--success); }
+.json-number { color: var(--warning); }
+.json-bool-true { color: var(--info); font-weight: 700; }
+.json-bool-false { color: var(--danger); font-weight: 700; }
+.json-null { color: var(--fg-dim); font-style: italic; }
+
+.json-size {
+  font-size: 10px;
+  color: var(--fg-dim);
+  margin-left: 6px;
+  padding: 1px 6px;
+  background: var(--bg-card);
+  border-radius: 4px;
+}
+
+.json-children {
+  padding-left: 20px;
+  border-left: 1px dashed var(--border);
+  margin: 2px 0;
+}
+
+.json-line { padding: 1px 0; }
+
+.json-type {
+  display: inline-block;
+  font-size: 9px;
+  color: var(--fg-dim);
+  background: var(--bg-card);
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-left: 6px;
+  opacity: 0.6;
+  text-transform: uppercase;
+}
+
+.json-link {
+  color: var(--info);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+
+/* =====================================================
+   📊 RESPONSE VIEWER
+   ===================================================== */
+.response-viewer {
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.response-summary {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  background: color-mix(in srgb, var(--bg-card) 80%, transparent);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.response-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.response-chip.ok { border-color: var(--success); color: var(--success); }
+.response-chip.warn { border-color: var(--warning); color: var(--warning); }
+.response-chip.err { border-color: var(--danger); color: var(--danger); }
+
+.response-chip-label {
+  opacity: 0.7;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.response-chip-value { font-weight: 700; }
+
+.response-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+}
+
+.response-tab {
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  color: var(--fg-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+}
+.response-tab:hover { color: var(--fg); background: var(--bg-card); }
+.response-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.response-tab-content {
+  display: none;
+  padding: 16px;
+}
+.response-tab-content.active { display: block; }
+
+.raw-response {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--fg);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.http-headers-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.http-header-row {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.http-header-key { color: var(--info); font-weight: 600; }
+.http-header-value { color: var(--fg); word-break: break-all; }
+
+/* =====================================================
+   🧪 AUTO-FORM
+   ===================================================== */
+.autoform-selector {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+
+.autoform-select,
+.autoform-select-method {
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--fg);
+  font-size: 13px;
+  font-family: var(--font-mono);
+  outline: none;
+}
+.autoform-select { flex: 1; min-width: 250px; }
+.autoform-select-method { min-width: 100px; font-weight: 700; }
+
+.autoform-select:focus,
+.autoform-select-method:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.autoform-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin: 16px 0;
+}
+
+.form-empty {
+  text-align: center;
+  padding: 30px;
+  color: var(--fg-dim);
+  font-size: 14px;
+}
+
+.auto-form-group {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+  background: var(--bg-code);
+}
+.auto-form-group legend {
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--fg-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auto-form-field {
+  margin-bottom: 12px;
+}
+.auto-form-field:last-child { margin-bottom: 0; }
+
+.auto-form-field label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+.auto-form-field label code {
+  background: var(--bg-card);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.auto-form-type {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: var(--bg-card);
+  color: var(--info);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+}
+
+.auto-form-field input[type="text"],
+.auto-form-field input[type="number"],
+.auto-form-field select,
+.auto-form-field textarea {
+  width: 100%;
+  padding: 9px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--fg);
+  font-size: 13px;
+  font-family: var(--font-mono);
+  outline: none;
+  transition: all 0.15s;
+}
+
+.auto-form-field input:focus,
+.auto-form-field select:focus,
+.auto-form-field textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.auto-form-json-editor {
+  min-height: 180px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.auto-form-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 6px 0;
+}
+
+.auto-form-hint {
+  font-size: 11px;
+  color: var(--fg-dim);
+  margin-top: 4px;
+  font-family: var(--font-mono);
+}
+
+.auto-form-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.auto-form-actions-inline {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+/* =====================================================
+   📊 ANALYTICS DASHBOARD
+   ===================================================== */
+.analytics-dashboard {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin: 24px 0;
+}
+
+.analytics-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.analytics-head h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--fg);
+}
+
+.analytics-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.analytics-timeframe {
+  padding: 6px 10px;
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--fg);
+  font-size: 12px;
+}
+
+.analytics-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.analytics-stat {
+  padding: 16px;
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  text-align: center;
+  transition: all 0.2s;
+}
+.analytics-stat:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+.analytics-stat.ok    { border-color: color-mix(in srgb, var(--success) 40%, var(--border)); }
+.analytics-stat.warn  { border-color: color-mix(in srgb, var(--warning) 40%, var(--border)); }
+.analytics-stat.err   { border-color: color-mix(in srgb, var(--danger) 40%, var(--border)); }
+
+.analytics-stat-icon {
+  font-size: 22px;
+  margin-bottom: 6px;
+  opacity: 0.8;
+}
+.analytics-stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  margin-bottom: 4px;
+}
+.analytics-stat-label {
+  font-size: 11px;
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.analytics-section {
+  margin-bottom: 24px;
+}
+.analytics-section h4 {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--fg-muted);
+  margin-bottom: 12px;
+}
+
+/* Timeline */
+.analytics-timeline {
+  position: relative;
+}
+.timeline-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 100px;
+  padding: 8px 0;
+  background: var(--bg-code);
+  border-radius: var(--radius);
+  padding: 12px 8px;
+}
+
+.timeline-bar-wrap {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  cursor: pointer;
+}
+.timeline-bar {
+  width: 100%;
+  background: var(--primary);
+  border-radius: 2px 2px 0 0;
+  transition: all 0.15s;
+  min-height: 2px;
+}
+.timeline-bar.has-errors { background: var(--danger); }
+.timeline-bar-wrap:hover .timeline-bar { filter: brightness(1.3); }
+
+.timeline-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--fg-dim);
+  font-family: var(--font-mono);
+  padding: 4px 8px 0;
+}
+
+/* List */
+.analytics-list-item {
+  display: grid;
+  grid-template-columns: 200px 1fr 50px;
+  gap: 12px;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 12px;
+}
+.analytics-list-item code {
+  background: var(--bg-code);
+  color: var(--primary);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.analytics-list-bar-wrap {
+  height: 6px;
+  background: var(--bg-code);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.analytics-list-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--info));
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+.analytics-list-count {
+  text-align: right;
+  font-family: var(--font-mono);
+  color: var(--fg-muted);
+}
+
+.analytics-empty {
+  text-align: center;
+  padding: 20px;
+  color: var(--fg-dim);
+  font-style: italic;
+  font-size: 13px;
+}
+
+/* Chips */
+.analytics-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.analytics-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  font-size: 12px;
+}
+.analytics-chip.ok  { border-color: var(--success); color: var(--success); }
+.analytics-chip.warn { border-color: var(--warning); color: var(--warning); }
+.analytics-chip.err  { border-color: var(--danger); color: var(--danger); }
+
+.analytics-chip-count {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  padding: 2px 8px;
+  background: var(--bg-card);
+  border-radius: 100px;
+  font-size: 11px;
+}
+```
+
+---
+
+📄 12. เพิ่ม Logic ใน app.js
+
+เพิ่มส่วนนี้ใน app.js ต่อท้าย:
+
+```javascript
+/* =====================================================
+   🔐 OAUTH2 UI
+   ===================================================== */
+(function () {
+  if (!window.TeraBoxOAuth2) return;
+
+  const O = window.TeraBoxOAuth2;
+  const els = {
+    oauthEmpty: document.getElementById('oauthEmpty'),
+    oauthUser: document.getElementById('oauthUser'),
+    oauthAvatar: document.getElementById('oauthAvatar'),
+    oauthName: document.getElementById('oauthName'),
+    oauthEmail: document.getElementById('oauthEmail'),
+    oauthLoginBtn: document.getElementById('oauthLoginBtn'),
+    oauthPopupBtn: document.getElementById('oauthPopupBtn'),
+    oauthLogoutBtn: document.getElementById('oauthLogoutBtn'),
+  };
+
+  if (!els.oauthEmpty) return;
+
+  function updateUI() {
+    const user = O.user;
+    const isAuth = O.isAuthenticated();
+
+    if (isAuth && user) {
+      els.oauthEmpty.classList.add('hidden');
+      els.oauthUser.classList.remove('hidden');
+      els.oauthName.textContent = user.name || user.preferred_username || 'ผู้ใช้';
+      els.oauthEmail.textContent = user.email || '';
+      els.oauthAvatar.src = user.picture || `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56"><rect width="56" height="56" fill="#3b82f6"/><text x="28" y="36" font-size="24" fill="white" text-anchor="middle" font-family="sans-serif">${(user.name || 'U')[0]}</text></svg>`)}`;
+    } else {
+      els.oauthEmpty.classList.remove('hidden');
+      els.oauthUser.classList.add('hidden');
+    }
+  }
+
+  els.oauthLoginBtn?.addEventListener('click', () => O.login());
+  els.oauthPopupBtn?.addEventListener('click', async () => {
+    try {
+      await O.login({ usePopup: true });
+      showToast('✅ เข้าสู่ระบบสำเร็จ');
+    } catch (err) {
+      showToast('❌ ' + err.message);
+    }
+  });
+  els.oauthLogoutBtn?.addEventListener('click', () => {
+    O.logout({ redirect: false });
+    showToast('🚪 ออกจากระบบแล้ว');
+  });
+
+  O.on('login', () => { updateUI(); showToast('✅ เข้าสู่ระบบสำเร็จ'); });
+  O.on('logout', () => { updateUI(); });
+
+  // Handle callback ถ้ามี
+  O.handleRedirectCallback().catch(err => {
+    if (err.message) showToast('⚠️ ' + err.message);
+  }).finally(updateUI);
+
+  updateUI();
+})();
+
+/* =====================================================
+   📡 SSE UI
+   ===================================================== */
+(function () {
+  if (!window.TeraBoxSSE) return;
+
+  const S = window.TeraBoxSSE;
+  const els = {
+    badge: document.getElementById('sseBadge'),
+    log: document.getElementById('sseLog'),
+    clearBtn: document.getElementById('sseClearBtn'),
+  };
+
+  if (!els.log) return;
+
+  function addEvent({ type, data, timestamp }) {
+    const empty = els.log.querySelector('.sse-empty');
+    if (empty) empty.remove();
+
+    const el = document.createElement('div');
+    el.className = 'sse-event';
+    el.innerHTML = `
+      <div class="sse-event-head">
+        <span class="sse-event-type">${escapeHtml(type)}</span>
+        <span class="sse-event-time">${new Date(timestamp).toLocaleTimeString('th-TH')}</span>
+      </div>
+      <div class="sse-event-body">${escapeHtml(typeof data === 'string' ? data : JSON.stringify(data, null, 2))}</div>
+    `;
+    els.log.prepend(el);
+
+    // จำกัด 100 events
+    while (els.log.children.length > 100) {
+      els.log.lastChild.remove();
+    }
+  }
+
+  function updateBadge(connected) {
+    els.badge.className = connected ? 'badge badge-ok' : 'badge badge-live';
+    els.badge.innerHTML = connected
+      ? '🟢 เชื่อมต่อแล้ว'
+      : '<span class="dot-live"></span> กำลังเชื่อมต่อ...';
+  }
+
+  els.clearBtn?.addEventListener('click', () => {
+    els.log.innerHTML = '<div class="sse-empty">ยังไม่มี events...</div>';
+  });
+
+  // Subscribe ทุก topic
+  document.querySelectorAll('.sse-topic input').forEach(cb => {
+    const topic = cb.value;
+    if (cb.checked) {
+      S.subscribe(topic, (e) => addEvent({ ...e, type: topic }));
+    }
+    cb.addEventListener('change', () => {
+      if (cb.checked) S.subscribe(topic, (e) => addEvent({ ...e, type: topic }));
+    });
+  });
+
+  S.on('open', () => updateBadge(true));
+  S.on('close', () => updateBadge(false));
+  S.on('error', () => updateBadge(false));
+
+  // Auto-connect
+  S.connect();
+})();
+
+/* =====================================================
+   🧪 AUTO-FORM UI
+   ===================================================== */
+(function () {
+  if (!window.TeraBoxFormGenerator || !window.TeraBoxDocs) return;
+
+  const G = window.TeraBoxFormGenerator;
+  const D = window.TeraBoxDocs;
+  const F = window.TeraBoxFormatter;
+
+  const els = {
+    endpointSelect: document.getElementById('autoformEndpoint'),
+    methodSelect: document.getElementById('autoformMethod'),
+    container: document.getElementById('autoformContainer'),
+    response: document.getElementById('autoformResponse'),
+  };
+
+  if (!els.container) return;
+
+  // Populate endpoint select
+  function populateEndpoints() {
+    const spec = D.spec;
+    if (!spec?.paths) return;
+
+    els.endpointSelect.innerHTML = '<option value="">— เลือก endpoint —</option>';
+
+    Object.entries(spec.paths).forEach(([path, methods]) => {
+      Object.keys(methods).forEach(method => {
+        const op = methods[method];
+        const opt = document.createElement('option');
+        opt.value = `${method.toUpperCase()}|${path}`;
+        opt.textContent = `${method.toUpperCase()} ${path}${op.summary ? ' — ' + op.summary : ''}`;
+        els.endpointSelect.appendChild(opt);
+      });
+    });
+  }
+
+  function generateForm() {
+    const val = els.endpointSelect.value;
+    if (!val) {
+      els.container.innerHTML = '<div class="form-empty">เลือก endpoint เพื่อสร้างฟอร์ม</div>';
+      return;
+    }
+
+    const [method, endpoint] = val.split('|');
+    els.methodSelect.value = method;
+
+    const html = G.generateForm(endpoint, method, D.spec);
+    els.container.innerHTML = html;
+
+    // Attach submit handler
+    const form = els.container.querySelector('.auto-form');
+    form?.addEventListener('submit', handleSubmit);
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+
+    try {
+      const data = G.extractFormData(form);
+      const result = await D.tryEndpoint(data.endpoint, data.method, { ...data.path, ...data.query }, data.body);
+
+      // Render response
+      els.response.classList.remove('hidden');
+      els.response.innerHTML = F.renderResponse({
+        status: result.status,
+        latency: result.latency,
+        headers: result.headers,
+        data: result.data,
+      });
+    } catch (err) {
+      els.response.classList.remove('hidden');
+      els.response.innerHTML = `
+        <div class="response-viewer" style="border-color: var(--danger);">
+          <div style="padding: 20px; color: var(--danger);">
+            ❌ ${escapeHtml(err.message)}
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  els.endpointSelect?.addEventListener('change', generateForm);
+  els.methodSelect?.addEventListener('change', generateForm);
+
+  D.on('spec:loaded', populateEndpoints);
+  D.on('ready', populateEndpoints);
+
+  if (D.spec) populateEndpoints();
+})();
+
+/* =====================================================
+   📊 ANALYTICS UI
+   ===================================================== */
+(function () {
+  if (!window.TeraBoxAnalytics) return;
+
+  const el = document.getElementById('analyticsDashboard');
+  if (!el) return;
+
+  function render() {
+    window.TeraBoxAnalytics.renderDashboard(el, { timeframe: 'day' });
+  }
+
+  // Re-render ทุก 10 วิ
+  setInterval(render, 10000);
+  render();
+
+  // Re-render เมื่อมี event ใหม่
+  window.TeraBoxAnalytics.on('event', () => {
+    // Debounce
+    clearTimeout(window.__analyticsRenderTimer);
+    window.__analyticsRenderTimer = setTimeout(render, 500);
+  });
+})();
+```
+
+---
+
+🚀 วิธีใช้งานทั้งหมด
+
+🔧 Setup
+
+```bash
+# 1. เพิ่มใน .env
+cat >> .env << 'EOF'
+# OAuth2
+VITE_OAUTH_CLIENT_ID=your-client-id
+VITE_OAUTH_AUTH_ENDPOINT=https://auth.terabox.com/oauth2/authorize
+VITE_OAUTH_TOKEN_ENDPOINT=https://auth.terabox.com/oauth2/token
+VITE_OAUTH_USERINFO_ENDPOINT=https://auth.terabox.com/oauth2/userinfo
+VITE_OAUTH_REDIRECT_URI=https://your-domain.com/oauth/callback
+EOF
+
+# 2. Restart
+docker compose up -d --build
+```
+
+🌐 เปิดใช้งาน
+
+Section URL
+🔌 Connection #connection
+🔐 OAuth2 #oauth
+📡 SSE #live
+🧪 Auto-form #autoform
+📊 Analytics #analytics
+
+---
+
+📊 สรุปสิ่งที่ได้ทั้ง 6 ฟีเจอร์
+
+# ฟีเจอร์ ไฟล์ ฟังก์ชันเด่น
+1 🔐 OAuth2 oauth2-client.js PKCE + popup + auto-refresh
+2 📡 SSE sse-client.js Auto-reconnect + event topics
+3 🎨 JSON Formatter response-formatter.js Tree view + 3 tabs
+4 🧪 Auto-form openapi-form-generator.js Generate จาก spec
+5 📊 Analytics analytics-dashboard.js Charts + export
+6 🔄 PWA service-worker.js + manifest.json Offline + install
+
+🎯 Flow ทั้งหมด
+
+```
+┌────────────────────────────────────────────────┐
+│  1. เปิดหน้า → Service Worker register         │
+│  2. โหลด config.js                             │
+│  3. OAuth2 check token → refresh ถ้าจำเป็น      │
+│  4. โหลด OpenAPI spec (cache 5 นาที)            │
+│  5. SSE connect + subscribe topics              │
+│  6. Auto-form populate จาก spec                 │
+│  7. Analytics track ทุก action                  │
+│  8. ถ้า offline → cache → offline.html          │
+└────────────────────────────────────────────────┘
+```
+
+🔐 Security
+
+· ✅ PKCE (S256) สำหรับ OAuth2
+· ✅ State parameter (CSRF protection)
+· ✅ Token refresh อัตโนมัติ (ก่อนหมด 60 วิ)
+· ✅ Fallback ไป static ถ้า API ล่ม
+· ✅ Cache API response (อ่านได้แม้ offline)
+
+⚡ Performance
+
+Operation Target
+PWA install <5s
+Offline load <500ms
+OAuth2 login <3s
+SSE connect <1s
+Auto-form generate <100ms
+Analytics render <50ms
+
+---
+
+ต้องการให้เพิ่มอะไรอีกไหมครับ?
+
+· 🔔 Push Notifications (via Service Worker)
+· 🎯 Command Palette (Cmd+K)
+· 📱 Mobile App wrapper (Capacitor)
+· 🌐 i18n ครบ (TH + EN ทั้งหมด)
+· 🧪 E2E tests (Playwright)
+· 🎬 Video tutorials embedded
