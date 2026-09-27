@@ -1,58 +1,93 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from database import engine, Base, AsyncSessionLocal
-from config import settings
-from routers import workflows, jobs, execution
-from services.scheduler import init_scheduler, start_scheduler, stop_scheduler
-import logging
+import os
+from dotenv import load_dotenv
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# ─── โหลดตัวแปรสภาพแวดล้อม ────────────────────────────────────────
+load_dotenv()
+
+# ─── ตรวจสอบการตั้งค่า Supabase ─────────────────────────────────────
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
-    logger.info("🚀 Starting up FastAPI application...")
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    logger.info("✅ Database tables created/verified")
+    """จัดการการเริ่มต้นและปิดระบบ"""
+    # Startup: ตรวจสอบการเชื่อมต่อ
+    print("✅ ZyntroAI New CrystalCastle — Backend Started")
     
-    if settings.SCHEDULER_ENABLED:
-        async with AsyncSessionLocal() as db:
-            await init_scheduler(db)
-        start_scheduler()
-        logger.info("✅ Scheduler initialized and started")
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        print("⚠️  Supabase credentials not found — running in limited mode")
     
     yield
     
     # Shutdown
-    logger.info("🛑 Shutting down FastAPI application...")
-    if settings.SCHEDULER_ENABLED:
-        stop_scheduler()
-    await engine.dispose()
+    print("👋 Shutting down gracefully...")
 
+
+# ─── สร้างแอปพลิเคชัน ───────────────────────────────────────────────
 app = FastAPI(
-    title="Cron Automation System API",
-    description="Backend สำหรับจัดการ Workflow และ Cron Job อัตโนมัติ",
+    title="ZyntroAI New CrystalCastle",
+    description="AI-Native Full-Stack Platform",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
-# CORS Setup สำหรับ Angular Frontend
+# ─── CORS ───────────────────────────────────────────────────────────
+ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    # เพิ่มโดเมนจริงเมื่อ deploy
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4200", "http://127.0.0.1:4200"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include Routers
-app.include_router(workflows.router)
-app.include_router(jobs.router)
-app.include_router(execution.router)
+
+# ─── Routes หลัก ────────────────────────────────────────────────────
+@app.get("/")
+async def root():
+    return {
+        "name": "ZyntroAI New CrystalCastle",
+        "version": "1.0.0",
+        "status": "operational",
+        "docs": "/docs",
+    }
+
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "scheduler_running": True}
+    """ตรวจสุขภาพระบบ — ใช้สำหรับ CI/CD และการเฝ้าดู"""
+    supabase_status = "configured" if (SUPABASE_URL and SUPABASE_KEY) else "missing"
+    
+    return {
+        "status": "healthy",
+        "services": {
+            "supabase": supabase_status,
+        },
+    }
+
+
+@app.get("/ready")
+async def readiness_check():
+    """ตรวจสอบความพร้อมใช้งาน"""
+    return {"ready": True}
+
+
+# ─── รันที่นี่โดยตรง ────────────────────────────────────────────────
+if __name__ == "__main__":
+    import uvicorn
+    
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,  # Auto-reload in dev
+    )
