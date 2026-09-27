@@ -1,0 +1,155 @@
+Got it — here's the consolidated, cleaned **Go 1.27.1 Command Reference** from `alldocs.go`, organized for quick daily use:
+
+---
+
+# 📘 Go 1.27.1 — `go` Command Reference
+
+## 📋 All Commands at a Glance
+
+| Command | Purpose |
+|---|---|
+| `go bug` | Open browser to start bug report |
+| `go build` | Compile packages & dependencies |
+| `go clean` | Remove object files & caches |
+| `go doc` | Show package/symbol documentation |
+| `go env` | Print/configure Go environment |
+| `go fix` | Apply static-analysis code fixes |
+| `go fmt` | Format source files via `gofmt` |
+| `go generate` | Run `//go:generate` directives |
+| `go get` | Add/update dependencies in `go.mod` |
+| `go install` | Build & install binaries |
+| `go list` | Query package/module info |
+| `go mod` | Module maintenance |
+| `go run` | Compile + run program |
+| `go telemetry` | Manage telemetry settings |
+| `go test` | Run test suite |
+| `go tool` | Run specific Go toolchain program |
+| `go version` | Print Go version |
+| `go vet` | Report code problems |
+| `go work` | Workspace maintenance |
+
+> Full help: `go help <command>` or `go help <topic>`
+
+---
+
+## 🔨 go build — Compile
+```bash
+go build [-o output] [flags] [packages]
+```
+- Ignores `*_test.go` during build
+- Output name derived from package or first `.go` file
+- `-o <path>` = set output file/directory
+
+**Common Flags** (shared: build, clean, get, install, list, run, test):
+| Flag | Effect |
+|---|---|
+| `-C dir` | Change directory first (must be 1st) |
+| `-a` | Rebuild all, even up-to-date |
+| `-n` | Show commands — don't run |
+| `-p N` | Parallel jobs (default = GOMAXPROCS) |
+| `-race` | Enable race detector |
+| `-cover` | Instrument coverage |
+| `-v` | Print package names |
+| `-x` | Print all executed commands |
+| `-tags a,b` | Set build tags |
+| `-trimpath` | Strip absolute paths from binary |
+| `-mod readonly\|vendor\|mod` | Module resolution mode |
+| `-ldflags '...'` | Pass args to linker |
+| `-gcflags '...'` | Pass args to compiler |
+| `-pgo auto\|off\|file` | Profile-guided optimization |
+| `-buildvcs true\|false\|auto` | Stamp Git info into binary |
+
+---
+
+## 📥 go get — Manage Dependencies
+```bash
+go get example.com/pkg              # add/latest
+go get example.com/pkg@v1.2.3       # specific version
+go get example.com/pkg@none         # remove dependency
+go get -u ./...                      # update all deps
+go get -u=patch ./...                # patch updates only
+```
+- `-t` = also update test dependencies
+- Updates `go.mod` + downloads source to module cache
+
+---
+
+## 📦 go install — Install Binaries
+```bash
+go install ./cmd/mytool
+go install example.com/cmd@latest   # versioned, ignores local go.mod
+```
+- Output → `$GOBIN` (default: `~/go/bin`)
+- Versioned installs useful for CLI tools without touching project deps
+
+---
+
+## 📋 go list — Query / Scripting
+```bash
+go list ./...                        # list all packages
+go list -m all                       # list all modules
+go list -f '{{.ImportPath}}' ./...  # custom format
+go list -json ./...                  # machine-readable
+go list -deps ./pkg                  # list deps recursively
+```
+
+---
+
+## ✅ go test — Run Tests
+```bash
+go test ./...
+go test -v -run TestName ./...       # verbose + filter
+go test -cover ./...                 # show coverage
+go test -race ./...                  # with race detector
+```
+
+---
+
+## 🧹 go clean — Remove Build Artifacts
+```bash
+go clean -cache           # clear build cache
+go clean -modcache        # clear downloaded modules
+go clean -testcache       # expire test results
+go clean -r ./...         # recurse + remove binaries
+```
+
+---
+
+## ⚙️ go env — Environment
+```bash
+go env                    # print all
+go env GOMOD GOBIN        # specific vars
+go env -w GOBIN=~/bin     # persist setting
+go env -u GOBIN           # unset custom
+go env -changed           # show non-default only
+```
+
+---
+
+## 📖 go doc — Documentation
+```bash
+go doc                    # current package
+go doc encoding/json
+go doc json.Number
+go doc -all .             # everything in current pkg
+go doc -http=:6060        # serve HTML docs
+```
+
+---
+
+## 📜 go generate — Code Generation
+```bash
+go generate ./...
+go generate -run "proto" ./...  # run matching directives only
+```
+- Scans for: `//go:generate command args...`
+- Sets: `$GOFILE`, `$GOPACKAGE`, `$GOOS`, `$GOARCH`…
+
+---
+
+## Additional Help Topics
+`buildconstraint`, `buildmode`, `buildjson`, `cache`, `environment`, `filetype`, `go.mod`, `gopath`, `goproxy`, `importpath`, `modules`, `module-auth`, `packages`, `testflag`, `vcs`
+
+---
+
+Would you like me to expand any specific command with full flags, examples, or translate sections into Thai?
