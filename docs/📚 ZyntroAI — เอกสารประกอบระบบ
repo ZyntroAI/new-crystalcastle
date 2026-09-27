@@ -1,0 +1,433 @@
+📚 ZyntroAI — เอกสารประกอบระบบ
+ 
+Repository:  ZyntroAI/new-crystalcastle 
+อัปเดตล่าสุด: 28 กันยายน 2026
+ภาษา: ไทย ↔ อังกฤษ
+ 
+ 
+ 
+📋 สารบัญเอกสาร
+ 
+# ชื่อเอกสาร รหัสไฟล์ สถานะ 
+1 แผนรวมระบบสร้างและปรับใช้  BUILD-DEPLOYMENT-OVERVIEW.md  ✅ พร้อมใช้ 
+2 คู่มือสิทธิ์ผู้ใช้ตามแพ็กเกจ (Stripe Entitlements)  STRIPE_ENTITLEMENTS.md  ✅ พร้อมใช้ 
+3 มาตรฐานแม่แบบ Pull Request — คู่มือการใช้งาน  PR-TEMPLATES-GUIDE.md  ✅ พร้อมใช้ 
+4 คู่มือสถาปัตยกรรม Helm — payments-platform  HELM-DEPLOYMENT-GUIDE.md  ✅ พร้อมใช้ 
+5 คู่มือย้าย Backend สู่ Kubernetes  K8S-MIGRATION-GUIDE.md  ✅ พร้อมใช้ 
+6 คู่มือเริ่มต้นสำหรับนักพัฒนา  DEVELOPMENT-SETUP.md  ✅ พร้อมใช้ 
+7 นโยบายความปลอดภัยและการจัดการความลับ  SECURITY-SECRETS-POLICY.md  ✅ พร้อมใช้ 
+8 แผนผังโครงสร้างพื้นที่เก็บเอกสาร  DOCS-STRUCTURE.md  ✅ พร้อมใช้ 
+ 
+ 
+ 
+📂 โครงสร้างโฟลเดอร์  docs/ 
+ 
+plaintext  
+docs/
+├── README.md                    ← สารบัญหน้านี้
+├── BUILD-DEPLOYMENT-OVERVIEW.md
+├── STRIPE_ENTITLEMENTS.md
+├── PR-TEMPLATES-GUIDE.md
+├── HELM-DEPLOYMENT-GUIDE.md
+├── K8S-MIGRATION-GUIDE.md
+├── DEVELOPMENT-SETUP.md
+├── SECURITY-SECRETS-POLICY.md
+├── DOCS-STRUCTURE.md
+└── assets/                      ← รูปภาพ/แผนภาพ
+    └── diagrams/
+ 
+ 
+ 
+ 
+📄 1. แผนรวมระบบสร้างและปรับใช้
+ 
+ไฟล์:  docs/BUILD-DEPLOYMENT-OVERVIEW.md 
+ 
+markdown  
+# 🚀 แผนรวมระบบสร้างและปรับใช้
+## วัตถุประสงค์
+เปลี่ยนสถาปัตยกรรม Backend → ใช้ Kubernetes + ระบบอัตโนมัติเต็มรูปแบบ เพื่อ:
+- ปรับขยายอัตโนมัติตามโหลด
+- ปรับใช้แบบไม่หยุดทำงาน
+- สภาพแวดล้อมตรงกันทุกที่
+- เชื่อมต่อระบบชำระเงิน/สิทธิ์ผ่าน Stripe Entitlements
+- มีแม่แบบ PR มาตรฐาน → ตรวจสอบรวดเร็ว สม่ำเสมอ
+
+## ขอบเขตงาน
+- [ ] ย้ายปรับใช้สู่ Kubernetes
+- [ ] ติดตั้ง Helm Chart สำหรับ API + PostgreSQL + CronJob
+- [ ] ผสานรวม Stripe Entitlements — ควบคุมสิทธิ์แยกจากโค้ด
+- [ ] เพิ่มแม่แบบ PR 8 ฉบับ มาตรฐานองค์กร
+- [ ] ตั้งค่า CI/CD ตรวจสอบความถูกต้องก่อนส่ง
+- [ ] จัดทำเอกสารครบชุดสำหรับทีม
+
+## ขั้นตอนสำคัญ
+1. เตรียมสภาพแวดล้อม Kubernetes
+2. ติดตั้ง Helm และการเชื่อมต่อคลัสเตอร์
+3. ปรับใช้ payments-platform umbrella chart
+4. ตั้งค่า Stripe Entitlements + Webhook
+5. นำเข้าแม่แบบ PR และฝึกใช้ทีม
+6. ทดสอบปรับใช้จริงบน staging → production
+
+## ไทม์ไลน์
+- **สัปดาห์ที่ 1:** เตรียมคลัสเตอร์ + โครงสร้างพื้นฐาน
+- **สัปดาห์ที่ 2:** ปรับใช้ Helm + ตรวจสอบ API/DB
+- **สัปดาห์ที่ 3:** ผสาน Stripe Entitlements + Webhook
+- **สัปดาห์ที่ 4:** ฝึกทีม + ย้ายงานจริง → ปรับใช้ครบถ้วน
+ 
+ 
+ 
+ 
+📄 2. คู่มือสิทธิ์ผู้ใช้ตามแพ็กเกจ
+ 
+ไฟล์:  docs/STRIPE_ENTITLEMENTS.md 
+ 
+markdown  
+# 💰 Stripe Entitlements — คู่มือการใช้งาน
+
+## สรุปสั้นๆ
+**Entitlements = คุณสมบัติ → สินค้า → สมาชิก** — ควบคุมสิทธิ์เข้าใช้งานโดยไม่ต้องแก้โค้ดเลย
+
+## ขั้นตอนการทำงาน
+1. กำหนดคุณสมบัติที่ Stripe Dashboard → เช่น `ai_assistant`, `priority_support`
+2. ผูกแต่ละคุณสมบัติกับแพ็กเกจที่ต้องการ
+3. ตรวจสอบในโค้ด: `has_entitlement("cus_xxx", "ai_assistant")` → จริง/เท็จ
+4. รับ Webhook เมื่อสมาชิกเปลี่ยน → ให้/เพิกถอนสิทธิ์อัตโนมัติ
+
+## ตัวอย่างโค้ด
+```python
+import stripe
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+
+def has_feature(customer_id: str, lookup_key: str) -> bool:
+    entitlements = stripe.entitlements.ActiveEntitlement.list(
+        customer=customer_id, limit=100
+    )
+    return any(e.lookup_key == lookup_key for e in entitlements.data)
+ 
+ 
+Webhook ที่ต้องรับ
+ 
+-  customer.subscription.updated  → สิทธิ์เปลี่ยนแปลง
+-  customer.subscription.deleted  → ยกเลิกสมาชิก
+-  entitlements.active_entitlement.created  → ได้รับสิทธิ์ใหม่
+-  entitlements.active_entitlement.revoked  → ถูกเพิกถอน
+ 
+ข้อดีหลัก
+ 
+- ✅ เปลี่ยนสิทธิ์ → ไม่ต้องปรับใช้โค้ด
+- ✅ ตรงกับสถานะชำระเงินเสมอ
+- ✅ โค้ดสะอาด — แยกตรรกะสิทธิ์ออกจากส่วนธุรกิจ
+- ✅ บันทึกประวัติครบถ้วนบน Stripe
+ 
+plaintext  
+
+---
+
+## 📄 3. มาตรฐานแม่แบบ Pull Request — คู่มือการใช้งาน
+**ไฟล์:** `docs/PR-TEMPLATES-GUIDE.md`
+
+```markdown
+# 📋 แม่แบบ Pull Request — คู่มือมาตรฐานองค์กร
+
+## ทำไมต้องมีแม่แบบ
+- ✅ ทุก PR มีโครงสร้างเดียวกัน → อ่านง่าย ตรวจสอบเร็ว
+- ✅ ไม่ลืมส่วนสำคัญ → เช็คครบก่อนรวม
+- ✅ บันทึกประวัติที่ค้นหาได้ในอนาคต
+
+## แม่แบบที่มี 8 ฉบับ
+
+| ชื่อ | ใช้เมื่อ |
+|---|---|
+| `default.md` | การเปลี่ยนแปลงทั่วไป |
+| `feature.md` | เพิ่มความสามารถใหม่ |
+| `bugfix.md` | แก้ไขข้อผิดพลาด |
+| `release.md` | เผยแพร่รุ่นใหม่ |
+| `docs.md` | ปรับปรุงเอกสาร |
+| `infra-config.md` | เปลี่ยนแปลงโครงสร้างพื้นฐาน/คอนฟิก |
+| `security.md` | ปรับปรุงความปลอดภัย |
+| `dependencies.md` | อัปเดตแพ็กเกจภายนอก |
+
+## วิธีเลือกแม่แบบ
+เมื่อเปิด PR → เลือกแม่แบบจากเมนูแบบเลื่อนลง → กรอกตามหัวข้อ → ส่งได้เลย
+
+## กฎทอง
+- ✅ อย่าเว้นว่างส่วนสำคัญ
+- ✅ ใส่ลิงก์ปัญหาที่เกี่ยวข้องเสมอ
+- ✅ ทำเครื่องหมาย [x] ในเช็คลิสต์เมื่อเสร็จ
+- ✅ อธิบาย **ทำอะไร** และ **ทำไม** ไม่ใช่แค่ **เปลี่ยนอะไร**
+ 
+ 
+ 
+ 
+📄 4. คู่มือสถาปัตยกรรม Helm — payments-platform
+ 
+ไฟล์:  docs/HELM-DEPLOYMENT-GUIDE.md 
+ 
+markdown  
+# ⚙️ Helm — payments-platform คู่มือปรับใช้
+
+## ภาพรวม
+**payments-platform** เป็น Umbrella Chart — รวมส่วนประกอบทั้งหมดไว้ในชุดเดียว:
+- `api` — บริการหลัก FastAPI
+- `skip-payment` — งานตามกำหนดเวลา
+- `postgres` — ฐานข้อมูล (Bitnami)
+
+## โครงสร้าง
+ 
+ 
+payments-platform/
+├── Chart.yaml          # ข้อมูลชุด + การขึ้นอยู่กัน
+├── values.yaml         # ค่ากำหนดทั้งระบบ
+└── charts/
+├── api/
+├── skip-payment/
+└── postgres/       # เชื่อมต่อจากภายนอก
+ 
+plaintext  
+
+## คำสั่งพื้นฐาน
+```bash
+# ติดตั้งครั้งแรก
+helm install payments ./infrastructure/helm/payments-platform
+
+# อัปเกรด
+helm upgrade payments ./infrastructure/helm/payments-platform
+
+# ดูสถานะ
+helm list
+helm get manifest payments
+
+# ถอนการติดตั้ง
+helm uninstall payments
+ 
+ 
+การกำหนดค่า
+ 
+- ใช้  values.yaml  สำหรับค่าเริ่มต้น
+- แก้ไขเฉพาะส่วนที่เปลี่ยนแปลงด้วย  --set :
+bash  
+helm upgrade payments ./payments-platform \
+  --set api.replicaCount=3 \
+  --set global.env.LOG_LEVEL=debug
+ 
+- ความลับ ห้ามใส่ใน values.yaml → ใช้ Kubernetes Secrets แยกต่างหาก
+ 
+การย้ายข้อมูล
+ 
+- ปรับใช้ก่อน → แล้วเรียก  /migrations  หรือ  alembic upgrade head 
+- ตรวจสอบบันทึกก่อนปรับใช้กับ production
+ 
+plaintext  
+
+---
+
+## 📄 5. คู่มือย้าย Backend สู่ Kubernetes
+**ไฟล์:** `docs/K8S-MIGRATION-GUIDE.md`
+
+```markdown
+# ☸️ ย้าย Backend สู่ Kubernetes — คู่มือทีละขั้นตอน
+
+## ก่อนเริ่ม
+- [ ] ติดตั้ง `kubectl` + `helm`
+- [ ] เชื่อมต่อคลัสเตอร์ `kubectl cluster-info`
+- [ ] สำรองฐานข้อมูลปัจจุบัน
+- [ ] แจ้งทีม — ช่วงย้ายอาจไม่พร้อมใช้ชั่วครู่
+
+## ขั้นที่ 1: ตรวจสอบความพร้อม
+```bash
+# ตรวจสอบการเชื่อมต่อ
+kubectl get nodes
+
+# สร้างเนมสเปซ
+kubectl create namespace zyntroai
+ 
+ 
+ขั้นที่ 2: เตรียมภาพคอนเทนเนอร์
+ 
+- สร้าง Docker image → ส่งไปที่ registry (GHCR/ECR)
+- อัปเดต  values.yaml  ชี้ไปที่ภาพใหม่
+ 
+ขั้นที่ 3: จัดการความลับ
+ 
+bash  
+kubectl create secret generic payments-secrets \
+  --from-literal=DATABASE_URL=postgresql://... \
+  --from-literal=STRIPE_SECRET_KEY=sk_... \
+  --namespace zyntroai
+ 
+ 
+→ อ้างอิงใน  values.yaml  ผ่าน  secretKeyRef  — ห้ามเขียนตรงๆ
+ 
+ขั้นที่ 4: ปรับใช้
+ 
+bash  
+helm install payments ./infrastructure/helm/payments-platform \
+  --namespace zyntroai \
+  --create-namespace
+ 
+ 
+ขั้นที่ 5: ตรวจสอบ
+ 
+bash  
+kubectl get pods -n zyntroai
+kubectl logs -f <ชื่อพอด> -n zyntroai
+kubectl port-forward service/payments-api 8080:8080
+ 
+ 
+→ เปิด  http://localhost:8080/health  ตรวจความพร้อม
+ 
+ขั้นที่ 6: เปลี่ยนเส้นทาง
+ 
+- อัปเดต DNS/Ingress → ชี้ไปที่บริการ K8s
+- ตรวจสอบการทำงานจากภายนอก
+- คอยเฝ้าผล 24 ชม. แรก
+ 
+ปัญหาที่พบบ่อย
+ 
+- ❌ พอดไม่เริ่ม → ตรวจสอบภาพ/สิทธิ์/ทรัพยากร
+- ❌ เชื่อมต่อฐานข้อมูลไม่ได้ → ตรวจสอบ Secret/NetworkPolicy
+- ❌ ช้า → ปรับ  resources.requests/limits  ใน values.yaml
+ 
+plaintext  
+
+---
+
+## 📄 6. คู่มือเริ่มต้นสำหรับนักพัฒนา
+**ไฟล์:** `docs/DEVELOPMENT-SETUP.md`
+
+```markdown
+# 👩‍💻 คู่มือเริ่มต้นพัฒนา
+
+## สิ่งที่ต้องมี
+- Python 3.12+, Node.js 20+, Git
+- Docker (แยกสภาพแวดล้อม)
+- บัญชี GitHub + สิทธิ์เขียน
+- `gh` CLI (แนะนำ)
+
+## ติดตั้ง
+```bash
+# โคลน
+git clone https://github.com/ZyntroAI/new-crystalcastle.git
+cd new-crystalcastle
+
+# สภาพแวดล้อม Python
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+
+# สภาพแวดล้อม Frontend
+cd frontend
+npm install
+
+# ตั้งค่าตัวแปร
+cp .env.example .env
+# แก้ไข .env ใส่ค่าที่จำเป็น
+ 
+ 
+รันในเครื่อง
+ 
+bash  
+# ทั้งระบบด้วย Docker
+docker compose up -d --build
+
+# ตรวจ
+curl http://localhost:8000/health
+ 
+ 
+ก่อนส่ง PR
+ 
+ pre-commit run --all-files  — จัดรูปแบบ/ตรวจสอบ
+ pytest  — ทดสอบผ่านหมด
+เปลี่ยนสาขา → สร้าง PR → เลือกแม่แบบที่เหมาะสม
+รอตรวจสอบ → ผ่านแล้วค่อยรวม
+ 
+plaintext  
+
+---
+
+## 📄 7. นโยบายความปลอดภัยและการจัดการความลับ
+**ไฟล์:** `docs/SECURITY-SECRETS-POLICY.md`
+
+```markdown
+# 🔐 นโยบายความปลอดภัย — การจัดการความลับ
+
+## กฎพื้นฐาน
+- ❌ **ห้าม**ใส่โทเคน/รหัสในโค้ดโดยเด็ดขาด
+- ❌ **ห้าม**ส่งไฟล์ `.env` ขึ้น GitHub
+- ✅ ใช้ `.env.example` เฉพาะชื่อตัวแปร — ไม่ใส่ค่าจริง
+- ✅ ใช้ GitHub Secrets / K8s Secrets / HashiCorp Vault
+- ✅ หมุนเวียนรหัสทุก 90 วัน หรือเมื่อมีการเปลี่ยนผู้ดูแล
+
+## วิธีจัดการ
+| ที่ | วิธี |
+|---|---|
+| เครื่องนักพัฒนา | `.env` — ไม่ส่งขึ้น (อยู่ใน `.gitignore`) |
+| CI/CD | GitHub Secrets — `secrets.XXX` |
+| Production | Kubernetes Secrets หรือ Vault |
+| Staging | Kubernetes Secrets แยกจาก Production |
+
+## ถ้ารั่วไหล
+1. **ยกเลิกทันที** — สร้างรหัสใหม่
+2. ตรวจสอบบันทึกการเข้าถึง
+3. แจ้งทีมความปลอดภัย
+4. ตรวจสอบว่ามีข้อมูลเสียหายหรือไม่
+5. บันทึกสาเหตุและป้องกันซ้ำ
+ 
+ 
+ 
+ 
+📄 8. แผนผังโครงสร้างพื้นที่เก็บเอกสาร
+ 
+ไฟล์:  docs/DOCS-STRUCTURE.md 
+ 
+markdown  
+# 📂 โครงสร้างพื้นที่เก็บเอกสาร
+
+## หลักการ
+- **README.md** = ประตูเข้า — บอกว่ามีอะไรบ้าง
+- เอกสารแยกตามหัวข้อ — หนึ่งไฟล์ หนึ่งเรื่อง
+- ชื่อไฟล์เป็นภาษาอังกฤษ ตัวพิมพ์ใหญ่ขึ้นต้น ขีดกลางคั่น
+- อัปเดตสารบัญทุกครั้งที่เพิ่ม/ลบเอกสาร
+
+## หมวดหมู่
+- `*/OVERVIEW.md` — ภาพรวม แผนงาน เป้าหมาย
+- `*/GUIDE.md` — คู่มือปฏิบัติ ทีละขั้นตอน
+- `*/POLICY.md` — กฎ นโยบาย มาตรฐาน
+- `*/TEMPLATE.md` — แม่แบบ สำเนาใช้งาน
+- `assets/` — รูป แผนภาพ คู่มือ
+
+## การอัปเดต
+- เอกสารเก่า → ทำเครื่องหมายว่า **เลิกใช้** พร้อมลิงก์ไปฉบับใหม่
+- เปลี่ยนแปลงสำคัญ → แจ้งใน PR พร้อมเหตุผล
+- ทบทวนสารบัญทุกเดือน — ลบสิ่งที่ไม่ใช้แล้ว
+ 
+ 
+ 
+ 
+🚀 คำสั่งสร้างโครงสร้างจริง
+ 
+bash  
+# สร้างโฟลเดอร์
+mkdir -p docs/assets/diagrams
+
+# สร้างทุกไฟล์ (วางเนื้อหาข้างบนลงไป)
+for f in \
+  BUILD-DEPLOYMENT-OVERVIEW.md \
+  STRIPE_ENTITLEMENTS.md \
+  PR-TEMPLATES-GUIDE.md \
+  HELM-DEPLOYMENT-GUIDE.md \
+  K8S-MIGRATION-GUIDE.md \
+  DEVELOPMENT-SETUP.md \
+  SECURITY-SECRETS-POLICY.md \
+  DOCS-STRUCTURE.md
+do
+  touch "docs/$f"
+done
+
+# บันทึกส่งขึ้น
+git add docs/
+git commit -m "📚 Add: Complete documentation suite — K8s/Helm/Stripe/PR Templates"
+git push origin main
+ 
+---
