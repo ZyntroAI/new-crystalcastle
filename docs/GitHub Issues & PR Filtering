@@ -1,0 +1,122 @@
+# GitHub Issues / PRs Filter & Search — Quick Reference
+
+**EN / TH** — คู่มืออ้างอิงด่วน การกรองและค้นหา Issues / Pull Requests
+
+---
+
+## 📌 Basic Filters / การกรองพื้นฐาน (Dropdown Menus)
+
+On the repo's **Issues** or **Pull requests** tab, use the dropdown menus above the list:
+บนแท็บ **Issues** หรือ **Pull requests** ของ repository ใช้เมนูดรอปดาวน์เหนือรายการ:
+
+| Filter Dimension / มิติการกรอง | Menu / เมนู | Description / คำอธิบาย |
+|---|---|---|
+| Default status / สถานะเริ่มต้น | **Filters** | Open / Created by you / Assigned to you / Mentioned you<br>เปิด / คุณสร้าง / มอบหมายให้คุณ / กล่าวถึงคุณ |
+| Assignee / ผู้รับผิดชอบ | **Assignee** | Lists users with write access; includes "Assigned to nobody"<br>แสดงผู้ใช้ที่มีสิทธิ์เขียน รวมถึง "ยังไม่มีผู้รับผิดชอบ" |
+| Labels / ป้ายกำกับ | **Labels** | Click a label to filter<br>คลิกป้ายกำกับเพื่อกรอง |
+| Issue type / ประเภท Issue | **Types** | Requires issue types enabled in your org<br>ต้องเปิดใช้งาน issue types ในองค์กร |
+| PR review status / สถานะรีวิว PR | **Reviews** (top-right on PR tab) | Review required / Approved / Changes requested, etc.<br>ต้องรีวิว / อนุมัติแล้ว / ขอแก้ไข ฯลฯ |
+| Sort / การเรียงลำดับ | **Sort** | Newest/Oldest created, Most/Least commented, Newest/Oldest updated, Most reactions<br>สร้างใหม่/เก่าสุด, คอมเมนต์มาก/น้อยสุด, อัปเดตใหม่/เก่าสุด, ปฏิกิริยามากสุด |
+
+---
+
+## 🔍 Search Syntax / ไวยากรณ์การค้นหา (Type directly in search bar / พิมพ์ในช่องค้นหา)
+
+### Common Qualifiers / คีย์เวิร์ดที่ใช้บ่อย
+
+```
+state:open          # open / closed — สถานะ
+is:issue            # issue / pr — ประเภท
+author:octocat      # creator — ผู้สร้าง
+assignee:octocat    # assignee — ผู้รับผิดชอบ
+involves:octocat    # involves user (comments, mentions) — เกี่ยวข้องกับผู้ใช้
+label:"bug"         # label (quote if spaces) — ป้ายกำกับ (มีช่องว่างให้ใส่ quote)
+linked:pr           # issue linked to a PR — issue ที่เชื่อมกับ PR
+linked:issue        # PR linked to an issue — PR ที่เชื่อมกับ issue
+has:label           # has metadata — มีข้อมูลเมตา
+no:project          # missing metadata — ไม่มีข้อมูลเมตา
+is:draft            # draft PR (PR only) — PR ฉบับร่าง
+is:merged           # merged (PR only) — รวมแล้ว
+```
+
+### PR Review Status / สถานะรีวิว PR (PR only)
+
+```
+review:none              # not reviewed — ยังไม่ได้รีวิว
+review:required          # review required before merge — ต้องรีวิวก่อนรวม
+review:approved          # approved — อนุมัติแล้ว
+review:changes_requested # changes requested — ขอให้แก้ไข
+reviewed-by:octocat      # reviewed by someone — รีวิวโดยบุคคล
+review-requested:octocat # review requested from someone — ขอรีวิวจากบุคคล
+user-review-requested:@me # directly requested my review — ขอรีวิวจากฉันโดยตรง
+team-review-requested:github/docs  # team requested — ขอรีวิวจากทีม
+```
+
+### CI Status / สถานะ CI (PR only)
+
+```
+status:success   # all checks pass — ทุกเช็คผ่าน
+status:failure   # at least one failure — มีอย่างน้อยหนึ่งที่ล้มเหลว
+status:pending   # no status or at least one pending — ไม่มีสถานะหรือกำลังรอ
+```
+
+### Issue Close Reason / เหตุผลปิด Issue (Issue only)
+
+```
+is:closed reason:completed      # closed as completed — ปิดเพราะเสร็จสิ้น
+is:closed reason:"not planned"  # closed as not planned — ปิดเพราะไม่ได้วางแผน
+```
+
+### Issue Types & Custom Fields / ประเภท Issue และฟิลด์กำหนดเอง
+
+```
+type:"Bug"                          # filter by issue type — กรองตามประเภท
+field.priority:high                 # custom field = value — ฟิลด์กำหนดเอง = ค่า
+field."target date":>=2026-03-01    # date comparison (quote field names with spaces) — เปรียบเทียบวันที่
+field.story-points:>5               # number comparison — เปรียบเทียบตัวเลข
+field.priority:high,medium          # multiple values (OR) — หลายค่า (OR)
+```
+
+### Scope / ขอบเขตการค้นหา
+
+```
+org:github          # within an organization — ภายในองค์กร
+user:octocat        # within a user's repos — ภายใน repo ของผู้ใช้
+repo:owner/name     # specific repo (up to 16 user/org qualifiers, repo unlimited) — repo ที่ระบุ
+```
+
+---
+
+## ⚡ Advanced Tips / เทคนิคขั้นสูง
+
+**1. Boolean operators / ตัวดำเนินการตรรกะ**
+- Space = `AND` by default / ช่องว่าง = `AND` โดยปริยาย: `label:bug assignee:octocat`
+- Explicit OR / OR แบบชัดเจน: `assignee:octocat OR assignee:hubot`
+- Exclude / ยกเว้น: prefix with `-` / ใส่ `-` ข้างหน้า: `-author:octocat`
+
+**2. Label AND vs OR / ป้ายกำกับ AND กับ OR**
+- OR (comma / เครื่องหมายจุลภาค): `label:"bug","wip"`
+- AND (separate / แยกเขียน): `label:"bug" label:"wip"`
+
+**3. Parentheses / วงเล็บซ้อน** (max 5 levels / สูงสุด 5 ชั้น)
+```
+(type:"Bug" AND assignee:octocat) OR (type:"Feature" AND assignee:hubot)
+```
+
+**4. Sort / เรียงลำดับ**
+```
+sort:created-asc    # oldest created — สร้างเก่าสุด
+sort:comments-desc  # most commented — คอมเมนต์มากสุด
+sort:updated-desc   # recently updated — อัปเดตล่าสุด
+sort:reactions-desc # most reactions — ปฏิกิริยามากสุด
+```
+
+**5. Share filters / แชร์ผลการกรอง** — The browser URL updates automatically; copy & share the link to reproduce the same view / URL ในเบราว์เซอร์จะอัปเดตโดยอัตโนมัติ คัดลอกลิงก์แล้วแชร์เพื่อให้เห็นมุมมองเดียวกัน:
+```
+/issues?q=state:open+is:issue+assignee:hubot+sort:created-asc
+```
+
+---
+
+Need a specific search query built, or a downloadable cheat sheet (HTML/PDF)? Just ask!
+ต้องการให้ช่วยสร้าง query ค้นหาเฉพาะ หรือทำเป็นแผ่นสรุปดาวน์โหลด (HTML/PDF) บอกได้เลยครับ
