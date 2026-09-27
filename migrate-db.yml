@@ -1,0 +1,74 @@
+name: Run Database Migrations
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:  # Allow manual trigger from UI
+
+concurrency:
+  group: db-migrate
+  cancel-in-progress: false  # Never cancel mid-migration!
+
+jobs:
+  migrate:
+    name: Apply Alembic Migrations
+    runs-on: ubuntu-latest
+    environment: production  # For secrets protection
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set Up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "uv"
+
+      - name: Install Dependencies
+        working-directory: ./backend
+        run: |
+          pip install uv
+          uv sync --frozen
+
+      - name: Wait for Database
+        uses: nick-fields/retry@v3
+        with:
+          timeout_seconds: 30
+          max_attempts: 5
+          command: |
+            PGPASSWORD="${{ secrets.DB_PASSWORD }}" pg_isready \
+              -h ${{ secrets.DB_HOST }} \
+              -p ${{ secrets.DB_PORT || 5432 }} \
+              -U ${{ secrets.DB_USER }} \
+              -d ${{ secrets.DB_NAME }}
+
+      - name: Run Migrations
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT || 5432 }}/${{ secrets.DB_NAME }}
+        run: |
+          uv run alembic upgrade head
+
+      - name: Verify Migration
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT || 5432 }}/${{ secrets.DB_NAME }}
+        run: |
+          uv run alembic current
+          uv run alembic check || echo "⚠️ New migrations exist — ensure they were committed!"
+
+      - name: Notify on Failure
+        if: failure()
+        uses: slackapi/slack-github-action@v2
+        with:
+          slack-message: |
+            🚨 *DATABASE MIGRATION FAILED*
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
