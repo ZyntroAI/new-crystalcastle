@@ -1,0 +1,43 @@
+
+## 📐 โมดูลหลัก
+
+### 1. Frontend — `src/` และ `frontend/`
+- **`src/`** — แอปพลิเคชันหลัก (Vite + React 18 + TypeScript)
+  - `components/` — ส่วนประกอบ UI
+  - `lib/` — ฟังก์ชันช่วย, เรียก API
+  - `i18n/` — ระบบแปลภาษา
+  - `App.tsx` — จุดเริ่มต้นแอป
+
+- **`frontend/src/components/`** — ชุดคอมโพเนนต์แยก
+  - `OnboardingWizard.tsx` — ตัวช่วยต้อนรับ
+  - `accordion.jsx`, `alert.jsx`, `badge.js` — ส่วนประกอบทั่วไป
+
+### 2. Backend — `backend/`
+- `main.py` — FastAPI entry point ✅
+- `gateway.config.ts` — GraphQL Federation รวม subgraphs
+- `requirements.txt` — Python dependencies
+- `core/`, `api/`, `db/` — (เตรียมโครงสร้าง)
+
+### 3. ฐานข้อมูล — `supabase/`
+- `migrations/` — สคริปต์ SQL สร้าง/อัปเดต schema
+- รองรับ: Deeper Research System, ระบบจัดการเอกสาร, ติดตามงาน
+
+### 4. AI Skills — `skills/`
+- `claude-rest-api.md` — คู่มือเรียกใช้ Claude
+- `TOOLS.md` — รายการเครื่องมือที่ AI เรียกได้
+- `fig-best-practices-suite/` — ชุดทดสอบ/ตัวอย่าง
+
+## 🔄 การไหลของข้อมูล
+
+1. ผู้ใช้เรียก → Frontend (`src/`)
+2. เรียก → Backend (`backend/main.py`)
+3. ตรวจสอบสิทธิ์ → Supabase Auth
+4. ดึง/บันทึกข้อมูล → Supabase PostgreSQL
+5. AI → เรียกผ่าน Backend → ส่งคืน Frontend
+
+## ⚙️ CI/CD
+- `.github/workflows/` — Build, Lint, Test, Deploy
+- ไฟล์ที่รูท (`FastAPI_CI.yaml`, `Python-CI.yml`) → **กำลังย้ายเข้า `.github/workflows/`**
+- CodeQL — ตรวจความปลอดภัยอัตโนมัติ ✅
+
+© 2026 ZyntroAI
