@@ -1,0 +1,95 @@
+แนวทางการออกแบบและวางระบบ **Workflows อัตโนมัติสำหรับอัปเดตเอกสาร คลังความรู้ และทักษะ AI (Workflows Auto-Update Docs / Knowledge / Skills)** สำหรับโปรเจกต์ **Crystal Castle** และระบบนิเวศ **Zyntro AI Studio** มีโครงสร้าง สถาปัตยกรรม และกลไกการทำงานเชิงลึกดังนี้:
+
+---
+
+### 1. โครงสร้างและแนวคิดหลัก (Core Architecture & Objectives)
+
+การวางระบบอัตโนมัติในการอัปเดต **Docs**, **Knowledge**, และ **Skills** มีเป้าหมายสำคัญคือการแปลงข้อมูลอัปเดตจากคลังโค้ด (Repository) ให้กลายเป็นคลังความรู้และชุดทักษะสำหรับ AI Agent โดยอัตโนมัติ:
+
+*   **Docs (Documentation Auto-Update)**: ระบบตรวจจับการเปลี่ยนแปลงของโค้ด หรือไฟล์บันทึกประวัติ แล้วทำการเขียนสรุป บันทึกรายการเปลี่ยนแปลงลงใน `CHANGELOG.md` หรือคอมไพล์เอกสารทางเทคนิคใหม่โดยอัตโนมัติ.
+*   **Knowledge (Knowledge Base Auto-Deployment)**: การซิงค์และเปลี่ยนไฟล์ Markdown ในโฟลเดอร์ `docs/knowledge/` ให้กลายเป็นหน้าเว็บคลังความรู้ผ่าน **MkDocs** หรือ **GitHub Pages** ทุกครั้งที่มี Commit ใหม่.
+*   **Skills (Agent Skills & Context Synchronization)**: การปรับปรุงไฟล์กำหนดบริบทและทักษะการทำงานของเอเจนต์ (เช่น `.ai-context.md`, `agent_config.json`, และ `.cursorrules`) เพื่อให้ AI Agent เข้าใจบทบาท กฎเกณฑ์ และขีดความสามารถใหม่ๆ ของโปรเจกต์อยู่เสมอ.
+
+---
+
+### 2. กลไกการทำงานของ Workflow ในแต่ละส่วน (Workflow Mechanics)
+
+#### **2.1 ระบบ Auto-Updating Documentation & CHANGELOG**
+เมื่อมีการดึงข้อมูลหรือปรับปรุงโค้ด ระบบ GitHub Actions จะสั่งรันสคริปต์เพื่อตรวจจับความเปลี่ยนแปลง แล้วทำการ Commit เอกสารกลับเข้าสู่ Repository โดยอัตโนมัติ:
+*   **การตั้งค่า Permissions**: ในระดับ Job ต้องกำหนดสิทธิ์ให้สอดคล้องกับหลัก **Least Privilege** เช่น `contents: write`, `pull-requests: write` และ `issues: write` เพื่อให้บอทหรือเอเจนต์มีสิทธิ์เขียนไฟล์ Commit กลับเข้า Repository หลัก และโต้ตอบบน Pull Request ได้.
+*   **การป้องกัน Infinite Loop (`[skip ci]`)**: ทุกครั้งที่สคริปต์อัตโนมัติทำการ Commit และ Push เอกสารที่อัปเดตแล้ว (เช่น `CHANGELOG.md`) กลับขึ้นไป ต้องระบุข้อความ `[skip ci]` ไว้ใน Commit Message เพื่อป้องกันไม่ให้ GitHub Actions มองว่าเป็น Push ใหม่แล้วรันวนลูปซ้ำซ้อน.
+
+#### **2.2 ระบบ Auto-Deploying Knowledge Base (`docs/knowledge/`)**
+ใช้การกำหนดเงื่อนไข **Path Filtering** เพื่อให้ Workflow ประมวลผลสร้างเว็บเอกสารเฉพาะเมื่อมีการแก้ไขไฟล์ในคลังความรู้:
+*   **Path Targeting**: ตั้งค่า `paths: ['docs/**']` ในไฟล์ YAML เพื่อสั่งรัน Workflow เฉพาะเมื่อมีการอัปเดตไฟล์ในโฟลเดอร์เอกสาร.
+*   **MkDocs & GitHub Pages Integration**: สคริปต์จะทำการติดตั้ง `mkdocs-material` แล้วรันคำสั่ง `mkdocs gh-deploy` เพื่อนำไฟล์ใน `docs/knowledge/` ขึ้นแสดงผลบนหน้าเว็บคลังความรู้โดยตรง.
+*   **Path Ignoring**: ใน Workflow อื่นๆ เช่น การ Build หรือ Deploy Vercel จะมีการตั้งค่า `paths-ignore: ['**.md', 'docs/**']` เพื่อข้ามการประมวลผลระบบใหญ่เวลาที่มีการแก้แค่ไฟล์เอกสาร ช่วยประหยัดเวลาและป้องกันการติด Rate Limit.
+
+#### **2.3 ระบบ Auto-Updating Agent Skills & Context**
+สำหรับการควบคุมและอัปเดตทักษะของ AI (Agent Skills & Instruction Optimization):
+*   **Dynamic Context Caching**: เอเจนต์สามารถดึงข้อมูลทักษะที่ตั้งค่าไว้ใน `agent_config.json` หรือ `.ai-context.md` มาเก็บไว้ใน Cache เพื่อลดการส่งข้อความซ้ำซ้อนและประหยัดค่า Token.
+*   **Instruction Enforcement**: เมื่อมีการอัปเดตทักษะหรือกฎเกณฑ์การเขียนโค้ด/แคปชันใน `docs/knowledge/skills`, เอเจนต์จะดึงกฎเกณฑ์ใหม่ไปใช้งานผ่านระบบ **Custom Instructions** หรือ **System Personas** ได้ทันที.
+
+---
+
+### 3. ตัวอย่างไฟล์ Workflow YAML ฉบับสมบูรณ์ (Auto-Update Docs & Deploy)
+
+ไฟล์ตัวอย่างสำหรับการอัปเดตและ Deploy คลังความรู้ `docs/knowledge` อัตโนมัติ:
+
+```yaml
+name: Auto Update & Deploy Docs/Knowledge
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - '.ai-context.md'
+
+jobs:
+  update-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install Documentation Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install mkdocs-material
+
+      - name: Build and Deploy Knowledge Site
+        run: |
+          mkdocs gh-deploy --force
+
+      - name: Commit Updated Metadata (Optional)
+        run: |
+          git config user.name "CrystalCastle Bot"
+          git config user.email "bot@crystalcastle.local"
+          git add CHANGELOG.md docs/
+          git diff --cached --quiet || git commit -m "chore: auto-update docs & knowledge base [skip ci]"
+          git push origin main
+```
+
+---
+
+### 4. ข้อควรระวังและแนวทางปฏิบัติที่ดีที่สุด (Best Practices)
+
+1. **ระบุ `[skip ci]` ใน Auto-Commit**: จำเป็นต้องใส่ `[skip ci]` ใน Commit Message ทุกครั้งเมื่อสั่งให้สคริปต์ Push เอกสารกลับเข้า Repository เพื่อป้องกันปัญหา Infinite Loop.
+2. **ตั้งค่า Permissions ให้ถูกต้อง**: ตรวจสอบว่าในระดับ Job มีการเปิดสิทธิ์ `contents: write` เพื่อให้ Workflow สามารถเขียนไฟล์กลับขึ้น Branch ได้.
+3. **การแยก Path อย่างชัดเจน**: ใช้ `paths` สำหรับ Workflow ที่อัปเดตเอกสาร และใช้ `paths-ignore` สำหรับ Workflow สาย Build/Deploy เพื่อลดการใช้โควตา Vercel หรือ Runner โดยไม่จำเป็น.
+4. **จัดโครงสร้าง `docs_dir` ใน `mkdocs.yml`**: หากเก็บไฟล์ไว้ในโฟลเดอร์ย่อย เช่น `docs/knowledge`, ต้องระบุ `docs_dir: docs/knowledge` ในไฟล์ `mkdocs.yml` เพื่อให้ระบบหาไฟล์ Markdown เจอและไม่เกิดหน้าเว็บว่างเปล่า.
+
+---
+
+💡 ต้องการให้ผมช่วยร่างโครงสร้างไฟล์ `mkdocs.yml` หรือปรับแต่งคำสั่งในสคริปต์ Auto-Update ให้รองรับการอัปเดตไฟล์ `skills` และ `.ai-context.md` ร่วมด้วยไหมครับ?
