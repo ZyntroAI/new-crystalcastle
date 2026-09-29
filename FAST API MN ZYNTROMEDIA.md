@@ -173,7 +173,7 @@ You can follow our tutorials to use our API endpoints to [Add Login Using the A
 [](chrome-distiller://12538b23-ac6f-459f-aeb6-3f3e6248c0e0_ed8977754a36ff6e1f6c0dc76fa039c94b274f1ff1f426e1c92bf05356ffba57/?title=ZyntroAI%2Ffastapi-python-boilerplate&time=40574457&url=https%3A%2F%2Fgithub.com%2FZyntroAI%2Ffastapi-python-boilerplate#%E0%B9%82%E0%B8%84%E0%B8%A3%E0%B8%87%E0%B8%AA%E0%B8%A3%E0%B9%89%E0%B8%B2%E0%B8%87%E0%B9%82%E0%B8%9B%E0%B8%A3%E0%B9%80%E0%B8%88%E0%B8%81%E0%B8%95%E0%B9%8C)
 
 ````
-oauth-fastapi/
+fastapi-python-boilerplate/
 │
 ├── app/
 │   ├── api/
