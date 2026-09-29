@@ -1,0 +1,264 @@
+วิธีเพิ่ม FIG / Claude / Slack ใน Reviewer (PR)
+
+บน GitHub การ “เพิ่ม Reviewer” ทำได้เฉพาะ **GitHub user หรือ GitHub team** ที่มีสิทธิ์เข้าถึง repository เท่านั้น ดังนั้น FIG, Claude และ Slack มีวิธีใช้งานต่างกัน:
+
+- **FIG**: ต้องมี GitHub account / GitHub App / bot account ที่เข้าถึง repo ก่อน จึงเพิ่มเป็น requested reviewer ได้
+- **Claude**: ถ้าติดตั้ง Claude Code GitHub integration แล้ว ใช้ `@claude review` ใน PR comment หรือเปิด automated review; ไม่จำเป็นต้องเป็น requested reviewer แบบ human เสมอไป
+- **Slack**: ไม่ใช่ GitHub reviewer จึงเพิ่มในช่อง Reviewers ไม่ได้; ใช้ GitHub for Slack app เพื่อแจ้ง PR/review ไปยัง Slack channel แทนครับ[1][2][3][4]
+
+## 1. เพิ่ม FIG เป็น Reviewer
+
+### ทางหน้า GitHub
+
+เงื่อนไข: FIG ต้องเป็น GitHub user/bot หรือ GitHub App ที่มีสิทธิ์อ่าน repository อย่างน้อย และคุณต้องมีสิทธิ์ `Write` ใน repo เพื่อ request review
+
+1. เปิด Pull Request
+2. ที่แถบขวา เลือก **Reviewers**
+3. ค้นหา GitHub username ของ FIG
+4. กด **Request**
+
+GitHub อนุญาตให้ request review จากบุคคลหรือ team ที่มีสิทธิ์เข้าถึง repository และผู้ขอ review ต้องมี write access ครับ[5][6]
+
+### ผ่าน GitHub CLI
+
+สมมติ PR หมายเลข `123` และ FIG GitHub login คือ `fig-bot`:
+
+```bash
+gh pr edit 123 \
+  --repo ZyntroAI/new-crystalcastle \
+  --add-reviewer fig-bot
+```
+
+ตรวจ reviewer ที่ถูกขอ:
+
+```bash
+gh pr view 123 \
+  --repo ZyntroAI/new-crystalcastle \
+  --json reviewRequests \
+  --jq '.reviewRequests'
+```
+
+### ผ่าน `gh api`
+
+```bash
+PR_NUMBER=123
+FIG_REVIEWER="fig-bot"
+
+gh api \
+  --method POST \
+  "/repos/ZyntroAI/new-crystalcastle/pulls/$PR_NUMBER/requested_reviewers" \
+  -f "reviewers[]=$FIG_REVIEWER"
+```
+
+GitHub REST API ใช้ endpoint `POST /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers` โดยส่ง GitHub login ใน `reviewers` หรือส่ง team slug ใน `team_reviewers`; reviewer จะได้รับ notification[3][7][8]
+
+> เปลี่ยน `fig-bot` เป็น GitHub username หรือ bot account จริงของ FIG ก่อนรัน อย่าเดาชื่อ account
+
+## 2. เพิ่ม Claude เป็น Reviewer
+
+### ทางเลือก A: ใช้ `@claude review` — แนะนำ
+
+หากติดตั้ง Claude Code GitHub integration / Claude Code Action แล้ว ให้คอมเมนต์ใน PR:
+
+```text
+@claude review
+```
+
+คำสั่งนี้สั่ง Claude วิเคราะห์ PR หนึ่งครั้งและโพสต์ feedback ลง PR ตามการตั้งค่า integration
+
+ตัวเลือกเพิ่มเติม:
+
+```text
+@claude review once
+```
+
+ตรวจครั้งเดียว ไม่ subscribe กับ commit ต่อไป
+
+```text
+@claude review always
+```
+
+ตรวจตอนนี้และติดตาม PR ต่อเมื่อมี push ใหม่ในอนาคต
+
+Claude Code สามารถโพสต์ inline review comments สำหรับ finding ในโค้ด หรือ summary comment หากไม่พบปัญหา โดย findings ไม่ได้ approve หรือ block PR ของคุณอัตโนมัติ[1][2][9]
+
+### ทางเลือก B: เปิด Automatic PR Review
+
+Claude Code documentation ระบุว่ามี automatic code review สำหรับ PR โดยไม่ต้องเขียน workflow เองในบาง integration/configuration ให้เปิดผ่าน Claude Code/GitHub integration settings ตามองค์กรของคุณ[2][9]
+
+ข้อควรระวังสำหรับ repository ที่มี OCR/PDF หรือ secrets:
+
+- อย่าอนุญาตให้ Claude แก้/push code อัตโนมัติ ถ้าต้องการเพียง review
+- จำกัด scope ของ GitHub integration เฉพาะ repository ที่จำเป็น
+- อย่าให้ workflow ของ Claude มี `contents: write` หากมีหน้าที่ review/comment เท่านั้น
+- อย่า inject repository secrets เข้า workflow สำหรับ PR review
+- ระวัง PR จาก fork; หลีกเลี่ยง `pull_request_target` ที่ checkout หรือ run code จาก PR เพราะมีความเสี่ยง secret exposure
+- ตั้ง requirement ให้ human review เป็นผู้อนุมัติและ merge เสมอ
+
+### ทางเลือก C: Request reviewer จาก Claude bot
+
+ถ้า Claude integration สร้าง GitHub bot account ที่ปรากฏใน reviewer list และได้รับสิทธิ์ใน repo คุณอาจ request มันได้แบบ FIG:
+
+```bash
+gh pr edit 123 \
+  --repo ZyntroAI/new-crystalcastle \
+  --add-reviewer <claude-bot-github-login>
+```
+
+แต่ไม่ใช่ทุก Claude integration รองรับ requested-reviewer semantics ดังนั้น `@claude review` เป็นวิธีที่เชื่อถือได้กว่าเมื่อคุณไม่ทราบ bot login ที่แท้จริง[1][2]
+
+## 3. ใช้ Slack สำหรับแจ้งเตือน PR
+
+Slack เป็นช่องทาง notification ไม่ใช่ GitHub reviewer จึงไม่สามารถใส่ Slack channel ใน **Reviewers** ของ PR ได้
+
+### ติดตั้ง GitHub for Slack
+
+1. ติดตั้ง GitHub app ใน Slack workspace
+2. เชื่อม GitHub organization/repository
+3. เข้า Slack channel ที่ต้องการ เช่น `#github-reviews`
+4. รัน:
+
+```text
+/github subscribe ZyntroAI/new-crystalcastle pulls reviews comments
+```
+
+เพื่อแจ้ง:
+
+- PR เปิดใหม่/ปิด/merge
+- PR review
+- PR comments
+
+GitHub for Slack รองรับการ subscribe event `reviews` และ `comments` เพิ่มจาก notification ปกติได้[4]
+
+### ตั้งรูปแบบ channel
+
+แนะนำ:
+
+```text
+#github-pr-notifications
+```
+
+ใช้รับ PR opened, merged, closed และ status updates
+
+```text
+#github-pr-reviews
+```
+
+ใช้รับ review request, review comments, Claude/FIG findings และ discussion
+
+ตัวอย่าง:
+
+```text
+/github subscribe ZyntroAI/new-crystalcastle pulls reviews comments
+```
+
+หาก channel มี noise มาก ให้ subscribe เฉพาะ:
+
+```text
+/github subscribe ZyntroAI/new-crystalcastle reviews comments
+```
+
+## 4. Workflow ที่แนะนำ
+
+สำหรับ PR ของ FIG เช่น branch `fig/review-pdf-convert-ocr`:
+
+```text
+FIG สร้าง branch และเปิด PR
+        │
+        ├─ Request reviewer: human maintainer
+        │
+        ├─ @claude review
+        │
+        ├─ FIG ทำ review report ใน review_results.md
+        │
+        ├─ Slack แจ้ง #github-pr-reviews
+        │
+        └─ Human reviewer ตรวจ diff, security findings และ merge
+```
+
+### คำสั่งรวดเร็วหลังเปิด PR
+
+```bash
+PR_NUMBER=123
+REPO="ZyntroAI/new-crystalcastle"
+
+# เพิ่ม human reviewer ที่มี GitHub account จริง
+gh pr edit "$PR_NUMBER" \
+  --repo "$REPO" \
+  --add-reviewer <human-github-login>
+
+# เพิ่ม FIG เฉพาะเมื่อทราบ GitHub login ที่แท้จริง
+gh pr edit "$PR_NUMBER" \
+  --repo "$REPO" \
+  --add-reviewer <fig-github-login>
+
+# สั่ง Claude review
+gh pr comment "$PR_NUMBER" \
+  --repo "$REPO" \
+  --body "@claude review"
+
+# ตรวจสถานะ reviewer และ reviews
+gh pr view "$PR_NUMBER" \
+  --repo "$REPO" \
+  --json reviewRequests,reviews,statusCheckRollup
+```
+
+> อย่าใช้ placeholder เช่น `<fig-github-login>` แบบตรงตัว ต้องแทนด้วย login จริงก่อน execute
+
+## 5. ตั้ง CODEOWNERS สำหรับบังคับ Review
+
+หากต้องการให้ PR ที่แตะ `pdf-convert-ocr` ต้องมี review จากผู้รับผิดชอบเสมอ ให้เพิ่ม:
+
+```text
+.github/CODEOWNERS
+```
+
+ตัวอย่าง:
+
+```text
+# PDF/OCR component
+/pdf-convert-ocr/ @ZyntroAI/pdf-ocr-maintainers
+```
+
+แล้วเปิด branch protection บน `main`:
+
+- Require a pull request before merging
+- Require approvals อย่างน้อย 1–2 คน
+- Require review from Code Owners
+- Require status checks to pass
+- Dismiss stale approvals เมื่อมี push ใหม่
+- Restrict force pushes
+- Restrict branch deletion
+- Do not allow external bot/agent to bypass these rules
+
+GitHub สามารถ request review จาก user/team ที่มี access และ team reviewer ใช้ team slug ใน API ได้[3][5][8]
+
+## สรุป
+
+| สิ่งที่ต้องการ | วิธีที่ถูกต้อง |
+|---|---|
+| FIG เป็น reviewer | เพิ่ม GitHub bot/user ของ FIG ใน Reviewers หลัง grant repo access |
+| Claude ตรวจ PR | คอมเมนต์ `@claude review` หลังติดตั้ง Claude Code integration |
+| Claude ตรวจทุก push | `@claude review always` หรือเปิด auto review |
+| Slack รับแจ้ง review | `/github subscribe ZyntroAI/new-crystalcastle reviews comments` |
+| บังคับ human review | Branch protection + CODEOWNERS |
+| บังคับ reviewer เฉพาะ component | CODEOWNERS สำหรับ `/pdf-convert-ocr/` |
+
+ประเด็นสำคัญที่สุด: ให้ FIG และ Claude เป็น automated/advisory reviewers ได้ แต่ให้ **มนุษย์ที่ได้รับมอบหมายผ่าน CODEOWNERS เป็นผู้ approve และ merge** โดยเฉพาะ PR ที่กระทบ PDF processing, GitHub Actions, secrets, dependencies หรือ deployment ครับ[2][4][5]
+
+การอ้างอิง:
+[1] Claude Code GitHub Actions - Claude Code Docs https://code.claude.com/docs/en/github-actions
+[2] Code Review - Claude Code Docs https://code.claude.com/docs/en/code-review
+[3] REST API endpoints for review requests - GitHub Docs https://docs.github.com/en/rest/pulls/review-requests
+[4] Customizing notifications for GitHub in Slack https://docs.github.com/en/integrations/how-tos/slack/customize-notifications
+[5] Requesting a pull request review - GitHub Docs https://docs.github.com/en/pull-requests/how-tos/create-pull-requests/requesting-a-pull-request-review
+[6] Requesting a pull request review - GitHub Enterprise Server 3.16 Docs https://docs.github.com/en/enterprise-server@3.16/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/requesting-a-pull-request-review
+[7] REST API endpoints for review requests https://docs.github.com/en/enterprise-server@3.22/rest/pulls/review-requests
+[8] Code Samples For ``request... https://docs.github.com/en/enterprise-server@3.19/rest/pulls/review-requests
+[9] Claude Code GitHub Actions https://code.claude.com/docs/en/github-actions?38d7aa68_page=4&fcdaa149_page=13
+[10] github-actions https://code.claude.com/docs/fr/github-actions
+[11] Find bugs with ultrareview - Claude Code Docs https://code.claude.com/docs/en/ultrareview
+[12] Claude Code GitHub Actions https://code.claude.com/docs/de/github-actions
+[13] Use Claude Code in the cloud https://code.claude.com/docs/en/claude-code-on-the-web
+[14] claude.com › docs › connectorsGitHub integration - Claude.ai Documentation https://claude.com/docs/connectors/github
+[15] claude-code-action/docs/solutions.md at main https://github.com/anthropics/claude-code-action/blob/main/docs/solutions.md
