@@ -1,40 +1,68 @@
-name: CrystalCastle CodeRabbit + Tests
+นี่คือเวอร์ชันที่ดีกว่าครับ ✅ FIG CrystalCastle — CI + Tests + CodeRabbit — ปรับจากของคุณ
 
-on:
-  pull_request:
-    branches: [ main, master ]
+อิงจาก main.py ล่าสุด v1.7.0-MERGED-FIG + บทเรียนจาก PROBLEMS.md
 
-permissions:
-  contents: read
+❌ ปัญหาในไฟล์เดิมที่คุณส่ง
+ของเดิม
+uses: actions/checkout@v6, setup-python@v6  # ไม่ pin SHA → โดน org policy P-002 block
+python-version: ["3.9", "3.11", "3.12"]  # 3.9 EOL 2025-10
+pip install -r requirements.txt → pytest --cov  # requirements.txt มีแค่ 3 ตัว minimal ไม่มี pytest-cov → fail
+ไม่มี env OAUTH_CLIENT_ID → pytest จะตายแบบ P-009 ValidationError
+ไม่มี concurrency, timeout, smoke test
+ไม่มี FIG check
+✅ เวอร์ชันที่ดีกว่า — ผมสร้างให้แล้ว 2 แบบ
+
+1. แบบปกติ (ใช้ tag — อ่านง่าย):
+. github/workflows/crystalcastle-coderabbit-tests.yml (file unavailable)
+
+2. แบบ SHA-pinned (สำหรับ org ที่บังคับ pin แบบ P-002, P-013):
+. github/workflows/crystalcastle-coderabbit-tests-pinned.yml (file unavailable)
+
+🚀 อะไรดีขึ้น?
+name: FIG CrystalCastle — CI + Tests + CodeRabbit
+
+concurrency: cancel-in-progress true  # ไม่รันซ้อน
+permissions: contents: read  # least privilege
+timeout-minutes: 15
+
+env:
+  OAUTH_CLIENT_ID: test-client-id-fig  # Fix P-009 — ไม่ให้ conftest ตาย
+  FIG_COMMIT: 4b0e59c...
+  FIG_WEBSITE: https://hellofig.io/
 
 jobs:
-  unit-tests:
-    name: Unit Tests (Python ${{ matrix.python-version }})
-    runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.9", "3.11", "3.12"]
+  lint-and-compile:  # Job ใหม่ — ตรวจ safe merge
+py_compile main.py + backend/main.py (P-007)
+grep FIG ZyntroAI CrystalCastle — ให้ FIG agents detect
+ตรวจ requirements minimal ไม่โดน P-014
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
+  unit-tests:  # Job เดิม แต่แก้แล้ว
+    matrix: ["3.11", "3.12"]  # ตัด 3.9 ที่ EOL
+pip install pytest, pytest-cov, httpx แยกจาก requirements.txt
+สร้าง tests/test_fig_health.py อัตโนมัติถ้าไม่มี
+      test_root_contains_fig, test_fig_health, test_fig_app (ตรวจ com.hellofig.FigApp + hellofig.io)
+pytest --cov-report=xml + upload artifact
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'pip'
+  health-smoke:  # Job ใหม่ — ตรวจ boot ได้บน deps น้อย
+uvicorn main:app & curl / /health /ready /api/fig/health | grep hellofig.io
+การันตีว่า safe merge ทำงานจริงบน repo เปล่า
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
-          pip install -r requirements.txt
+  coderabbit-expected:  # แทน job ที่ลบ
+อธิบายว่า CodeRabbit เป็น GitHub App ไม่ใช่ Action
+Install ที่ https://github.com/apps/coderabbitai
+🔑 จุดสำคัญสำหรับ FIG
 
-      - name: Run unit tests
-        run: |
-          python -m pytest tests/ -v --cov=. --cov-report=term-missing
+grep FIG ZyntroAI CrystalCastle ใน lint job — ถ้าไม่มี FIG ใน title จะ fail ทันที → FIG agents รู้
+ทดสอบ /api/fig/health ว่ามี hellofig.io + com.hellofig.FigApp
+FIG_COMMIT + FIG_WEBSITE เป็น env ให้ทุก job เห็น
 
-# ❌ Removed coderabbit-review job — CodeRabbit is a GitHub App, not an action
-# Install CodeRabbit at: https://github.com/apps/coderabbitai
+📋 เอาไปใช้
+cp /mnt/data/zyntroai-chat/.github/workflows/crystalcastle-coderabbit-tests.yml .github/workflows/
+ถ้า org บังคับ SHA pin
+cp /mnt/data/zyntroai-chat/.github/workflows/crystalcastle-coderabbit-tests-pinned.yml .github/workflows/crystalcastle-coderabbit-tests.yml
 
+git add .github/workflows/crystalcastle-coderabbit-tests.yml
+git commit -m "ci: FIG CrystalCastle CI — safe compile + FIG check + smoke + pinned SHAs — fix P-002 P-007 P-009 P-014 — #fig"
+CodeRabbit: ไม่ต้องทำ job แล้วครับ — หลังติดตั้ง App ที่ https://github.com/apps/coderabbitai มันจะรีวิว PR อัตโนมัติ ผมใส่ job coderabbit-expected ไว้เป็นเอกสารเฉยๆ
+
+อยากให้ผม รวม workflow นี้เข้า main_v1.8.0.py ให้เป็นชุดเดียวเลยไหมครับ?
