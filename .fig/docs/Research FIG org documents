@@ -1,0 +1,236 @@
+Research FIG org documents
+
+“FIG org documents” มีความหมายได้หลายแบบ แต่จากบริบทก่อนหน้าของคุณ—FIG Agent, skills, GitHub review และองค์กร—แหล่งที่เกี่ยวข้องที่สุดคือเอกสารของ **Fig AI / hellofig.io** และ repository **Fig4-AI/fig-engineering-principles** ครับ
+
+## เอกสาร FIG ที่พบ
+
+### 1. FIG Agent Platform
+
+Fig ระบุว่าเป็นแพลตฟอร์ม AI สำหรับองค์กรที่ให้สร้าง specialized agents, เชื่อมต่อระบบงาน เช่น GitHub, Google Drive และ Salesforce, กำหนด role/rules ของ agent, และให้ agent ส่งมอบงานจริงภายใต้ governance ขององค์กร[1][2]
+
+เอกสารที่ควรเริ่มอ่าน:
+
+- [Fig Agent: Deployable AI Agents](https://hellofig.io/fig-agent) — ภาพรวมการสร้าง agent, เชื่อม tools และกำหนดความรับผิดชอบ
+- [Agent Governance](https://hellofig.io/agents/agent-governance) — การควบคุม access, sharing, capabilities, approvals และ oversight[3]
+- [Fig for Business](https://hellofig.io/business) — วิธีใช้งาน Fig ผ่าน web/desktop/mobile, virtual machine execution และการให้ผู้ใช้เข้าไปอนุมัติงานสำคัญ[4]
+
+สำหรับ use case ของคุณ ควรเน้นตรวจใน governance ว่า agent มีสิทธิ์ใดบ้าง เช่น:
+
+```text
+Repository read access
+Repository write access
+Pull request creation
+GitHub Actions visibility
+Workflow modification
+Secrets visibility
+Deployment capability
+Organization administration
+```
+
+หลักที่ควรใช้คือให้ agent มีสิทธิ์เท่าที่จำเป็นสำหรับงานเท่านั้น เช่น review agent ควรอ่าน source ได้ และถ้าต้องเขียน `review_results.md`/เปิด PR ให้มี write เฉพาะ repository เป้าหมาย แต่ไม่ควรได้ organization admin, repository admin, secrets access หรือสิทธิ์ deploy/release
+
+## 2. Plugins และเอกสารองค์กร
+
+หน้า [Fig Plugins](https://hellofig.io/platform/plugins) ระบุว่า Fig ใช้ plugins เพื่อ bundle connectors, skills และ playbooks ให้ agent ทำงานตามรูปแบบ governance ขององค์กรได้ รวมถึง integration กับ GitHub, Notion, Google Drive, Gmail และ Microsoft Teams[5]
+
+สำหรับการทำเอกสารองค์กร คุณสามารถจัดชุดความรู้ได้เป็น:
+
+```text
+Organization documentation
+├── Security policy
+├── GitHub repository policy
+├── Agent access policy
+├── Secrets management policy
+├── Coding standards
+├── CI/CD policy
+├── Release policy
+├── Incident response runbook
+├── Pull request policy
+└── Agent skills and playbooks
+```
+
+FIG สามารถนำ document เหล่านี้ไปเป็น source สำหรับ rules, templates, approval flow และ standardized output ของ agent ได้ หากองค์กรเชื่อม Google Drive, Notion หรือ GitHub เข้ากับ platform[4][5]
+
+## 3. Fig Engineering Principles
+
+repository [Fig4-AI/fig-engineering-principles](https://github.com/Fig4-AI/fig-engineering-principles) มีเนื้อหาที่ตรงกับงาน engineering agent โดยเฉพาะ: มี `/fig`, `/fig-workflow` และ `/fig-agent` เพื่อให้ agent ทำงานตาม engineering principles และ workflow แบบ orchestrated[6]
+
+จากหน้าหลัก repository:
+
+| ส่วน | จุดประสงค์ |
+|---|---|
+| `/fig` | ใช้สำหรับ review PR, ทำงานเปลี่ยนแปลงเล็ก, ตอบคำถามเกี่ยวกับ codebase |
+| `/fig-workflow` | ทำงาน engineering แบบครบ flow เช่น design → implement → ship |
+| `/fig-agent` | subagent ที่ใช้ engineering principles เดียวกัน |
+| `AGENTS.md` | วิธีส่งต่อ principles ไปยัง tools/agents ที่อ่าน project instructions |
+
+เอกสารนี้มีประโยชน์มากถ้าคุณต้องการให้ FIG ทำ review `pdf-convert-ocr` อย่างเป็นระบบ เพราะคุณสามารถเพิ่ม guidance ใน repository-level `AGENTS.md` และแยก specialized skill สำหรับ OCR/security review ตามที่วางโครงไว้ก่อนหน้า[6]
+
+## 4. เอกสารที่ควรสร้างเอง
+
+สำหรับ organization ที่ใช้ FIG กับ GitHub ผมแนะนำให้สร้าง “minimum governance document pack” ก่อนมอบสิทธิ์เขียน repository ให้ agent
+
+```text
+org-docs/
+├── agent-governance.md
+├── github-access-policy.md
+├── secrets-and-api-keys-policy.md
+├── pull-request-policy.md
+├── ci-cd-and-release-policy.md
+├── incident-response.md
+├── document-data-classification.md
+└── skills/
+    ├── pdf-ocr-security-review/
+    │   ├── SKILL.md
+    │   └── references/
+    └── github-review-delivery/
+        └── SKILL.md
+```
+
+### `agent-governance.md`
+
+ควรกำหนด:
+
+- Agent ประเภทใดทำงานอะไรได้
+- Agent ใด read-only และ agent ใดเขียน branch/เปิด PR ได้
+- งานใดต้องรอ approval เช่น push, PR, merge, deployment, release, secret rotation
+- วิธีเก็บ audit trail ของ task, commands, diff, PR และ artifact
+- วิธีหยุด agent เมื่อพบ security incident
+
+### `github-access-policy.md`
+
+ควรกำหนด:
+
+- Agent ให้เป็น outside collaborator หรือ GitHub App
+- Scope ที่ต่ำสุดที่จำเป็น
+- Repository ที่อนุญาต
+- สิทธิ์ branch ที่ agent push ได้ เช่น `fig/*`
+- ห้าม agent push โดยตรงเข้า `main`
+- ห้าม agent merge PR
+- ห้าม agent เปลี่ยน repository settings, secrets หรือ Actions settings
+- วิธี offboard/remove access
+
+Outside collaborators เป็นผู้ที่ไม่ใช่สมาชิก organization แต่เข้าถึง repository ที่ได้รับมอบเฉพาะเจาะจง จึงเหมาะกับ agent/contractor ที่ต้องทำงานเฉพาะ repository มากกว่าเพิ่มเป็น organization member[7][8]
+
+### `secrets-and-api-keys-policy.md`
+
+ควรกำหนด:
+
+- ห้ามใส่ secret ใน code, docs, issue, PR, commit, workflow log, artifact หรือ cache
+- ใช้ GitHub environment secrets หรือ external secret manager
+- แยก dev/staging/production credentials
+- หากพบ secret ให้ redact, ไม่ validate key, และแจ้ง owner
+- Rotation/revocation procedure
+- เปิด secret scanning และ push protection
+
+GitHub secret scanning มีไว้เพื่อช่วยตรวจจับ credential ที่รั่วใน repository และ push protection ช่วยหยุด secret ก่อนถูก push[9][10]
+
+### `pull-request-policy.md`
+
+ควรกำหนด:
+
+- PR ต้องผ่าน CI
+- PR จาก agent ต้องมี reviewer มนุษย์
+- agent ห้าม merge
+- เปลี่ยน workflow, dependency, permission, Docker, deployment หรือ authentication ต้องถูกจัดเป็น high-risk change
+- PR ที่เกี่ยวกับ security ต้องแนบ threat model และ test evidence
+- documentation-only PR เช่น `review_results.md` ต้องระบุชัดว่าไม่แก้ source code
+
+## 5. Template สำหรับ Agent Policy
+
+คุณสามารถวางข้อความนี้เป็นเอกสารในองค์กรหรือเพิ่มเข้า `AGENTS.md`:
+
+```md
+# FIG Agent Governance Policy
+
+## Purpose
+
+FIG agents may assist with repository inspection, code review, documentation,
+testing, and pull request preparation. Agents must operate under least privilege
+and must not bypass human review.
+
+## Access Rules
+
+- Agents may access only approved repositories.
+- Agents must use the minimum permission required.
+- Agents must push only to agent-owned branches such as `fig/*`.
+- Agents must never push directly to `main`, `master`, release, or protected branches.
+- Agents must never merge pull requests.
+- Agents must not change organization settings, repository settings, branch protection,
+  GitHub Actions secrets, environment secrets, deploy keys, webhooks, or access control.
+- Agents must not add collaborators or modify team membership.
+
+## Security Rules
+
+- Never expose raw API keys, tokens, passwords, private keys, cookies, certificates,
+  database URLs, or credential-like material.
+- Never test, validate, rotate, revoke, or use discovered credentials.
+- Treat possible secrets as compromised until an authorized owner verifies them.
+- Do not upload source documents, OCR output, customer content, or repository data to
+  unapproved external services.
+- Do not put sensitive data in issue comments, PR descriptions, commit messages,
+  workflow logs, build artifacts, caches, or generated reports.
+
+## Pull Request Rules
+
+- All changes must use a dedicated branch.
+- Every agent-created PR requires human review before merge.
+- The PR must include a concise summary, test evidence, and known limitations.
+- The agent must report only verified push/PR status.
+- If GitHub authentication or permission is unavailable, the agent must record the
+  blocker and exact next step without claiming successful delivery.
+
+## High-Risk Changes
+
+Require explicit human approval before:
+- Changing GitHub Actions workflows.
+- Changing permissions or authentication.
+- Adding or upgrading dependencies.
+- Editing deployment/release configuration.
+- Changing Dockerfiles or container permissions.
+- Handling secrets, credentials, external APIs, or cloud infrastructure.
+- Deleting files or rewriting Git history.
+
+## Incident Rule
+
+If a possible secret, unauthorized access path, or critical vulnerability is found:
+1. Stop any unsafe operation.
+2. Redact the sensitive value.
+3. Record only the path, line, classification, and impact.
+4. Notify the repository/security owner through the approved process.
+5. Do not attempt remediation unless explicitly authorized.
+```
+
+## แนะนำลำดับเริ่มต้น
+
+1. เปิดอ่าน Fig Agent และ Agent Governance documentation เพื่อดู capability/approval model ที่องค์กร FIG ใช้จริง[1][3]
+2. นำ `fig-engineering-principles` มาดูเป็น reference สำหรับ `/fig`, `/fig-workflow`, `/fig-agent` และแนวทาง `AGENTS.md`[6]
+3. สร้าง organization policy 4 ไฟล์ก่อน:
+   - `agent-governance.md`
+   - `github-access-policy.md`
+   - `secrets-and-api-keys-policy.md`
+   - `pull-request-policy.md`
+4. เชื่อม policy เหล่านี้เข้ากับ skill `pdf-ocr-security-review`
+5. ให้ FIG มี Write access เฉพาะ repo เป้าหมาย, push ได้เฉพาะ `fig/*`, และเปิด PR ได้ แต่ไม่มีสิทธิ์ merge/deploy/admin
+6. เปิด GitHub secret scanning/push protection และกำหนด branch protection บน `main` ก่อนใช้ agent ทำงานแบบ autonomous[7][8][9][10]
+
+การอ้างอิง:
+[1] Fig Agent: Deployable AI Agents https://hellofig.io/fig-agent
+[2] About Fig | The enterprise AI platform https://hellofig.io/about
+[3] Agent governance | Fig https://hellofig.io/agents/agent-governance
+[4] Fig AI - Websites & Agents https://hellofig.io/business
+[5] Plugins | Fig https://hellofig.io/platform/plugins
+[6] Fig4-AI/fig-engineering-principles ... https://github.com/Fig4-AI/fig-engineering-principles
+[7] Managing outside collaborators https://docs.github.com/en/organizations/managing-user-access-to-your-organizations-repositories/managing-outside-collaborators
+[8] Adding outside collaborators to repositories in your organization https://docs.github.com/en/organizations/managing-user-access-to-your-organizations-repositories/managing-outside-collaborators/adding-outside-collaborators-to-repositories-in-your-organization
+[9] Secret scanning - GitHub Docs https://docs.github.com/en/code-security/concepts/secret-security/secret-scanning
+[10] Remediating a leaked secret in your repository - GitHub Docs https://docs.github.com/en/code-security/tutorials/remediate-leaked-secrets/remediating-a-leaked-secret
+[11] Agency Profile - 4As https://www.aaaa.org/agency-profile/a4O5Y000001ulCM/fig/
+[12] Fig https://github.com/withfig
+[13] Fig for Professional Services https://hellofig.io/fig-agent-pages/fig-professional-services
+[14] Financial Independence Group hiring Onboarding Support Specialist in Cornelius, NC | LinkedIn https://www.linkedin.com/jobs/view/onboarding-support-specialist-at-financial-independence-group-4240996268
+[15] fig-package-manager https://github.com/fig-package-manager
+[16] The FIG Agent Platform https://fignow.com/fig-agents
+[17] Fig AI Guide 2026: Features, Pricing, How to Use & Complete ... https://aitoolsdevpro.com/ai-tools/fig-guide/
+[18] fig https://fig.io/manual/fig
+[19] Fig Dashboard - Fig.io https://fig.io/user-manual/dashboard
