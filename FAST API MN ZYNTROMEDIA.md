@@ -1,6 +1,6 @@
 ---
 aliases:
-  - CrystalCastle
+  - new-crystalcastle
 API: Slack
 cssclasses: CONFIG
 tags:
