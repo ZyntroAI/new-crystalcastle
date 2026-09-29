@@ -1,0 +1,119 @@
+language: "th-TH"
+tone_instructions: >
+  รีวิวสั้น กระชับ ตรงประเด็น
+  โฟกัส Security, Reliability และ Correctness
+  ไม่ต้องกล่าวถึง formatting หรือ style
+
+focus: "security"
+
+reviews:
+  profile: "assertive"
+  high_level_summary: true
+  changed_files_summary: true
+  collapse_walkthrough: true
+  estimate_code_review_effort: true
+  suggested_labels: true
+  auto_apply_labels: false
+  suggested_reviewers: false
+
+  review_instructions: |
+    รายงานเฉพาะประเด็นระดับ medium–high impact
+    เน้น Security, Correctness, Reliability และ Performance
+    ข้ามเรื่อง formatting, lint และ style โดยสมบูรณ์
+    หากปัญหาสามารถแก้ไขผ่าน linter/formatter อัตโนมัติ ไม่ต้องกล่าวถึง
+
+  review_settings:
+    minimum_severity: medium
+    report_minor_issues: false
+
+  path_instructions:
+    # Workflow — ตรวจเข้มเรื่อง permissions & hardening
+    - path: ".github/workflows/**"
+      instructions: |
+        ตรวจสอบความปลอดภัยของ workflow อย่างเข้มงวด:
+        - permissions ตั้งเป็น least privilege เท่าที่จำเป็น
+        - action ทุกรายการ pin SHA หรือ release tag ที่เชื่อถือได้
+        - หลีกเลี่ยง pull_request_target หากไม่มีการตรวจสอบความถูกต้อง
+        - ไม่ส่งต่อ secrets ผ่าน env โดยไม่จำเป็น
+        - พิจารณาใช้ OIDC แทน long-lived PAT
+        - ป้องกันความเสี่ยงจาก artifact poisoning
+
+    # CODEOWNERS — ตรวจสอบการครอบคลุมและความเหมาะสม
+    - path: ".github/CODEOWNERS"
+      instructions: |
+        ตรวจสอบความครอบคลุมและความถูกต้อง:
+        - ครอบคลุม path สำคัญ: .github/workflows/**, src/lib/**, infra/**
+        - ไม่มี wildcard ที่กว้างเกินไป เช่น * ทั้ง repo
+        - ทีม/บุคคลที่รับผิดชอบตรงกับเนื้อหา
+
+    # Next.js — Server/Client & ความปลอดภัย
+    - path: "src/**/*.{ts,tsx}"
+      instructions: |
+        ตรวจสอบตามหลักความปลอดภัยของ Next.js:
+        - Server Actions / Route Handlers มีการตรวจสอบสิทธิ์และ input
+        - ป้องกันการรั่วไหลของข้อมูลใน SSR / cache / revalidation
+        - พฤติกรรม dynamic rendering ไม่ทำให้ข้อมูลส่วนตัวรั่ว
+        - แยก server/client boundary อย่างชัดเจน
+
+    # Supabase — RLS & Data Access
+    - path: "supabase/**"
+      instructions: |
+        ตรวจสอบความปลอดภัยของ Supabase:
+        - เปิด RLS ทุกตารางที่เปิดให้เข้าถึงจากภายนอก
+        - ใช้ auth.uid() เพื่อตรวจสอบสิทธิ์เจ้าของข้อมูล
+        - สิทธิ์ anon ไม่มากกว่าความจำเป็น
+        - service role ใช้เฉพาะบน server เท่านั้น
+        - มีการตรวจสอบ/validate ข้อมูลก่อนส่ง query
+
+    # AI / LLM integrations — ความปลอดภัย & ความมั่นคง
+    - path: "src/**/*ai*,src/**/*llm*,src/**/*groq*,src/lib/ai/**"
+      instructions: |
+        ตรวจสอบความเสี่ยงจากการใช้ AI:
+        - ป้องกัน prompt injection ทั้ง input และ output
+        - มีการตรวจสอบ/ทำความสะอาดข้อมูลที่ได้จาก model
+        - มีกลไกจัดการความผิดพลาด: retries, timeout, rate limiting
+        - ป้องกันการใช้ token มากเกินไปหรือค่าใช้จ่ายเกินตัว
+
+    # package.json — ความเสี่ยงจาก dependencies
+    - path: "package.json"
+      instructions: |
+        ตรวจสอบสถานะและความเสี่ยงของแพ็กเกจ:
+        - ไม่ใช้เวอร์ชันที่ deprecated หรือมีช่องโหว่
+        - เวอร์ชันตรงกับมาตรฐานและไม่ drift เกินไป
+
+    # Lockfile — ตรวจสอบการเปลี่ยนแปลงที่ผิดปกติ
+    - path: "pnpm-lock.yaml"
+      instructions: |
+        ตรวจพบการเปลี่ยนแปลงที่ผิดปกติหรือไม่คาดคิดใน dependencies
+        - ตรวจสอบ integrity hash
+        - แจ้งเมื่อมีแพ็กเกจที่ไม่น่าเชื่อถือถูกเพิ่มเข้ามา
+
+auto_review:
+  enabled: true
+  auto_incremental_review: true
+  drafts: false
+
+knowledge_base:
+  web_search:
+    enabled: true
+  code_guidelines:
+    enabled: true
+
+security:
+  gitleaks:
+    enabled: true
+  trufflehog:
+    enabled: true
+  zizmor:
+    enabled: true
+
+# ปิดหากไม่มี Docker / IaC ใน repo
+hadolint:
+  enabled: false
+checkov:
+  enabled: false
+tflint:
+  enabled: false
+
+chat:
+  auto_reply: false
