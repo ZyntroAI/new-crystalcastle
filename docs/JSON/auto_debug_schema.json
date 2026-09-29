@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AutoDebugDeepResearchSession",
+  "type": "object",
+  "required": [
+    "session_id",
+    "target_issue",
+    "research_state",
+    "hypotheses",
+    "verification_history"
+  ],
+  "properties": {
+    "session_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for the debugging session."
+    },
+    "target_issue": {
+      "type": "object",
+      "required": ["error_type", "stack_trace"],
+      "properties": {
+        "error_type": { "type": "string", "example": "NullPointerError" },
+        "error_message": { "type": "string" },
+        "stack_trace": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "file": { "type": "string" },
+              "line": { "type": "integer" },
+              "function": { "type": "string" }
+            }
+          }
+        },
+        "environment": {
+          "type": "object",
+          "properties": {
+            "runtime": { "type": "string", "example": "Node.js v20.10.0" },
+            "os": { "type": "string" },
+            "dependencies": { "type": "object" }
+          }
+        }
+      }
+    },
+    "research_state": {
+      "type": "object",
+      "required": ["iteration", "max_iterations", "gathered_evidence"],
+      "properties": {
+        "iteration": { "type": "integer", "default": 0 },
+        "max_iterations": { "type": "integer", "default": 5 },
+        "gathered_evidence": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["source_type", "summary", "data"],
+            "properties": {
+              "evidence_id": { "type": "string" },
+              "source_type": {
+                "type": "string",
+                "enum": [
+                  "codebase_ast",
+                  "git_history",
+                  "runtime_log",
+                  "external_docs",
+                  "issue_tracker"
+                ]
+              },
+              "summary": { "type": "string" },
+              "data": { "type": "object" },
+              "confidence_score": { "type": "number", "minimum": 0, "maximum": 1 }
+            }
+          }
+        }
+      }
+    },
+    "hypotheses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["hypothesis_id", "description", "status"],
+        "properties": {
+          "hypothesis_id": { "type": "string" },
+          "description": { "type": "string" },
+          "suspected_files": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "status": {
+            "type": "string",
+            "enum": ["untested", "validated", "refuted"]
+          },
+          "proposed_fix": {
+            "type": "object",
+            "properties": {
+              "patch_diff": { "type": "string" },
+              "rationale": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "verification_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["timestamp", "hypothesis_id", "outcome"],
+        "properties": {
+          "timestamp": { "type": "string", "format": "date-time" },
+          "hypothesis_id": { "type": "string" },
+          "outcome": {
+            "type": "string",
+            "enum": ["success", "build_failure", "test_failure", "timeout"]
+          },
+          "execution_logs": { "type": "string" },
+          "diff_applied": { "type": "string" }
+        }
+      }
+    },
+    "resolution": {
+      "type": "object",
+      "properties": {
+        "is_resolved": { "type": "boolean" },
+        "winning_patch": { "type": "string" },
+        "root_cause_analysis": { "type": "string" },
+        "prevention_recommendations": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}
