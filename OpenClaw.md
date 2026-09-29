@@ -1,4 +1,4 @@
-Here’s a final consolidated summary of your open tabs:
+tHere’s a final consolidated summary of your open tabs:
 
 🦞 OpenClaw (Docs + Website)
 - Docs site: Explains OpenClaw as a self-hosted gateway connecting chat apps (Discord, Telegram, WhatsApp, Slack, Teams, iMessage, Matrix, etc.) to AI agents.  
