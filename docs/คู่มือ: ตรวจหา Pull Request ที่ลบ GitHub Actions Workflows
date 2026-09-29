@@ -1,0 +1,260 @@
+เขียนเอกสาร guide
+
+# คู่มือ: ตรวจหา Pull Request ที่ลบ GitHub Actions Workflows
+
+คู่มือนี้ช่วยตรวจว่า Pull Request (PR) ใดลบหรือแก้ไขไฟล์ GitHub Actions ภายใต้โฟลเดอร์ `.github/workflows/`
+
+## เป้าหมาย
+
+ต้องการหาให้ได้ว่า:
+
+- PR หมายเลขใดลบ workflow
+- ใครเป็นผู้สร้างและ merge PR
+- ไฟล์ workflow ใดถูกลบ
+- จะกู้ไฟล์กลับจาก commit ก่อนหน้าได้อย่างไร
+
+GitHub Actions workflow คือไฟล์ YAML ใน `.github/workflows/` ที่กำหนดงานอัตโนมัติ เช่น test, build, deploy และ security scan[1]
+
+## วิธีที่ 1: ตรวจจากหน้า GitHub
+
+### เปิดประวัติ workflow
+
+เปิดลิงก์นี้ในเบราว์เซอร์:
+
+```text
+https://github.com/ZyntroAI/new-crystalcastle/commits/main/.github/workflows
+```
+
+หน้านี้จะแสดง commit ที่เคยแก้ไขไฟล์ภายใต้ `.github/workflows/`
+
+### หา commit ที่ลบไฟล์
+
+ตรวจชื่อ commit และรายการไฟล์ที่เปลี่ยนแปลง มองหาคำหรือสัญลักษณ์ต่อไปนี้:
+
+- `remove`
+- `delete`
+- `cleanup`
+- `chore`
+- `D` ซึ่งหมายถึง Deleted
+- ไฟล์ เช่น `.github/workflows/ci.yml` ที่หายไปจากรายการ
+
+เมื่อเจอ commit ที่น่าสงสัย ให้คลิกเข้าไปดูรายละเอียด diff
+
+### ระบุ PR ที่เกี่ยวข้อง
+
+ในหน้า commit ให้มองหาสิ่งใดสิ่งหนึ่ง:
+
+- ข้อความ `Merge pull request #123`
+- ป้ายหรือปุ่มที่แสดง `#123`
+- ข้อความเช่น `This commit was created on GitHub.com and signed with GitHub’s verified signature`
+- ลิงก์ในส่วน pull request ที่เชื่อมกับ commit นั้น
+
+จากนั้นเปิด PR หมายเลขนั้น เช่น:
+
+```text
+https://github.com/ZyntroAI/new-crystalcastle/pull/123
+```
+
+## วิธีที่ 2: ใช้ GitHub Search
+
+หากทราบว่ามี PR อยู่แล้ว ให้เปิดหน้า PR ทั้งหมด:
+
+```text
+https://github.com/ZyntroAI/new-crystalcastle/pulls?q=is%3Apr+is%3Aclosed
+```
+
+ลองค้นหาด้วยคำเหล่านี้ในช่องค้นหา:
+
+```text
+is:pr is:closed workflow
+```
+
+```text
+is:pr is:closed remove
+```
+
+```text
+is:pr is:closed delete
+```
+
+```text
+is:pr is:closed .github
+```
+
+วิธีนี้เหมาะเมื่อชื่อหรือคำอธิบาย PR ระบุชัดว่าเกี่ยวข้องกับ workflow แต่ไม่รับประกันว่าจะเจอทุกกรณี เพราะผู้สร้าง PR อาจไม่ได้ใส่คำเหล่านี้ไว้ในชื่อหรือรายละเอียด
+
+## วิธีที่ 3: ใช้ Git ในเครื่อง
+
+วิธีนี้แม่นที่สุด เพราะค้นจากประวัติไฟล์โดยตรง
+
+### Clone รีโป
+
+```bash
+git clone https://github.com/ZyntroAI/new-crystalcastle.git
+cd new-crystalcastle
+```
+
+หากมีรีโปอยู่แล้ว ให้ดึง branch และประวัติทั้งหมดก่อน:
+
+```bash
+git fetch --all --tags --prune
+```
+
+### แสดง commit ที่แตะ workflow
+
+```bash
+git log --all --name-status -- .github/workflows
+```
+
+ผลลัพธ์ตัวอย่าง:
+
+```text
+commit a1b2c3d4e5f6
+Author: Example User
+Date:   2026-09-20
+
+    cleanup old CI configuration
+
+D       .github/workflows/ci.yml
+D       .github/workflows/deploy.yml
+```
+
+บรรทัดที่ขึ้นต้นด้วย `D` หมายถึงไฟล์ถูกลบ:
+
+```text
+D       .github/workflows/ci.yml
+```
+
+ให้คัดลอก commit SHA เช่น `a1b2c3d4e5f6` เก็บไว้
+
+### ดูรายละเอียดการลบ
+
+```bash
+git show --stat a1b2c3d4e5f6
+```
+
+ดู diff เต็ม:
+
+```bash
+git show a1b2c3d4e5f6 -- .github/workflows
+```
+
+## วิธีที่ 4: ผูก commit กับ PR
+
+หลังได้ commit SHA แล้ว ให้เปิด URL นี้ โดยแทนที่ `<SHA>` ด้วย SHA จริง:
+
+```text
+https://github.com/ZyntroAI/new-crystalcastle/commit/<SHA>
+```
+
+หาก commit มาจาก PR หน้า GitHub มักแสดง PR ที่เชื่อมโยงกับ commit นั้น
+
+หากติดตั้ง GitHub CLI (`gh`) แล้ว สามารถค้นหา PR ที่เกี่ยวข้องได้ด้วย:
+
+```bash
+gh pr list \
+  --repo ZyntroAI/new-crystalcastle \
+  --state all \
+  --search "<SHA>"
+```
+
+หรือดู PR ที่ถูก merge และค้นจากชื่อไฟล์:
+
+```bash
+gh pr list \
+  --repo ZyntroAI/new-crystalcastle \
+  --state merged \
+  --limit 100 \
+  --search "workflow"
+```
+
+## วิธีที่ 5: กู้ workflow กลับ
+
+ก่อนกู้ ให้ยืนยันไฟล์และ commit ต้นทางให้ถูกต้อง โดยดูจาก commit ก่อนหน้าที่ workflow ยังมีอยู่
+
+### ค้นหา commit ล่าสุดของไฟล์
+
+ตัวอย่างสำหรับ `ci.yml`:
+
+```bash
+git log --all -- .github/workflows/ci.yml
+```
+
+### กู้ไฟล์จาก commit ก่อนลบ
+
+แทน `<GOOD_SHA>` ด้วย commit ที่ไฟล์ยังอยู่:
+
+```bash
+git checkout <GOOD_SHA> -- .github/workflows/ci.yml
+```
+
+ตรวจการเปลี่ยนแปลง:
+
+```bash
+git status
+git diff -- .github/workflows/ci.yml
+```
+
+สร้าง branch สำหรับการกู้คืน:
+
+```bash
+git switch -c restore-workflows
+git add .github/workflows/ci.yml
+git commit -m "restore: recover CI workflow"
+git push -u origin restore-workflows
+```
+
+จากนั้นเปิด Pull Request จาก branch `restore-workflows` ไปยัง `main`
+
+## ข้อควรระวังด้านความปลอดภัย
+
+- ตรวจทุกไฟล์ YAML ก่อนกู้ โดยเฉพาะ `permissions`, `secrets`, `GITHUB_TOKEN` และขั้นตอน deploy
+- หลีกเลี่ยงการใช้ `pull_request_target` กับโค้ดจาก PR ภายนอก เพราะอาจทำให้โค้ดที่ไม่น่าเชื่อถือรันในบริบทที่มีสิทธิ์สูง
+- กำหนด `permissions` ให้แคบที่สุด เช่น `contents: read` สำหรับ workflow ที่ทำ test
+- อย่าใส่ secret ลงใน YAML, source code, log หรือ comment
+- ใช้ GitHub Environments แยก `staging` และ `production` พร้อมกำหนดผู้อนุมัติ deployment
+- ให้ CI เป็น required status check ก่อน merge เข้า `main`
+
+## แบบฟอร์มรายงานผล
+
+ใช้แบบฟอร์มนี้เพื่อบันทึกผลการตรวจสอบ:
+
+```md
+# Workflow Removal Investigation
+
+- Repository: `ZyntroAI/new-crystalcastle`
+- Branch checked: `main`
+- Investigation date: `YYYY-MM-DD`
+
+## Removed files
+
+- `.github/workflows/<workflow-name>.yml`
+
+## Deletion commit
+
+- Commit SHA: `<SHA>`
+- Commit URL: `https://github.com/ZyntroAI/new-crystalcastle/commit/<SHA>`
+- Author: `<username>`
+- Date: `YYYY-MM-DD`
+- Message: `<commit message>`
+
+## Related pull request
+
+- PR: `#<number>`
+- URL: `https://github.com/ZyntroAI/new-crystalcastle/pull/<number>`
+- Author: `<username>`
+- Merged by: `<username>`
+- Merge date: `YYYY-MM-DD`
+
+## Recovery plan
+
+- Source commit: `<GOOD_SHA>`
+- Files to restore: `<workflow-files>`
+- Restoration branch: `restore-workflows`
+- Required reviewers: `<reviewers>`
+```
+
+เมื่อได้ commit SHA หรือ PR URL แล้ว ให้กรอกลงในแบบฟอร์มนี้เพื่อให้มีหลักฐานชัดเจนก่อนกู้ workflow กลับครับ
+
+การอ้างอิง:
+[1] Workflows https://docs.github.com/en/actions/concepts/workflows-and-actions/workflows
