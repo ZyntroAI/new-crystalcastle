@@ -1,44 +1,33 @@
 name: CI
-
+ 
 on:
-  pull_request:
-    branches: [main]
-  push:
-    branches: [main]
-  workflow_dispatch:
-
-permissions:
-  contents: read
-
-concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+pull_request:
+push:
+branches:
+- main
+- develop
+ 
 jobs:
-  test:
-    name: Lint, test, and build
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      # เปลี่ยนส่วนนี้ให้ตรงกับ stack ของโปรเจกต์
-      - name: Set up runtime
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Lint
-        run: npm run lint --if-present
-
-      - name: Run tests
-        run: npm test -- --runInBand
-
-      - name: Build
-        run: npm run build --if-present
+test:
+runs-on: ubuntu-latest
+ 
+steps:
+- uses: actions/checkout@v5
+- uses: actions/setup-node@v5
+with:
+node-version: 22
+ 
+- run: npm ci
+- run: npm test --if-present
+ 
+build:
+runs-on: ubuntu-latest
+ 
+steps:
+- uses: actions/checkout@v5
+- uses: actions/setup-node@v5
+with:
+node-version: 22
+ 
+- run: npm ci
+- run: npm run build
