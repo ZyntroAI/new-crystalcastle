@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vercel Deployment Task Tracker & Best Practices</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        vercel: {
+                            black: '#000000',
+                            dark: '#0a0a0a',
+                            card: '#111111',
+                            border: '#222222',
+                            accent: '#0070f3',
+                            cyan: '#50e3c2',
+                            purple: '#7928ca',
+                            magenta: '#ff0080',
+                            warning: '#f5a623',
+                            success: '#10b981'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Sarabun', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Fira Code', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Alpine.js for reactive state management -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- Chart.js for analytics dashboard -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        
+        body {
+            font-family: 'Inter', 'Sarabun', sans-serif;
+            background-color: #000000;
+            color: #ededed;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #262626;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #404040;
+        }
+
+        .glass-card {
+            background: rgba(17, 17, 17, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(255, 255, 255, 0.18);
+        }
+
+        .triangle-logo {
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-bottom: 21px solid #ffffff;
+        }
+    </style>
+</head>
+<body x-data="vercelTrackerApp()" x-init="initApp()" class="min-h-screen bg-black text-gray-100 antialiased selection:bg-white selection:text-black">
+
+    <!-- Top Navigation Header -->
+    <header class="sticky top-0 z-40 border-b border-zinc-800 bg-black/80 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-3">
+                    <div class="triangle-logo"></div>
+                    <span class="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
+                        Vercel Deployment Tracker
+                    </span>
+                </div>
+                <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 hidden sm:inline-block">
+                    Best Practice Engine
+                </span>
+            </div>
+
+            <!-- Header Quick Controls -->
+            <div class="flex items-center space-x-3">
+                <button @click="openAddModal()" class="flex items-center space-x-2 px-3.5 py-1.5 text-xs font-medium rounded-lg bg-white text-black hover:bg-gray-200 transition-all shadow-sm">
+                    <i class="fa-solid fa-plus"></i>
+                    <span class="hidden sm:inline">เพิ่มงานใหม่</span>
+                </button>
+                <button @click="exportData()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 transition" title="Export JSON">
+                    <i class="fa-solid fa-download sm:mr-1"></i> <span class="hidden md:inline">ส่งออก</span>
+                </button>
+                <label class="px-3 py-1.5 text-xs font-medium rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 transition cursor-pointer" title="Import JSON">
+                    <i class="fa-solid fa-upload sm:mr-1"></i> <span class="hidden md:inline">นำเข้า</span>
+                    <input type="file" accept=".json" @change="importData($event)" class="hidden">
+                </label>
+                <button @click="resetToDefaults()" class="p-1.5 text-xs rounded-lg text-zinc-400 hover:text-red-400 hover:bg-zinc-900 border border-transparent hover:border-zinc-800 transition" title="รีเซ็ตเป็นค่าเริ่มต้น">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        <!-- Progress Summary Cards Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            <!-- Overall Readiness Metric -->
+            <div class="glass-card rounded-xl p-5 relative overflow-hidden group">
+                <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-blue-600/10 rounded-full blur-2xl group-hover:bg-blue-600/20 transition"></div>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-medium text-zinc-400 uppercase tracking-wider">ความพร้อมใช้งาน (Overall)</p>
+                        <h3 class="text-3xl font-extrabold text-white mt-1" x-text="completionPercentage + '%'">0%</h3>
+                    </div>
+                    <div class="p-2.5 bg-zinc-900 rounded-lg border border-zinc-800 text-blue-400">
+                        <i class="fa-solid fa-gauge-high text-lg"></i>
+                    </div>
+                </div>
+                <!-- Progress Bar -->
+                <div class="w-full bg-zinc-800 h-2 rounded-full mt-4 overflow-hidden">
+                    <div class="bg-gradient-to-r from-blue-500 to-emerald-400 h-full rounded-full transition-all duration-500" :style="'width: ' + completionPercentage + '%'"></div>
+                </div>
+                <p class="text-xs text-zinc-500 mt-2" x-text="completedCount + ' จาก ' + totalTasksCount + ' รายการเสร็จสิ้นแล้ว'"></p>
+            </div>
+
+            <!-- Performance Card -->
+            <div class="glass-card rounded-xl p-5 relative overflow-hidden group">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-medium text-emerald-400 uppercase tracking-wider">🚀 ประสิทธิภาพ (Performance)</p>
+                        <h3 class="text-2xl font-bold text-white mt-1" x-text="getCategoryStats('performance').text">0/0</h3>
+                    </div>
+                    <div class="p-2.5 bg-zinc-900 rounded-lg border border-zinc-800 text-emerald-400">
+                        <i class="fa-solid fa-bolt text-lg"></i>
+                    </div>
+                </div>
+                <div class="w-full bg-zinc-800 h-1.5 rounded-full mt-4 overflow-hidden">
+                    <div class="bg-emerald-500 h-full rounded-full transition-all duration-500" :style="'width: ' + getCategoryStats('performance').percent + '%'"></div>
+                </div>
+                <p class="text-xs text-zinc-500 mt-2" x-text="'เน้น Web Vitals & Caching (' + getCategoryStats('performance').percent + '%)'"></p>
+            </div>
+
+            <!-- Security Card -->
+            <div class="glass-card rounded-xl p-5 relative overflow-hidden group">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-medium text-purple-400 uppercase tracking-wider">🛡️ ความปลอดภัย (Security)</p>
+                        <h3 class="text-2xl font-bold text-white mt-1" x-text="getCategoryStats('security').text">0/0</h3>
+                    </div>
+                    <div class="p-2.5 bg-zinc-900 rounded-lg border border-zinc-800 text-purple-400">
+                        <i class="fa-solid fa-shield-halved text-lg"></i>
+                    </div>
+                </div>
+                <div class="w-full bg-zinc-800 h-1.5 rounded-full mt-4 overflow-hidden">
+                    <div class="bg-purple-500 h-full rounded-full transition-all duration-500" :style="'width: ' + getCategoryStats('security').percent + '%'"></div>
+                </div>
+                <p class="text-xs text-zinc-500 mt-2" x-text="'Env Variables & Protection (' + getCategoryStats('security').percent + '%)'"></p>
+            </div>
+
+            <!-- Cost Efficiency Card -->
+            <div class="glass-card rounded-xl p-5 relative overflow-hidden group">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-medium text-amber-400 uppercase tracking-wider">💰 ควบคุมต้นทุน (Cost Optimization)</p>
+                        <h3 class="text-2xl font-bold text-white mt-1" x-text="getCategoryStats('cost').text">0/0</h3>
+                    </div>
+                    <div class="p-2.5 bg-zinc-900 rounded-lg border border-zinc-800 text-amber-400">
+                        <i class="fa-solid fa-coins text-lg"></i>
+                    </div>
+                </div>
+                <div class="w-full bg-zinc-800 h-1.5 rounded-full mt-4 overflow-hidden">
+                    <div class="bg-amber-500 h-full rounded-full transition-all duration-500" :style="'width: ' + getCategoryStats('cost').percent + '%'"></div>
+                </div>
+                <p class="text-xs text-zinc-500 mt-2" x-text="'Serverless Execution & Limits (' + getCategoryStats('cost').percent + '%)'"></p>
+            </div>
+
+        </div>
+
+        <!-- Controls & Filter Toolbar -->
+        <div class="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between glass-card p-4 rounded-xl border border-zinc-800">
+            
+            <!-- Category Tabs -->
+            <div class="flex items-center space-x-1 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
+                <button @click="currentCategory = 'all'" :class="currentCategory === 'all' ? 'bg-zinc-800 text-white border-zinc-700' : 'text-zinc-400 hover:text-white border-transparent'" class="px-3 py-1.5 text-xs font-medium rounded-lg border transition whitespace-nowrap">
+                    ทั้งหมด (<span x-text="tasks.length"></span>)
+                </button>
+                <button @click="currentCategory = 'performance'" :class="currentCategory === 'performance' ? 'bg-emerald-950/60 text-emerald-300 border-emerald-800' : 'text-zinc-400 hover:text-white border-transparent'" class="px-3 py-1.5 text-xs font-medium rounded-lg border transition whitespace-nowrap">
+                    🚀 Performance
+                </button>
+                <button @click="currentCategory = 'security'" :class="currentCategory === 'security' ? 'bg-purple-950/60 text-purple-300 border-purple-800' : 'text-zinc-400 hover:text-white border-transparent'" class="px-3 py-1.5 text-xs font-medium rounded-lg border transition whitespace-nowrap">
+                    🛡️ Security
+                </button>
+                <button @click="currentCategory = 'cost'" :class="currentCategory === 'cost' ? 'bg-amber-950/60 text-amber-300 border-amber-800' : 'text-zinc-400 hover:text-white border-transparent'" class="px-3 py-1.5 text-xs font-medium rounded-lg border transition whitespace-nowrap">
+                    💰 Cost Efficiency
+                </button>
+                <button @click="currentCategory = 'cicd'" :class="currentCategory === 'cicd' ? 'bg-blue-950/60 text-blue-300 border-blue-800' : 'text-zinc-400 hover:text-white border-transparent'" class="px-3 py-1.5 text-xs font-medium rounded-lg border transition whitespace-nowrap">
+                    ⚙️ Build & CI/CD
+                </button>
+            </div>
+
+            <!-- Search and Status Filters -->
+            <div class="flex items-center space-x-3">
+                <!-- Search Input -->
+                <div class="relative flex-1 md:w-60">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-zinc-500 text-xs"></i>
+                    <input type="text" x-model="searchQuery" placeholder="ค้นหาข้อปฏิบัติหรือคีย์เวิร์ด..." class="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-600 transition">
+                </div>
+
+                <!-- Status Select -->
+                <select x-model="statusFilter" class="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-zinc-300 focus:outline-none focus:border-zinc-600">
+                    <option value="all">สถานะทั้งหมด</option>
+                    <option value="pending">⏳ รอดำเนินการ</option>
+                    <option value="completed">✅ เสร็จสิ้น</option>
+                </select>
+
+                <!-- View Switcher -->
+                <div class="flex items-center bg-zinc-900 p-1 rounded-lg border border-zinc-800">
+                    <button @click="viewMode = 'list'" :class="viewMode === 'list' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'" class="px-2.5 py-1 text-xs rounded transition" title="มุมมอง รายการ">
+                        <i class="fa-solid fa-list"></i>
+                    </button>
+                    <button @click="viewMode = 'grid'" :class="viewMode === 'grid' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'" class="px-2.5 py-1 text-xs rounded transition" title="มุมมอง การ์ด">
+                        <i class="fa-solid fa-border-all"></i>
+                    </button>
+                    <button @click="viewMode = 'analytics'" :class="viewMode === 'analytics' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'" class="px-2.5 py-1 text-xs rounded transition" title="มุมมอง วิเคราะห์">
+                        <i class="fa-solid fa-chart-pie"></i>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Main Task List Container -->
+        <template x-if="viewMode !== 'analytics'">
+            <div class="space-y-4">
+                
+                <!-- Zero state message -->
+                <div x-show="filteredTasks.length === 0" class="glass-card rounded-xl p-12 text-center border border-zinc-800">
+                    <div class="w-12 h-12 rounded-full bg-zinc-900 text-zinc-500 flex items-center justify-center mx-auto mb-3">
+                        <i class="fa-solid fa-clipboard-check text-xl"></i>
+                    </div>
+                    <h4 class="text-sm font-semibold text-zinc-300">ไม่พบรายการที่ตรงกับเงื่อนไข</h4>
+                    <p class="text-xs text-zinc-500 mt-1">ลองเปลี่ยนคำค้นหาหรือเลือกหมวดหมู่อื่น</p>
+                </div>
+
+                <!-- LIST VIEW -->
+                <template x-if="viewMode === 'list'">
+                    <div class="space-y-2.5">
+                        <template x-for="task in filteredTasks" :key="task.id">
+                            <div class="glass-card rounded-xl p-4 transition-all duration-200 hover:border-zinc-700 flex flex-col md:flex-row md:items-center justify-between gap-4 border border-zinc-800"
+                                 :class="task.completed ? 'opacity-70 bg-zinc-950/40' : ''">
+                                
+                                <div class="flex items-start space-x-3.5 flex-1">
+                                    <!-- Checkbox -->
+                                    <button @click="toggleTask(task.id)" class="mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition"
+                                            :class="task.completed ? 'bg-emerald-500 border-emerald-500 text-black' : 'border-zinc-700 hover:border-zinc-500 text-transparent'">
+                                        <i class="fa-solid fa-check text-xs"></i>
+                                    </button>
+
+                                    <!-- Content -->
+                                    <div class="flex-1 space-y-1">
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <span class="text-sm font-semibold text-zinc-100" :class="task.completed ? 'line-through text-zinc-500' : ''" x-text="task.title"></span>
+                                            
+                                            <!-- Category Badge -->
+                                            <span class="px-2 py-0.5 text-[10px] font-medium rounded-full border" :class="getCategoryBadgeStyle(task.category)" x-text="getCategoryLabel(task.category)"></span>
+
+                                            <!-- Priority Badge -->
+                                            <span class="px-2 py-0.5 text-[10px] font-medium rounded-full border" :class="getPriorityBadgeStyle(task.priority)" x-text="getPriorityLabel(task.priority)"></span>
+                                            
+                                            <!-- Impact Badge -->
+                                            <span class="px-2 py-0.5 text-[10px] font-mono rounded bg-zinc-900 border border-zinc-800 text-zinc-400" x-text="task.impact"></span>
+                                        </div>
+
+                                        <p class="text-xs text-zinc-400 line-clamp-2" x-text="task.description"></p>
+                                        
+                                        <!-- Subtasks Mini Progress -->
+                                        <template x-if="task.subtasks && task.subtasks.length > 0">
+                                            <div class="pt-1 flex items-center space-x-2 text-[11px] text-zinc-500">
+                                                <i class="fa-solid fa-list-check"></i>
+                                                <span x-text="getSubtaskCount(task) + ' รายการย่อย'"></span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="flex items-center space-x-2 border-t md:border-t-0 pt-2 md:pt-0 border-zinc-800/80 justify-end">
+                                    <button @click="openDetailModal(task)" class="px-2.5 py-1 text-xs font-medium rounded-md bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 transition flex items-center space-x-1">
+                                        <i class="fa-solid fa-code text-[11px]"></i>
+                                        <span>คำแนะนำ & โค้ด</span>
+                                    </button>
+                                    <button @click="editTask(task)" class="p-1.5 text-xs text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 rounded transition" title="แก้ไข">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+                                    <button @click="deleteTask(task.id)" class="p-1.5 text-xs text-zinc-500 hover:text-red-400 hover:bg-zinc-900 rounded transition" title="ลบ">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- GRID VIEW -->
+                <template x-if="viewMode === 'grid'">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <template x-for="task in filteredTasks" :key="task.id">
+                            <div class="glass-card rounded-xl p-5 border border-zinc-800 flex flex-col justify-between space-y-4 hover:border-zinc-700 transition"
+                                 :class="task.completed ? 'opacity-75 bg-zinc-950/40' : ''">
+                                
+                                <div class="space-y-3">
+                                    <div class="flex justify-between items-start gap-2">
+                                        <span class="px-2 py-0.5 text-[10px] font-medium rounded-full border" :class="getCategoryBadgeStyle(task.category)" x-text="getCategoryLabel(task.category)"></span>
+                                        <button @click="toggleTask(task.id)" class="w-5 h-5 rounded border flex items-center justify-center transition"
+                                                :class="task.completed ? 'bg-emerald-500 border-emerald-500 text-black' : 'border-zinc-700 hover:border-zinc-500 text-transparent'">
+                                            <i class="fa-solid fa-check text-xs"></i>
+                                        </button>
+                                    </div>
+
+                                    <div>
+                                        <h4 class="text-sm font-semibold text-zinc-100" :class="task.completed ? 'line-through text-zinc-500' : ''" x-text="task.title"></h4>
+                                        <p class="text-xs text-zinc-400 mt-1.5 line-clamp-3" x-text="task.description"></p>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-3 pt-2 border-t border-zinc-800">
+                                    <div class="flex items-center justify-between text-[11px]">
+                                        <span class="px-2 py-0.5 font-medium rounded-full border" :class="getPriorityBadgeStyle(task.priority)" x-text="getPriorityLabel(task.priority)"></span>
+                                        <span class="font-mono text-zinc-500" x-text="task.impact"></span>
+                                    </div>
+
+                                    <div class="flex items-center justify-between pt-1">
+                                        <button @click="openDetailModal(task)" class="text-xs text-blue-400 hover:text-blue-300 font-medium flex items-center space-x-1">
+                                            <span>ดูรายละเอียด</span>
+                                            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                                        </button>
+                                        <div class="flex items-center space-x-1">
+                                            <button @click="editTask(task)" class="p-1 text-xs text-zinc-400 hover:text-zinc-200">
+                                                <i class="fa-solid fa-pen-to-square"></i>
+                                            </button>
+                                            <button @click="deleteTask(task.id)" class="p-1 text-xs text-zinc-500 hover:text-red-400">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+            </div>
+        </template>
+
+        <!-- ANALYTICS VIEW -->
+        <template x-if="viewMode === 'analytics'">
+            <div class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <!-- Chart Card 1: Category Progress -->
+                    <div class="glass-card p-6 rounded-xl border border-zinc-800 space-y-4">
+                        <h3 class="text-sm font-semibold text-zinc-200 flex items-center space-x-2">
+                            <i class="fa-solid fa-chart-column text-blue-400"></i>
+                            <span>อัตราการดำเนินการตามหมวดหมู่</span>
+                        </h3>
+                        <div class="space-y-3">
+                            <template x-for="cat in ['performance', 'security', 'cost', 'cicd']" :key="cat">
+                                <div class="space-y-1">
+                                    <div class="flex justify-between text-xs">
+                                        <span class="text-zinc-300" x-text="getCategoryLabel(cat)"></span>
+                                        <span class="font-mono text-zinc-400" x-text="getCategoryStats(cat).percent + '%'"></span>
+                                    </div>
+                                    <div class="w-full bg-zinc-900 h-2 rounded-full overflow-hidden border border-zinc-800">
+                                        <div class="h-full rounded-full transition-all duration-500" 
+                                             :class="getCategoryColorClass(cat)" 
+                                             :style="'width: ' + getCategoryStats(cat).percent + '%'"></div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Chart Card 2: Priority Distribution -->
+                    <div class="glass-card p-6 rounded-xl border border-zinc-800 space-y-4">
+                        <h3 class="text-sm font-semibold text-zinc-200 flex items-center space-x-2">
+                            <i class="fa-solid fa-fire text-amber-400"></i>
+                            <span>การกระจายตามระดับความสำคัญ (Priority)</span>
+                        </h3>
+                        <div class="grid grid-cols-3 gap-3 pt-2 text-center">
+                            <div class="p-3 bg-red-950/30 border border-red-900/50 rounded-lg">
+                                <span class="text-xs text-red-400 block font-medium">สูง (Critical)</span>
+                                <span class="text-xl font-bold text-white mt-1 block" x-text="getPriorityCount('high')">0</span>
+                            </div>
+                            <div class="p-3 bg-amber-950/30 border border-amber-900/50 rounded-lg">
+                                <span class="text-xs text-amber-400 block font-medium">ปานกลาง</span>
+                                <span class="text-xl font-bold text-white mt-1 block" x-text="getPriorityCount('medium')">0</span>
+                            </div>
+                            <div class="p-3 bg-blue-950/30 border border-blue-900/50 rounded-lg">
+                                <span class="text-xs text-blue-400 block font-medium">ต่ำ</span>
+                                <span class="text-xl font-bold text-white mt-1 block" x-text="getPriorityCount('low')">0</span>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-zinc-900/80 rounded-lg border border-zinc-800 text-xs text-zinc-400 space-y-1.5">
+                            <div class="flex items-center space-x-2 text-zinc-200 font-medium">
+                                <i class="fa-solid fa-lightbulb text-amber-400"></i>
+                                <span>คำแนะนำการปรับปรุง:</span>
+                            </div>
+                            <p>ควรดำเนินการในส่วนที่มีระดับความสำคัญ **"สูง"** และหมวด **"Security"** เป็นอันดับแรกก่อนปรับใช้จริงบน Production บน Vercel</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </template>
+
+    </main>
+
+    <!-- DETAIL / CODE SNIPPET MODAL -->
+    <div x-show="showDetailModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" x-transition>
+        <div @click.away="showDetailModal = false" class="glass-card max-w-2xl w-full rounded-2xl border border-zinc-800 p-6 space-y-5 max-h-[90vh] overflow-y-auto">
+            
+            <template x-if="selectedTask">
+                <div class="space-y-4">
+                    <!-- Modal Header -->
+                    <div class="flex justify-between items-start">
+                        <div class="space-y-1">
+                            <div class="flex items-center space-x-2">
+                                <span class="px-2 py-0.5 text-[10px] font-medium rounded-full border" :class="getCategoryBadgeStyle(selectedTask.category)" x-text="getCategoryLabel(selectedTask.category)"></span>
+                                <span class="px-2 py-0.5 text-[10px] font-medium rounded-full border" :class="getPriorityBadgeStyle(selectedTask.priority)" x-text="getPriorityLabel(selectedTask.priority)"></span>
+                            </div>
+                            <h3 class="text-lg font-bold text-white" x-text="selectedTask.title"></h3>
+                        </div>
+                        <button @click="showDetailModal = false" class="text-zinc-500 hover:text-white p-1">
+                            <i class="fa-solid fa-xmark text-lg"></i>
+                        </button>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="text-sm text-zinc-300 leading-relaxed bg-zinc-900/60 p-4 rounded-xl border border-zinc-800" x-text="selectedTask.description"></div>
+
+                    <!-- Subtasks Interactive Checklist -->
+                    <div class="space-y-2">
+                        <h4 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">รายการย่อย (Checklist)</h4>
+                        <div class="space-y-1.5">
+                            <template x-for="(sub, idx) in selectedTask.subtasks" :key="idx">
+                                <div @click="toggleSubtask(selectedTask, idx)" class="flex items-center space-x-3 p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-700 cursor-pointer transition">
+                                    <input type="checkbox" :checked="sub.completed" class="rounded border-zinc-700 bg-zinc-800 text-emerald-500 focus:ring-0">
+                                    <span class="text-xs text-zinc-200" :class="sub.completed ? 'line-through text-zinc-500' : ''" x-text="sub.title"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Recommended Code / Configuration Snippet -->
+                    <template x-if="selectedTask.codeSnippet">
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center">
+                                <h4 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">ตัวอย่างการตั้งค่า / โค้ดที่แนะนำ</h4>
+                                <button @click="copyCode(selectedTask.codeSnippet)" class="text-xs text-blue-400 hover:text-blue-300 font-mono">
+                                    <i class="fa-regular fa-copy mr-1"></i> คัดลอกโค้ด
+                                </button>
+                            </div>
+                            <pre class="bg-black p-4 rounded-xl border border-zinc-800 text-xs font-mono text-emerald-400 overflow-x-auto"><code x-text="selectedTask.codeSnippet"></code></pre>
+                        </div>
+                    </template>
+
+                    <!-- Modal Actions -->
+                    <div class="pt-3 border-t border-zinc-800 flex justify-end space-x-3">
+                        <button @click="toggleTask(selectedTask.id); showDetailModal = false;" 
+                                class="px-4 py-2 text-xs font-semibold rounded-lg transition"
+                                :class="selectedTask.completed ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700' : 'bg-emerald-500 text-black hover:bg-emerald-400'">
+                            <span x-text="selectedTask.completed ? 'ทำเลียบแบบยังไม่เสร็จ' : 'ทำเครื่องหมายว่าเสร็จแล้ว'"></span>
+                        </button>
+                    </div>
+
+                </div>
+            </template>
+
+        </div>
+    </div>
+
+    <!-- ADD / EDIT TASK MODAL -->
+    <div x-show="showAddModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" x-transition>
+        <div @click.away="showAddModal = false" class="glass-card max-w-xl w-full rounded-2xl border border-zinc-800 p-6 space-y-4">
+            
+            <div class="flex justify-between items-center">
+                <h3 class="text-base font-bold text-white" x-text="isEditing ? 'แก้ไขข้อปฏิบัติ Vercel' : 'เพิ่มข้อปฏิบัติ Vercel ใหม่'"></h3>
+                <button @click="showAddModal = false" class="text-zinc-500 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form @submit.prevent="saveTask()" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1">หัวข้อปฏิบัติ (Task Title)</label>
+                    <input type="text" x-model="formTask.title" required placeholder="เช่น กำหนด maxDuration สำหรับ API Routes" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-zinc-600">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-400 mb-1">หมวดหมู่</label>
+                        <select x-model="formTask.category" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-300">
+                            <option value="performance">🚀 Performance</option>
+                            <option value="security">🛡️ Security</option>
+                            <option value="cost">💰 Cost Efficiency</option>
+                            <option value="cicd">⚙️ Build & CI/CD</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-400 mb-1">ระดับความสำคัญ</label>
+                        <select x-model="formTask.priority" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-300">
+                            <option value="high">สูง (Critical)</option>
+                            <option value="medium">ปานกลาง</option>
+                            <option value="low">ต่ำ</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1">ผลกระทบหลัก (Impact Label)</label>
+                    <input type="text" x-model="formTask.impact" placeholder="เช่น -30% Latency หรือ Save $50/mo" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-zinc-600">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1">รายละเอียดและแนวทาง</label>
+                    <textarea x-model="formTask.description" rows="3" placeholder="อธิบายเหตุผลและรายละเอียดขั้นตอน..." class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-zinc-600"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1">โค้ดตัวอย่าง (Optional Code Snippet)</label>
+                    <textarea x-model="formTask.codeSnippet" rows="3" placeholder="// โค้ด vercel.json หรือ next.config.js..." class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-emerald-400 font-mono focus:outline-none focus:border-zinc-600"></textarea>
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-2 border-t border-zinc-800">
+                    <button type="button" @click="showAddModal = false" class="px-4 py-2 text-xs font-medium rounded-lg text-zinc-400 hover:bg-zinc-900">ยกเลิก</button>
+                    <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-white text-black hover:bg-zinc-200">บันทึกรายการ</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div x-show="toast.show" x-cloak class="fixed bottom-5 right-5 z-50 bg-zinc-900 text-white border border-zinc-700 px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 text-xs" x-transition>
+        <i class="fa-solid text-emerald-400" :class="toast.icon || 'fa-circle-check'"></i>
+        <span x-text="toast.message"></span>
+    </div>
+
+    <script>
+        function vercelTrackerApp() {
+            return {
+                currentCategory: 'all',
+                statusFilter: 'all',
+                searchQuery: '',
+                viewMode: 'list',
+                showDetailModal: false,
+                showAddModal: false,
+                selectedTask: null,
+                isEditing: false,
+
+                toast: {
+                    show: false,
+                    message: '',
+                    icon: 'fa-circle-check'
+                },
+
+                formTask: {
+                    id: null,
+                    title: '',
+                    category: 'performance',
+                    priority: 'medium',
+                    impact: 'High Impact',
+                    description: '',
+                    codeSnippet: '',
+                    completed: false,
+                    subtasks: []
+                },
+
+                // Default Vercel Best Practice Dataset
+                tasks: [],
+
+                initApp() {
+                    const saved = localStorage.getItem('vercel_best_practices_tasks');
+                    if (saved) {
+                        try {
+                            this.tasks = JSON.parse(saved);
+                        } catch (e) {
+                            this.loadDefaultTasks();
+                        }
+                    } else {
+                        this.loadDefaultTasks();
+                    }
+                },
+
+                loadDefaultTasks() {
+                    this.tasks = [
+                        {
+                            id: 'v1',
+                            title: 'ใช้ Next.js `<Image />` Component พร้อมกำหนด `sizes`',
+                            category: 'performance',
+                            priority: 'high',
+                            impact: 'ลด LCP & CLS (-40% Image Payload)',
+                            description: 'หลีกเลี่ยงการใช้ <img> ธรรมดา ให้ใช้ <Image> จาก next/image เพื่อให้ Vercel Image Optimization CDN ทำการแปลงภาพเป็น WebP/AVIF และ resize ตาม viewport อัตโนมัติ',
+                            codeSnippet: `import Image from 'next/image';\n\nexport default function Avatar() {\n  return (\n    <Image\n      src="/profile.png"\n      alt="User Profile"\n      width={200}\n      height={200}\n      sizes="(max-width: 768px) 100vw, 33vw"\n      priority // สำหรับ LCP Image บนสุด\n    />\n  );\n}`,
+                            completed: false,
+                            subtasks: [
+                                { title: 'ตรวจทานภาพในส่วน Hero ให้ใส่ priority prop', completed: false },
+                                { title: 'กำหนดขนาด width และ height ที่ถูกต้อง', completed: false },
+                                { title: 'เพิ่ม `sizes` เพื่อป้องกันการโหลดภาพขนาดเกินความจำเป็น', completed: false }
+                            ]
+                        },
+                        {
+                            id: 'v2',
+                            title: 'ตั้งค่า `maxDuration` และ Memory ให้เหมาะสมสำหรับ Serverless Functions',
+                            category: 'cost',
+                            priority: 'high',
+                            impact: 'ป้องกันค่าบริการบานปลายจาก Infinite Loops',
+                            description: 'Serverless Functions บน Vercel มีเวลาประมวลผลฟรีตาม Limit การตั้งค่า maxDuration จะช่วยตัดการทำงานหากมี API ค้างหรือ Timeout ช่วยประหยัดงบประมาน',
+                            codeSnippet: `// app/api/process/route.ts\nexport const maxDuration = 10; // จำกัดที่ 10 วินาที\nexport const dynamic = 'force-dynamic';\n\nexport async function POST(request: Request) {\n  // API Logic\n}`,
+                            completed: false,
+                            subtasks: [
+                                { title: 'ตรวจสอบ API Routes ที่ต้องใช้เวลานาน', completed: false },
+                                { title: 'ระบุ maxDuration ใน route config', completed: false }
+                            ]
+                        },
+                        {
+                            id: 'v3',
+                            title: 'แยก Environment Variables ตาม Scope (Production / Preview)',
+                            category: 'security',
+                            priority: 'high',
+                            impact: 'ป้องกันหลุด Database Secrets สู่ Preview Builds',
+                            description: 'อย่าใช้ API Keys ชุด Production บน Preview Deployments ให้แยก Environment Variables บน Vercel Dashboard ให้ชัดเจน และห้ามใส่ prefix NEXT_PUBLIC_ กับ Private Secret',
+                            codeSnippet: `# .env.local (ใช้เฉพาะบนเครื่อง Local)\nDATABASE_URL="postgresql://user:pass@localhost:5432/devdb"\n\n# บน Vercel Dashboard -> Environment Variables:\n# เลือก Environment: Production เท่านั้นสำหรับ DB Production!`,
+                            completed: false,
+                            subtasks: [
+                                { title: 'ตรวจสอบว่าไม่มี Secret หลุดใน client bundle (NEXT_PUBLIC_)', completed: false },
+                                { title: 'แยก DB String ของ Staging และ Production ออกจากกัน', completed: false }
+                            ]
+                        },
+                        {
+                            id: 'v4',
+                            title: 'ตั้งค่า Colocation ของ Region ระหว่าง Vercel Functions กับ Database',
+                            category: 'performance',
+                            priority: 'high',
+                            impact: 'ลด Latency จาก 200ms เหลือ <20ms',
+                            description: 'หาก Database ของคุณอยู่ที่ AWS us-east-1 (iad1) ควรตั้งค่า Function Region บน Vercel ให้อยู่ที่ iad1 เดียวกัน เพื่อลดเวลาการเดินทางของ Network TCP Connection',
+                            codeSnippet: `// vercel.json\n{\n  "regions": ["iad1"]\n}`,
+                            completed: false,
+                            subtasks: [
+                                { title: 'ตรวจสอบ Region ของ Database (Supabase/Neon/PlanetScale)', completed: false },
+                                { title: 'ตั้งค่า region ใน vercel.json หรือ Vercel Project Settings', completed: false }
+                            ]
+                        },
+                        {
+                            id: 'v5',
+                            title: 'เปิดใช้งาน Skew Protection เพื่อความราบรื่นในการ Deploy',
+                            category: 'cicd',
+                            priority: 'medium',
+                            impact: 'ป้องกันความผิดพลาดขณะผู้ใช้กดหน้าเว็บช่วง Deploy',
+                            description: 'Skew Protection ป้องกันปัญหา Client ชิ้นส่วนเก่าเรียก API หรือ Serverless Function เวอร์ชันใหม่ขณะที่การ Deployment กำลังสลับสวิตช์',
+                            codeSnippet: `// ใน next.config.js\nmodule.exports = {\n  experimental: {\n    skewProtection: true,\n  },\n};`,
+                            completed: false,
+                            subtasks: [
+                                { title: 'เปิดใช้งาน Skew Protection ใน Vercel Deployment Settings', completed: false }
+                            ]
+                        },
+                        {
+                            id: 'v6',
+                            title: 'กำหนด Ignored Build Step สำหรับไฟล์ที่ไม่ใช่ Source Code',
+                            category: 'cost',
+                            priority: 'medium',
+                            impact: 'ประหยัดเวลาและ Build Minutes เกินจำเป็น',
+                            description: 'กำหนดสคริปต์เพื่อสั่งให้ Vercel ข้ามการ Build หากไฟล์ที่ถูกแก้มีเพียง Documentation (.md) หรือไฟล์ที่ไม่เกี่ยวกับแอปพลิเคชัน',
+                            codeSnippet: `// Command ใน Vercel Dashboard -> Build Settings -> Ignored Build Step:\nnpx build-step-ignore`,
+                            completed: false,
+                            subtasks: [
+                                { title: 'เพิ่ม Ignore Rule สำหรับ *.md และ docs/', completed: false }
+                            ]
+                        },
+                        {
+                            id: 'v7',
+                            title: 'ใช้ Stale-While-Revalidate (SWR) หรือ ISR สำหรับ Content Heavy Pages',
+                            category: 'performance',
+                            priority: 'medium',
+                            impact: 'เพิ่มอัตรา Cache Hit Ratio สูงถึง 95%+',
+                            description: 'ช่วยให้ผู้ใช้งานได้รับ HTML ล่าสุดจาก CDN Edge ของ Vercel ทันทีโดยไม่ต้องรอให้ Server สร้างหน้าเว็บใหม่ทุก Request',
+                            codeSnippet: `// app/blog/[slug]/page.tsx\nexport const revalidate = 3600; // สร้าง Cache ใหม่ทุก 1 ชั่วโมง\n\nexport async function generateStaticParams() {\n  // Fetch static paths\n}`,
+                            completed: false,
+                            subtasks: [
+                                { title: 'ระบุ revalidate time ใน Route Segment Config', completed: false }
+                            ]
+                        },
+                        {
+                            id: 'v8',
+                            title: 'ตั้งค่า Content Security Policy (CSP) & Security Headers',
+                            category: 'security',
+                            priority: 'high',
+                            impact: 'ป้องกันภัยคุกคาม XSS & Clickjacking',
+                            description: 'ใส่ Security Headers ใน next.config.js หรือ vercel.json เช่น X-Frame-Options, X-Content-Type-Options และ CSP เพื่อยกระดับความปลอดภัยระบบ',
+                            codeSnippet: `// next.config.js\nconst securityHeaders = [\n  { key: 'X-Frame-Options', value: 'DENY' },\n  { key: 'X-Content-Type-Options', value: 'nosniff' }\n];\n\nmodule.exports = {\n  async headers() {\n    return [{ source: '/(.*)', headers: securityHeaders }];\n  }\n};`,
+                            completed: false,
+                            subtasks: [
+                                { title: 'ใส่ X-Frame-Options header', completed: false },
+                                { title: 'เปิดใช้งาน Strict-Transport-Security (HSTS)', completed: false }
+                            ]
+                        }
+                    ];
+                    this.saveToStorage();
+                },
+
+                saveToStorage() {
+                    localStorage.setItem('vercel_best_practices_tasks', JSON.stringify(this.tasks));
+                },
+
+                get filteredTasks() {
+                    return this.tasks.filter(task => {
+                        const matchCat = this.currentCategory === 'all' || task.category === this.currentCategory;
+                        const matchStatus = this.statusFilter === 'all' || 
+                                           (this.statusFilter === 'completed' && task.completed) ||
+                                           (this.statusFilter === 'pending' && !task.completed);
+                        const matchSearch = task.title.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+                                            task.description.toLowerCase().includes(this.searchQuery.toLowerCase());
+                        return matchCat && matchStatus && matchSearch;
+                    });
+                },
+
+                get totalTasksCount() {
+                    return this.tasks.length;
+                },
+
+                get completedCount() {
+                    return this.tasks.filter(t => t.completed).length;
+                },
+
+                get completionPercentage() {
+                    if (this.totalTasksCount === 0) return 0;
+                    return Math.round((this.completedCount / this.totalTasksCount) * 100);
+                },
+
+                getCategoryStats(category) {
+                    const catTasks = this.tasks.filter(t => t.category === category);
+                    if (catTasks.length === 0) return { text: '0/0', percent: 0 };
+                    const done = catTasks.filter(t => t.completed).length;
+                    const percent = Math.round((done / catTasks.length) * 100);
+                    return { text: `${done}/${catTasks.length}`, percent };
+                },
+
+                getPriorityCount(priority) {
+                    return this.tasks.filter(t => t.priority === priority).length;
+                },
+
+                // Action Handlers
+                toggleTask(id) {
+                    const task = this.tasks.find(t => t.id === id);
+                    if (task) {
+                        task.completed = !task.completed;
+                        if (task.subtasks) {
+                            task.subtasks.forEach(s => s.completed = task.completed);
+                        }
+                        this.saveToStorage();
+                        this.showToast(task.completed ? 'ทำเครื่องหมายว่าเสร็จสิ้นแล้ว' : 'เปลี่ยนสถานะเป็นรอดำเนินการ');
+                    }
+                },
+
+                toggleSubtask(task, index) {
+                    if (task.subtasks && task.subtasks[index]) {
+                        task.subtasks[index].completed = !task.subtasks[index].completed;
+                        const allDone = task.subtasks.every(s => s.completed);
+                        task.completed = allDone;
+                        this.saveToStorage();
+                    }
+                },
+
+                getSubtaskCount(task) {
+                    if (!task.subtasks) return '0/0';
+                    const done = task.subtasks.filter(s => s.completed).length;
+                    return `${done}/${task.subtasks.length}`;
+                },
+
+                openDetailModal(task) {
+                    this.selectedTask = task;
+                    this.showDetailModal = true;
+                },
+
+                openAddModal() {
+                    this.isEditing = false;
+                    this.formTask = {
+                        id: 'v_' + Date.now(),
+                        title: '',
+                        category: 'performance',
+                        priority: 'medium',
+                        impact: 'High Impact',
+                        description: '',
+                        codeSnippet: '',
+                        completed: false,
+                        subtasks: []
+                    };
+                    this.showAddModal = true;
+                },
+
+                editTask(task) {
+                    this.isEditing = true;
+                    this.formTask = JSON.parse(JSON.stringify(task));
+                    this.showAddModal = true;
+                },
+
+                saveTask() {
+                    if (this.isEditing) {
+                        const idx = this.tasks.findIndex(t => t.id === this.formTask.id);
+                        if (idx !== -1) {
+                            this.tasks[idx] = { ...this.formTask };
+                        }
+                        this.showToast('อัปเดตข้อมูลสำเร็จ');
+                    } else {
+                        this.tasks.unshift({ ...this.formTask });
+                        this.showToast('เพิ่มรายการข้อปฏิบัติใหม่แล้ว');
+                    }
+                    this.saveToStorage();
+                    this.showAddModal = false;
+                },
+
+                deleteTask(id) {
+                    this.tasks = this.tasks.filter(t => t.id !== id);
+                    this.saveToStorage();
+                    this.showToast('ลบรายการเรียบร้อยแล้ว', 'fa-trash');
+                },
+
+                resetToDefaults() {
+                    this.loadDefaultTasks();
+                    this.showToast('รีเซ็ตรายการเป็นค่าเริ่มต้นแล้ว');
+                },
+
+                exportData() {
+                    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.tasks, null, 2));
+                    const downloadAnchor = document.createElement('a');
+                    downloadAnchor.setAttribute("href", dataStr);
+                    downloadAnchor.setAttribute("download", `vercel_tasks_${new Date().toISOString().slice(0,10)}.json`);
+                    document.body.appendChild(downloadAnchor);
+                    downloadAnchor.click();
+                    downloadAnchor.remove();
+                    this.showToast('ส่งออกไฟล์ข้อมูลเรียบร้อย');
+                },
+
+                importData(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const imported = JSON.parse(e.target.result);
+                            if (Array.isArray(imported)) {
+                                this.tasks = imported;
+                                this.saveToStorage();
+                                this.showToast('นำเข้าข้อมูลสำเร็จแล้ว');
+                            }
+                        } catch (err) {
+                            this.showToast('ไฟล์ JSON ไม่ถูกต้อง', 'fa-triangle-exclamation');
+                        }
+                    };
+                    reader.readAsText(file);
+                },
+
+                copyCode(text) {
+                    if (!text) return;
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    this.showToast('คัดลอกโค้ดไปยัง คลิปบอร์ดแล้ว!');
+                },
+
+                showToast(msg, icon = 'fa-circle-check') {
+                    this.toast.message = msg;
+                    this.toast.icon = icon;
+                    this.toast.show = true;
+                    setTimeout(() => {
+                        this.toast.show = false;
+                    }, 3000);
+                },
+
+                // Category & UI styling helpers
+                getCategoryLabel(cat) {
+                    const map = {
+                        performance: '🚀 Performance',
+                        security: '🛡️ Security',
+                        cost: '💰 Cost Efficiency',
+                        cicd: '⚙️ Build & CI/CD'
+                    };
+                    return map[cat] || cat;
+                },
+
+                getCategoryBadgeStyle(cat) {
+                    const styles = {
+                        performance: 'bg-emerald-950/60 text-emerald-400 border-emerald-800',
+                        security: 'bg-purple-950/60 text-purple-400 border-purple-800',
+                        cost: 'bg-amber-950/60 text-amber-400 border-amber-800',
+                        cicd: 'bg-blue-950/60 text-blue-400 border-blue-800'
+                    };
+                    return styles[cat] || 'bg-zinc-800 text-zinc-300 border-zinc-700';
+                },
+
+                getCategoryColorClass(cat) {
+                    const styles = {
+                        performance: 'bg-emerald-500',
+                        security: 'bg-purple-500',
+                        cost: 'bg-amber-500',
+                        cicd: 'bg-blue-500'
+                    };
+                    return styles[cat] || 'bg-zinc-500';
+                },
+
+                getPriorityLabel(priority) {
+                    const map = { high: 'สูง (Critical)', medium: 'ปานกลาง', low: 'ต่ำ' };
+                    return map[priority] || priority;
+                },
+
+                getPriorityBadgeStyle(priority) {
+                    const styles = {
+                        high: 'bg-red-950/60 text-red-400 border-red-800',
+                        medium: 'bg-amber-950/60 text-amber-300 border-amber-800',
+                        low: 'bg-blue-950/60 text-blue-300 border-blue-800'
+                    };
+                    return styles[priority] || 'bg-zinc-800 text-zinc-400 border-zinc-700';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
