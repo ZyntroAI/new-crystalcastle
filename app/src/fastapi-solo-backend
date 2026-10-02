@@ -1,0 +1,24 @@
+This code sets up the folder structure for a **FastAPI backend project** called `fastapi-solo-backend`. Here's what it does:
+
+1. **Defines a base path** — all directories will be created under `/mnt/agents/output/fastapi-solo-backend/`.
+
+2. **Creates a modular project layout** using `os.makedirs()` with `exist_ok=True` (no error if a folder already exists):
+
+```
+fastapi-solo-backend/
+├── app/
+│   ├── api/v1/          — Route handlers / API endpoints (version 1)
+│   ├── core/            — Core config: settings, security, database connection
+│   ├── models/          — SQLAlchemy / ORM database models
+│   ├── schemas/         — Pydantic schemas for request/response validation
+│   ├── services/        — Business logic layer
+│   ├── repositories/    — Data access layer (abstracts DB queries)
+│   ├── dependencies/    — FastAPI dependency injection functions
+│   └── utils/           — Shared utility/helper functions
+├── tests/               — Test suite
+└── migrations/          — Alembic database migration files
+```
+
+3. **Prints "Directories created"** after setup completes.
+
+This follows a **layered architecture** pattern (API → Service → Repository → Model), which keeps concerns separated and makes the code easier to test, extend, and maintain as the project grows.
