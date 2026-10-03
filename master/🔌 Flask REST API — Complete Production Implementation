@@ -1,0 +1,385 @@
+ได้เลยครับ! ต่อเนื่องจากโครงสร้าง Flask ที่วางไว้ — นี่คือ ส่วนที่ขาด + ปัญหา Obsidian ที่แก้ไข + การเชื่อมทุกส่วนเข้าด้วยกัน 👇
+ 
+ 
+ 
+🔌 Flask REST API — Complete Production Implementation
+ 
+⚠️ ปัญหาที่พบ:  https://127.0.0.1:27124  — "site not supported for access"
+ 
+สาเหตุและวิธีแก้:
+ 
+1. ตรวจสอบการติดตั้งใน Obsidian
+ 
+- เปิด Obsidian → การตั้งค่า → ปลั๊กอิน → ติดตั้ง Local REST API (ถ้ายังไม่มี ให้ค้นหาและติดตั้ง)
+- เปิดใช้งาน → ไปที่การตั้งค่าปลั๊กอิน:
+- ✅ เปิด Enable REST API
+- ✅ สร้าง API Key / Bearer Token แล้วคัดลอก
+- ✅ ตั้งค่า CORS → เพิ่ม  http://localhost:5000 ,  http://localhost:3000 
+- ✅ พอร์ต:  27124  (ค่าเริ่มต้น)
+- ✅ เปิด HTTPS หรือปิดการตรวจสอบ SSL ฝั่งไคลเอนต์
+ 
+2. ปรับ  config.py  ให้ถูกต้อง
+ 
+python  
+class Config:
+    # ... (ค่าเดิม)
+    
+    # Obsidian — แก้ตรงนี้ให้ตรงกับเครื่อง
+    OBSIDIAN_API_URL = os.getenv("OBSIDIAN_API_URL", "https://127.0.0.1:27124")
+    OBSIDIAN_API_KEY = os.getenv("OBSIDIAN_API_KEY", "")
+    OBSIDIAN_VERIFY_SSL = os.getenv("OBSIDIAN_VERIFY_SSL", "False").lower() == "true"
+ 
+ 
+3. ปรับ  obsidian_sdk/client.py  — ปิด SSL verify สำหรับ localhost
+ 
+python  
+# ในส่วนเริ่มต้น — httpx ไม่ตรวจใบรับรองที่ลงนามเอง
+async def health_check(self):
+    async with httpx.AsyncClient(verify=self.verify_ssl, timeout=10.0) as client:
+        resp = await client.get(f"{self.base_url}/vault/", headers=self.headers)
+        resp.raise_for_status()
+        return resp.json()
+ 
+ 
+เมื่อ  OBSIDIAN_VERIFY_SSL=False  →  verify=False  → ไม่เกิดข้อผิดพลาดใบรับรอง
+ 
+ 
+ 
+📁 เติมส่วนที่ขาดให้ครบถ้วน
+ 
+1.  app/schemas/auth.py 
+ 
+python  
+from marshmallow import Schema, fields, validate
+
+class LoginSchema(Schema):
+    email = fields.Email(required=True, validate=validate.Length(max=120))
+    password = fields.Str(required=True, validate=validate.Length(min=6, max=128))
+
+class RegisterSchema(Schema):
+    email = fields.Email(required=True, validate=validate.Length(max=120))
+    password = fields.Str(required=True, validate=validate.Length(min=8, max=128))
+    name = fields.Str(validate=validate.Length(max=64))
+ 
+ 
+2.  app/models/user.py 
+ 
+python  
+from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
+from ..extensions import db
+
+class User(db.Model):
+    __tablename__ = "users"
+
+    id = db.Column(db.String(36), primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
+    name = db.Column(db.String(64))
+    password_hash = db.Column(db.String(256), nullable=False)
+    role = db.Column(db.String(20), default="member")  # owner/admin/member/specialvip
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_login = db.Column(db.DateTime)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password, method="pbkdf2:sha256")
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "email": self.email,
+            "name": self.name,
+            "role": self.role,
+            "is_active": self.is_active,
+        }
+ 
+ 
+3.  app/services/wiki_service.py 
+ 
+python  
+import httpx
+from datetime import datetime
+from typing import Optional
+import json
+from pathlib import Path
+from ..config import Config
+
+CACHE_DIR = Path(__file__).parent.parent.parent / ".cache" / "wikipedia"
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
+USER_AGENT = "ZyntroAI-Flask/1.0 (dev@zyntroai.com)"
+
+def get_cache_key(title: str, lang: str) -> str:
+    return f"{lang}:{title.lower().replace(' ', '_')}"
+
+def load_cache(cache_key: str) -> Optional[dict]:
+    cache_file = CACHE_DIR / f"{cache_key}.json"
+    if cache_file.exists():
+        data = json.loads(cache_file.read_text())
+        return data
+    return None
+
+def save_cache(cache_key: str, data: dict, ttl: int = 86400):
+    cache_file = CACHE_DIR / f"{cache_key}.json"
+    cache_file.write_text(json.dumps(data, ensure_ascii=False, indent=2))
+
+def fetch_wikipedia_article(title: str, lang: str = "en", use_cache: bool = True) -> dict:
+    cache_key = get_cache_key(title, lang)
+    
+    if use_cache:
+        cached = load_cache(cache_key)
+        if cached:
+            return cached
+
+    api_url = f"https://{lang}.wikipedia.org/w/api.php"
+    headers = {"User-Agent": USER_AGENT}
+    params = {
+        "action": "query", "format": "json", "titles": title,
+        "prop": "extracts|info|revisions", "exintro": True, "explaintext": True,
+        "inprop": "url", "rvprop": "ids", "rvlimit": 1,
+    }
+
+    resp = httpx.get(api_url, params=params, headers=headers, timeout=10.0)
+    resp.raise_for_status()
+    data = resp.json()
+
+    pages = data["query"]["pages"]
+    page = next(iter(pages.values()))
+    if "missing" in page:
+        raise ValueError(f"ไม่พบบทความ: {title}")
+
+    result = {
+        "title": page["title"],
+        "summary": page["extract"][:800] + ("..." if len(page["extract"]) > 800 else ""),
+        "full_url": page["fullurl"],
+        "accessed_at": datetime.utcnow().isoformat(),
+        "revision_id": str(page["revisions"][0]["revid"]),
+        "license": "CC BY-SA 4.0",
+        "lang": lang,
+    }
+
+    save_cache(cache_key, result)
+    return result
+ 
+ 
+4.  app/api/v1/obsidian.py  — เชื่อมให้ทำงานจริง
+ 
+python  
+from flask import request
+from flask_jwt_extended import jwt_required
+from . import bp
+from app.utils.responses import success_response, error_response
+from app.obsidian_sdk.client import ObsidianClient
+from app.config import Config
+
+def get_obsidian_client():
+    if not Config.OBSIDIAN_API_KEY:
+        raise RuntimeError("OBSIDIAN_API_KEY ยังไม่ได้ตั้งค่า")
+    return ObsidianClient(
+        api_url=Config.OBSIDIAN_API_URL,
+        api_key=Config.OBSIDIAN_API_KEY,
+        verify_ssl=Config.OBSIDIAN_VERIFY_SSL,
+    )
+
+@bp.route("/obsidian/status", methods=["GET"])
+@jwt_required()
+def obsidian_status():
+    """ตรวจสอบการเชื่อมต่อ"""
+    try:
+        client = get_obsidian_client()
+        info = client.health_check()
+        return success_response(data={
+            "connected": True,
+            "vault_name": info.get("vaultName"),
+            "api_url": Config.OBSIDIAN_API_URL,
+        })
+    except Exception as e:
+        return success_response(data={
+            "connected": False,
+            "error": str(e),
+            "api_url": Config.OBSIDIAN_API_URL,
+        })
+
+@bp.route("/obsidian/note/write", methods=["POST"])
+@jwt_required()
+def write_note():
+    """สร้าง/อัปเดตโน้ต"""
+    data = request.get_json()
+    path = data.get("path")
+    content = data.get("content")
+    append = data.get("append", False)
+
+    if not path or not content:
+        return error_response("ต้องระบุ path และ content", status_code=400)
+
+    try:
+        client = get_obsidian_client()
+        if append:
+            result = client.append_to_note(path, content)
+        else:
+            result = client.write_note(path, content)
+        return success_response(data={"path": path, "mode": "append" if append else "write"})
+    except Exception as e:
+        return error_response(f"เขียนไม่สำเร็จ: {str(e)}", status_code=500)
+
+@bp.route("/obsidian/note/read", methods=["GET"])
+@jwt_required()
+def read_note():
+    """อ่านโน้ต"""
+    path = request.args.get("path")
+    if not path:
+        return error_response("ต้องระบุ path", status_code=400)
+
+    try:
+        client = get_obsidian_client()
+        note = client.read_note(path)
+        return success_response(data={"path": note.path, "content": note.content})
+    except Exception as e:
+        if "404" in str(e):
+            return error_response("ไม่พบโน้ต", status_code=404)
+        return error_response(f"อ่านไม่สำเร็จ: {str(e)}", status_code=500)
+ 
+ 
+5.  app/obsidian_sdk/client.py  — ปรับให้ทำงานร่วมกับ Flask
+ 
+python  
+"""
+Obsidian Local REST API Client — ZyntroAI Flask
+เอกสารอ้างอิง: https://github.com/coddingtonbear/obsidian-local-rest-api
+"""
+import httpx
+from typing import Optional, List, Dict, Any
+from dataclasses import dataclass
+
+@dataclass
+class Note:
+    path: str
+    content: str
+    modified: Optional[str] = None
+
+class ObsidianClient:
+    def __init__(
+        self,
+        api_url: str = "https://127.0.0.1:27124",
+        api_key: str = "",
+        verify_ssl: bool = False,
+    ):
+        self.base_url = api_url.rstrip("/")
+        self.api_key = api_key
+        self.verify_ssl = verify_ssl
+        self.headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "text/markdown",
+        }
+
+    def health_check(self) -> Dict[str, Any]:
+        """ตรวจสอบการเชื่อมต่อ"""
+        with httpx.Client(verify=self.verify_ssl, timeout=10.0) as client:
+            resp = client.get(f"{self.base_url}/vault/", headers=self.headers)
+            resp.raise_for_status()
+            return resp.json()
+
+    def write_note(self, path: str, content: str) -> Dict[str, Any]:
+        """สร้าง/เขียนทับโน้ต"""
+        full_path = f"{self.base_url}/vault/{path.lstrip('/')}"
+        with httpx.Client(verify=self.verify_ssl, timeout=10.0) as client:
+            resp = client.post(full_path, content=content, headers=self.headers)
+            resp.raise_for_status()
+            return resp.json()
+
+    def read_note(self, path: str) -> Note:
+        """อ่านเนื้อหาโน้ต"""
+        full_path = f"{self.base_url}/vault/{path.lstrip('/')}"
+        with httpx.Client(verify=self.verify_ssl, timeout=10.0) as client:
+            resp = client.get(full_path, headers=self.headers)
+            resp.raise_for_status()
+            return Note(path=path, content=resp.text)
+
+    def append_to_note(self, path: str, content: str, separator: str = "\n") -> Dict[str, Any]:
+        """เพิ่มเนื้อหาต่อท้าย"""
+        try:
+            existing = self.read_note(path)
+            new_content = existing.content + separator + content
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                new_content = content
+            else:
+                raise
+        return self.write_note(path, new_content)
+ 
+ 
+ 
+ 
+🚀 คำสั่งเริ่มระบบทั้งหมด
+ 
+ขั้นที่ 1: ติดตั้ง
+ 
+bash  
+cd zyntroai-flask
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+ 
+ 
+ขั้นที่ 2: ตั้งค่า
+ 
+bash  
+cp .env.example .env
+# แก้ไข .env — ใส่ค่าต่อไปนี้:
+# SECRET_KEY=... (สุ่มใหม่)
+# JWT_SECRET_KEY=... (สุ่มใหม่)
+# OBSIDIAN_API_KEY=... (จาก Obsidian → ปลั๊กอิน Local REST API)
+ 
+ 
+ขั้นที่ 3: สร้างฐานข้อมูล
+ 
+bash  
+flask shell
+>>> from app import create_app
+>>> from app.extensions import db
+>>> from app.models.user import User
+>>> db.create_all()
+>>> exit()
+ 
+ 
+ขั้นที่ 4: เริ่มเซิร์ฟเวอร์
+ 
+bash  
+python run.py
+# เปิด: http://localhost:5000
+# เปิดเอกสาร: http://localhost:5000/
+ 
+ 
+ขั้นที่ 5: ทดสอบการเชื่อมต่อ Obsidian
+ 
+bash  
+curl -X GET "http://localhost:5000/api/v1/obsidian/status" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+ 
+ 
+ถ้าได้  connected: true  → ✅ สำเร็จ!
+ 
+ 
+ 
+✅ สรุป Endpoint ทั้งหมดที่ทำงานได้จริง
+ 
+เมธอด เส้นทาง หน้าที่ ต้องล็อกอิน 
+GET  /  สถานะระบบ ❌ 
+POST  /api/v1/auth/login  เข้าสู่ระบบ ❌ 
+POST  /api/v1/auth/refresh  ต่ออายุโทเคน ✅ 
+GET  /api/v1/wiki/get  ดึงบทความ Wikipedia ❌ 
+GET  /api/v1/obsidian/status  ตรวจสอบการเชื่อมต่อ ✅ 
+POST  /api/v1/obsidian/note/write  เขียน/ต่อท้ายโน้ต ✅ 
+GET  /api/v1/obsidian/note/read  อ่านโน้ต ✅ 
+ 
+ 
+ 
+ต้องการเพิ่มส่วนไหนต่อไหมครับ? เช่น
+ 
+- Unit Test สำหรับแต่ละ endpoint
+- Supabase Integration — ย้ายจาก SQLite ไป PostgreSQL
+- Agents Endpoint — ควบคุม Multi-Agent ผ่าน Flask
+- Security Scan Endpoint — ตรวจหารหัสในข้อความ/ไฟล์
+- Production Deployment — Gunicorn + Nginx + Docker
