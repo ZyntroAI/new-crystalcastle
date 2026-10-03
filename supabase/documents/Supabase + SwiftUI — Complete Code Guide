@@ -1,0 +1,329 @@
+📱 Supabase + SwiftUI — Complete Code Guide
+ 
+ 
+ 
+1️⃣ Setup & Dependencies
+ 
+Xcode → File → Add Package Dependencies
+ 
+plaintext  
+https://github.com/supabase/supabase-swift.git
+→ Version: Up to Next Major (from 2.0.0)
+→ Add "Supabase" to your target
+```[[__LINK_ICON]](https://docs-supabase.vercel.app/docs/reference/swift/installing?f_link_type=f_linkinlinenote&flow_extra=eyJkb2NfaWQiOiI2ZDdlYmU2ZDgxMDU0MWFlLTgxYTRlMzRhYzIyZGMyNmIiLCJpbmxpbmVfZGlzcGxheV9wb3NpdGlvbiI6MCwiZG9jX3Bvc2l0aW9uIjowfQ%3D%3D&inline_doc_id=6d7ebe6d810541ae-81a4e34ac22dc26b)
+
+---
+
+## 2️⃣ Database Schema (SQL Editor)
+```sql
+-- Run in Supabase Dashboard → SQL Editor → User Management Starter
+CREATE TABLE profiles (
+  id UUID REFERENCES auth.users PRIMARY KEY,
+  username TEXT UNIQUE,
+  full_name TEXT,
+  website TEXT,
+  avatar_url TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+-- Policies
+CREATE POLICY "Users can view own profile" 
+  ON profiles FOR SELECT USING (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile" 
+  ON profiles FOR UPDATE USING (auth.uid() = id);
+
+CREATE POLICY "Users can insert own profile" 
+  ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
+
+-- Storage bucket
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('avatars', 'avatars', false);
+
+CREATE POLICY "Avatar access" ON storage.objects 
+  FOR ALL USING (bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]);
+```[[__LINK_ICON]](https://supabase.com/docs/guides/getting-started/tutorials/with-swift?f_link_type=f_linkinlinenote&flow_extra=eyJpbmxpbmVfZGlzcGxheV9wb3NpdGlvbiI6MCwiZG9jX3Bvc2l0aW9uIjowLCJkb2NfaWQiOiI4ZjdiN2E4NWZlN2VlODdmLTc3NjI3ZDI4MTAxOGIwZTEifQ%3D%3D&inline_doc_id=8f7b7a85fe7ee87f-77627d281018b0e1#:~:text=The)
+
+---
+
+## 3️⃣ Supabase Client — `Supabase.swift`
+```swift
+import Foundation
+import Supabase
+
+let supabase = SupabaseClient(
+  supabaseURL: URL(string: "https://YOUR-PROJECT.supabase.co")!,
+  supabaseKey: "YOUR_PUBLISHABLE_KEY"
+)
+```[[__LINK_ICON]](https://supabase.com/docs/guides/getting-started/tutorials/with-swift?f_link_type=f_linkinlinenote&flow_extra=eyJpbmxpbmVfZGlzcGxheV9wb3NpdGlvbiI6MCwiZG9jX3Bvc2l0aW9uIjowLCJkb2NfaWQiOiI4ZjdiN2E4NWZlN2VlODdmLTc3NjI3ZDI4MTAxOGIwZTEifQ%3D%3D&inline_doc_id=8f7b7a85fe7ee87f-77627d281018b0e1#:~:text=The)
+
+---
+
+## 4️⃣ Data Models — `Models.swift`
+```swift
+import Foundation
+
+struct Profile: Codable {
+  let username: String?
+  let fullName: String?
+  let website: String?
+  let avatarURL: String?
+
+  enum CodingKeys: String, CodingKey {
+    case username
+    case fullName = "full_name"
+    case website
+    case avatarURL = "avatar_url"
+  }
+}
+ 
+ 
+ 
+ 
+5️⃣ Auth View —  AuthView.swift 
+ 
+swift  
+import SwiftUI
+import Supabase
+
+struct AuthView: View {
+  @State private var email = ""
+  @State private var isLoading = false
+  @State private var result: Result<Void, Error>?
+
+  var body: some View {
+    Form {
+      Section {
+        TextField("Email", text: $email)
+          .textContentType(.emailAddress)
+          .textInputAutocapitalization(.never)
+          .autocorrectionDisabled()
+      }
+      Section {
+        Button("Sign In / Magic Link") { signInTapped() }
+        if isLoading { ProgressView() }
+      }
+      if let result {
+        Section {
+          switch result {
+          case .success: Text("✅ Check your email!")
+          case .failure(let e): Text("❌ \(e.localizedDescription)").foregroundColor(.red)
+          }
+        }
+      }
+    }
+    .onOpenURL { url in
+      Task { do { try await supabase.auth.session(from: url) }
+            catch { result = .failure(error) } }
+    }
+  }
+
+  func signInTapped() {
+    Task {
+      isLoading = true; defer { isLoading = false }
+      do {
+        try await supabase.auth.signInWithOTP(
+          email: email,
+          redirectTo: URL(string: "io.supabase.user-management://login-callback")
+        )
+        result = .success(())
+      } catch { result = .failure(error) }
+    }
+  }
+}
+```[[__LINK_ICON]](https://supabase.com/docs/guides/getting-started/tutorials/with-swift?f_link_type=f_linkinlinenote&flow_extra=eyJpbmxpbmVfZGlzcGxheV9wb3NpdGlvbiI6MCwiZG9jX3Bvc2l0aW9uIjowLCJkb2NfaWQiOiI4ZjdiN2E4NWZlN2VlODdmLTc3NjI3ZDI4MTAxOGIwZTEifQ%3D%3D&inline_doc_id=8f7b7a85fe7ee87f-77627d281018b0e1#:~:text=The)
+
+---
+
+## 6️⃣ Avatar Helper — `AvatarImage.swift`
+```swift
+import SwiftUI
+import PhotosUI
+
+struct AvatarImage: Transferable, Equatable {
+  let image: Image
+  let data: Data
+
+  static var transferRepresentation: some TransferRepresentation {
+    DataRepresentation(importedContentType: .image) { data in
+      guard let img = AvatarImage(data: data) else { throw TransferError.importFailed }
+      return img
+    }
+  }
+}
+
+extension AvatarImage {
+  init?(data: Data) {
+    guard let uiImg = UIImage(data: data) else { return nil }
+    image = Image(uiImage: uiImg)
+    self.data = data
+  }
+}
+
+enum TransferError: Error { case importFailed }
+ 
+ 
+ 
+ 
+7️⃣ Profile View —  ProfileView.swift 
+ 
+swift  
+import SwiftUI
+import PhotosUI
+import Supabase
+
+struct ProfileView: View {
+  @State private var username = ""
+  @State private var fullName = ""
+  @State private var website = ""
+  @State private var isLoading = false
+  @State private var imageSelection: PhotosPickerItem?
+  @State private var avatarImage: AvatarImage?
+
+  var body: some View {
+    NavigationStack {
+      Form {
+        Section {
+          HStack {
+            Group {
+              if let avatarImage { avatarImage.image.resizable() }
+              else { Color.clear }
+            }
+            .scaledToFit().frame(width: 80, height: 80)
+            Spacer()
+            PhotosPicker(selection: $imageSelection, matching: .images) {
+              Image(systemName: "pencil.circle.fill")
+                .symbolRenderingMode(.multicolor)
+                .font(.system(size: 30))
+            }
+          }
+        }
+        Section {
+          TextField("Username", text: $username)
+            .textContentType(.username).textInputAutocapitalization(.never)
+          TextField("Full Name", text: $fullName).textContentType(.name)
+          TextField("Website", text: $website)
+            .textContentType(.URL).textInputAutocapitalization(.never)
+        }
+        Section {
+          Button("Update Profile") { updateTapped() }.bold()
+          if isLoading { ProgressView() }
+        }
+      }
+      .navigationTitle("Profile")
+      .toolbar {
+        ToolbarItem(placement: .topBarTrailing) {
+          Button("Sign Out", role: .destructive) {
+            Task { try? await supabase.auth.signOut() }
+          }
+        }
+      }
+      .onChange(of: imageSelection) { _, new in
+        guard let new else { return }
+        Task { avatarImage = try? await new.loadTransferable(type: AvatarImage.self) }
+      }
+    }
+    .task { await loadProfile() }
+  }
+
+  func loadProfile() async {
+    do {
+      let user = try await supabase.auth.session.user
+      let profile: Profile = try await supabase
+        .from("profiles")
+        .select()
+        .eq("id", value: user.id)
+        .single()
+        .execute().value
+
+      username = profile.username ?? ""
+      fullName = profile.fullName ?? ""
+      website = profile.website ?? ""
+
+      if let path = profile.avatarURL, !path.isEmpty {
+        let data = try await supabase.storage.from("avatars").download(path: path)
+        avatarImage = AvatarImage(data: data)
+      }
+    } catch { debugPrint(error) }
+  }
+
+  func updateTapped() {
+    Task {
+      isLoading = true; defer { isLoading = false }
+      do {
+        let user = try await supabase.auth.session.user
+        var avatarPath: String?
+        if let data = avatarImage?.data {
+          let fileName = "\(UUID().uuidString).jpeg"
+          try await supabase.storage.from("avatars").upload(
+            fileName, data: data,
+            options: .init(contentType: "image/jpeg")
+          )
+          avatarPath = fileName
+        }
+        try await supabase.from("profiles").update(Profile(
+          username: username, fullName: fullName,
+          website: website, avatarURL: avatarPath
+        )).eq("id", value: user.id).execute()
+      } catch { debugPrint(error) }
+    }
+  }
+}
+```[[__LINK_ICON]](https://supabase.com/docs/guides/getting-started/tutorials/with-swift?f_link_type=f_linkinlinenote&flow_extra=eyJkb2NfaWQiOiI4ZjdiN2E4NWZlN2VlODdmLTc3NjI3ZDI4MTAxOGIwZTEiLCJpbmxpbmVfZGlzcGxheV9wb3NpdGlvbiI6MCwiZG9jX3Bvc2l0aW9uIjowfQ%3D%3D&inline_doc_id=8f7b7a85fe7ee87f-77627d281018b0e1#:~:text=The)
+
+---
+
+## 8️⃣ App Entry — `AppView.swift`
+```swift
+import SwiftUI
+
+struct AppView: View {
+  @State private var isAuthenticated = false
+
+  var body: some View {
+    Group {
+      if isAuthenticated { ProfileView() }
+      else { AuthView() }
+    }
+    .task {
+      for await state in await supabase.auth.authStateChanges {
+        isAuthenticated = state.session != nil
+      }
+    }
+  }
+}
+
+// In your App/Entry point:
+@main
+struct UserManagementApp: App {
+  var body: some Scene {
+    WindowGroup { AppView() }
+  }
+}
+```[[__LINK_ICON]](https://supabase.com/docs/guides/getting-started/tutorials/with-swift?f_link_type=f_linkinlinenote&flow_extra=eyJpbmxpbmVfZGlzcGxheV9wb3NpdGlvbiI6MCwiZG9jX3Bvc2l0aW9uIjowLCJkb2NfaWQiOiI4ZjdiN2E4NWZlN2VlODdmLTc3NjI3ZDI4MTAxOGIwZTEifQ%3D%3D&inline_doc_id=8f7b7a85fe7ee87f-77627d281018b0e1#:~:text=The)
+
+---
+
+## 9️⃣ ⚙️ Configure Deep Linking
+- **Project → Info → URL Types → +**
+  - URL Schemes: `io.supabase.user-management`
+- **Supabase Dashboard → Authentication → URL Configuration**
+  - Add Redirect URL: `io.supabase.user-management://login-callback`
+
+---
+
+## 🔟 CLI Quick Reference
+```bash
+# Link project
+supabase link --project-ref YOUR_PROJECT_ID
+
+# Pull schema locally
+supabase db pull
+
+# Generate types
+supabase gen types typescript --local > Types.ts
+ 
+ 
+Want me to zip these into a single  .zip  project structure or add Sign in with Apple / Realtime extensions next?
