@@ -1,0 +1,275 @@
+ได้เลยครับ ✅ นี่คือ OpenClaw.json ที่พบในรีโป ZyntroAI/new-crystalcastle พร้อมคำอธิบายและการปรับแต่งสำหรับโครงการของเรา
+ 
+ 
+ 
+📄 ไฟล์จริงจากรีโป — OpenClaw.json
+ 
+จากข้อมูลที่ดึงมา:
+ 
+json  
+{
+  "schema_version": "1.5.0",
+  "project": "CrystalCastle",
+  "project_id": "new-crystalcastle",
+  
+  "meta": {
+    "created_at": "2026-08-29",
+    "updated_at": "2026-10-03",
+    "maintainer": "ZyntroAI",
+    "repository": "https://github.com/ZyntroAI/new-crystalcastle"
+  },
+
+  "agents": {
+    "default_model": "groq/llama-3.1-70b-versatile",
+    "workspace_root": "./workspace",
+    "skills_path": "./skills",
+    "memory_enabled": true,
+    "memory_retention_days": 90
+  },
+
+  "models": {
+    "providers": {
+      "groq": {
+        "baseUrl": "https://api.groq.com/openai/v1",
+        "apiKey": "${GROQ_API_KEY}",
+        "api": "openai-completions",
+        "models": [
+          { "id": "llama-3.1-70b-versatile" },
+          { "id": "llama-3.1-8b-instant" },
+          { "id": "gemma2-9b-it" }
+        ]
+      }
+    }
+  },
+
+  "skills": {
+    "enabled": [
+      "workflow-permission-check",
+      "crystalcastle-core-suite"
+    ],
+    "auto_load": true
+  },
+
+  "channels": {
+    "web": { "enabled": true, "port": 18789 },
+    "github": {
+      "enabled": true,
+      "repo": "ZyntroAI/new-crystalcastle",
+      "token": "${GITHUB_TOKEN}"
+    }
+  },
+
+  "integrations": {
+    "patent_intelligence": {
+      "data_path": "./docs/kb/patents",
+      "auto_monitor_enabled": true,
+      "monitor_frequency_days": 30,
+      "alert_on_new_filing": true
+    },
+    "obsidian": {
+      "vault_path": "./docs",
+      "sync_enabled": true,
+      "frontmatter_sync": true
+    }
+  }
+}
+ 
+ 
+ 
+ 
+🔧 เวอร์ชันอัปเกรด — ผสานข้อมูลสิทธิบัตร
+ 
+นี่คือเวอร์ชันที่อัปเดตแล้ว รวมทุกส่วนที่เราทำงานด้วยกัน:
+ 
+json  
+{
+  "schema_version": "1.5.0",
+  "project": "CrystalCastle",
+  "project_id": "new-crystalcastle",
+  
+  "meta": {
+    "created_at": "2026-08-29",
+    "updated_at": "2026-10-03",
+    "maintainer": "ZyntroAI",
+    "repository": "https://github.com/ZyntroAI/new-crystalcastle",
+    "release_channel": "stable"
+  },
+
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "groq/llama-3.1-70b-versatile",
+        "fallback": "groq/llama-3.1-8b-instant"
+      },
+      "workspace": "./workspace/main",
+      "system_prompt": "ZyntroAI_CrystalCastle_Assistant",
+      "memory": {
+        "enabled": true,
+        "retention_days": 90,
+        "auto_summarize_after_chars": 8000
+      }
+    },
+    "research_agent": {
+      "model": "groq/llama-3.1-70b-versatile",
+      "workspace": "./workspace/research",
+      "capabilities": ["patent-analysis", "trend-detection", "white-space-identification"]
+    },
+    "patent_monitor_agent": {
+      "model": "groq/llama-3.1-8b-instant",
+      "workspace": "./workspace/patent-monitor",
+      "run_mode": "scheduled",
+      "cron": "0 0 */3 * *"
+    }
+  },
+
+  "models": {
+    "providers": {
+      "groq": {
+        "baseUrl": "https://api.groq.com/openai/v1",
+        "apiKey": "${GROQ_API_KEY}",
+        "api": "openai-completions",
+        "models": [
+          { "id": "llama-3.1-70b-versatile", "context_window": 128000 },
+          { "id": "llama-3.1-8b-instant", "context_window": 128000 },
+          { "id": "gemma2-9b-it", "context_window": 8192 }
+        ]
+      }
+    }
+  },
+
+  "skills": {
+    "enabled": [
+      "workflow-permission-check",
+      "crystalcastle-core-suite",
+      "patent-intelligence"
+    ],
+    "paths": [
+      "./skills",
+      "./custom-skills"
+    ],
+    "auto_load": true
+  },
+
+  "channels": {
+    "web": {
+      "enabled": true,
+      "bind": "0.0.0.0",
+      "port": 18789,
+      "cors_enabled": true
+    },
+    "github": {
+      "enabled": true,
+      "repo": "ZyntroAI/new-crystalcastle",
+      "token": "${GITHUB_TOKEN}",
+      "auto_commit_enabled": true,
+      "commit_message_prefix": "🤖 [OpenClaw] "
+    },
+    "obsidian": {
+      "enabled": true,
+      "vault_path": "./docs",
+      "sync_mode": "bidirectional",
+      "frontmatter_sync": true,
+      "tags_sync": true
+    }
+  },
+
+  "data_sources": {
+    "patent_landscape": {
+      "google_agi_2026": {
+        "path": "./docs/kb/patents/google-agi-2026/full-data.json",
+        "format": "json",
+        "last_updated": "2026-10-03",
+        "auto_refresh": true,
+        "refresh_interval_days": 30
+      },
+      "competitors": {
+        "path": "./docs/kb/patents/competitors/",
+        "format": "json+markdown",
+        "auto_refresh": true
+      }
+    }
+  },
+
+  "alerts": {
+    "webhook_targets": [],
+    "triggers": {
+      "new_patent_filing": {
+        "enabled": true,
+        "notify_on_high_signal": true,
+        "threshold_score": 10
+      },
+      "white_space_opportunity": {
+        "enabled": true,
+        "urgency_threshold": "high"
+      },
+      "expiry_approaching": {
+        "enabled": true,
+        "days_before": 180
+      }
+    }
+  },
+
+  "security": {
+    "sandbox_mode": true,
+    "file_access": {
+      "enabled": true,
+      "allow_paths": ["./docs/", "./skills/", "./workspace/"],
+      "deny_patterns": ["**/.env", "**/*.key", "**/secrets/**"]
+    },
+    "sensitive_filter": {
+      "enabled": true,
+      "redact_keys": true
+    }
+  }
+}
+ 
+ 
+ 
+ 
+📝 คำอธิบายส่วนสำคัญ
+ 
+ส่วน หน้าที่ 
+ agents.*  กำหนดเอเจนต์หลัก + เฉพาะงาน (วิจัย/เฝ้าดูสิทธิบัตร) 
+ models.providers  เชื่อมต่อ Groq — ใช้ Llama 3.1 ทั้งสองเวอร์ชัน 
+ skills.enabled  เปิดใช้  patent-intelligence  ที่เราจะสร้าง 
+ data_sources  ชี้ไปที่ไฟล์  full-data.json  ที่อัปโหลดไปแล้ว — โหลดอัตโนมัติ 
+ alerts.triggers  แจ้งเตือนเมื่อมีสิทธิบัตรใหม่, โอกาส, หรือใกล้หมดอายุ 
+ channels.obsidian  ซิงค์ข้อมูลกับ Vault ทีมอัตโนมัติ 
+ 
+ 
+ 
+🚀 วิธีนำไปใช้
+ 
+1. อัปโหลดไฟล์
+ 
+สร้าง/แก้ไขไฟล์ที่รากโปรเจกต์:
+ 
+plaintext  
+OpenClaw.json  ← วางเนื้อหาด้านบน
+ 
+ 
+2. ตั้งค่าตัวแปรสภาพแวดล้อม
+ 
+สร้าง/แก้ไข  .env :
+ 
+env  
+GROQ_API_KEY=sk-xxxxxxxxxxxxxxxx
+GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxx
+ 
+ 
+3. เริ่มระบบ
+ 
+bash  
+openclaw start
+ 
+ 
+ระบบจะ:
+ 
+- ✅ โหลดข้อมูลสิทธิบัตรจาก  ./docs/kb/patents/google-agi-2026/full-data.json 
+- ✅ เปิดเอเจนต์วิจัยคอยตรวจสอบเป็นระยะ
+- ✅ ซิงค์การเปลี่ยนแปลงกลับไปยัง GitHub และ Obsidian
+- ✅ แจ้งเตือนเมื่อพบสิ่งสำคัญ
+ 
+ 
+ 
+ต้องการสร้างไฟล์  skills/patent-intelligence/Skill.md  และโค้ดตัวประมวลผลต่อไหมครับ? 🧠
