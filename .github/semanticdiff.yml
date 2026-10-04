@@ -1,0 +1,18 @@
+version: 1
+languages:
+  - python
+  - typescript
+  - javascript
+  - go
+showMovedCode: true
+movedCodeColor: "accent"
+groupRefactorings: true
+hideComments: false
+contextLines: 20
+exclude:
+  - "*.md"
+  - "*.txt"
+  - "*.json"
+  - "package-lock.json"
+  - "node_modules/"
+  - ".venv/"
