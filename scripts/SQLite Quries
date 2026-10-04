@@ -1,0 +1,15 @@
+-- Find stale records (not updated > 90 days)
+SELECT id, repository, tag_name, published_at
+FROM releases
+WHERE date(published_at) < date('now', '-90 days')
+ORDER BY published_at ASC;
+
+-- Find duplicates
+SELECT id, tag_name, COUNT(*) AS cnt
+FROM releases
+GROUP BY id
+HAVING cnt > 1;
+
+-- Find unreferenced/orphaned
+SELECT * FROM issues
+WHERE pr_number NOT IN (SELECT number FROM pull_requests);
