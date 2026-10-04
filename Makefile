@@ -60,3 +60,18 @@ docker-all: docker-build docker-scan
 # make docker-scan     # สแกนความปลอดภัย
 # make docker-all      # ทำทั้งสองขั้นตอน
 # make docker-clean    # ลบภาพ
+
+# 1. ติดตั้ง Trivy (ครั้งแรก)
+brew install aquasecurity/trivy/trivy   # macOS
+
+# 2. รันตรวจสอบในเครื่อง
+make docker-all
+# ✅ Build ผ่าน
+# ✅ Scan ผ่าน
+# → พร้อมส่ง
+
+# 3. ส่งขึ้น
+git add Dockerfile .dockerignore Makefile .github/workflows/ci-workflow-v3.1.yml
+git commit -m "chore: align Docker build + scan across CI & Local 🐳"
+git push -u origin feature/docker-ci-alignment
+
