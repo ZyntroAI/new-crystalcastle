@@ -1,0 +1,6 @@
+# Dry-run first (no delete)
+find . -name "*.tmp" -atime +7 -print
+
+# Delete with logging
+find . -name "*.tmp" -atime +7 -delete -print \
+  >> logs/purge_$(date +%Y%m%d).log
