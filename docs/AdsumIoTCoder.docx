@@ -26,3 +26,212 @@ Adsum IoT Coder คือ ส่วนขยาย AI agent สำหรับ V
 สรุปสั้นๆ: เป็นเครื่องมือ AI ช่วยพัฒนาเฟิร์มแวร์ ESP32/nRF โดยเชื่อมต่อกับบอร์ดจริงเพื่อแก้ปัญหาแบบเรียลไทม์ ฟรี และเป็นโอเพ่นซอร์สครับ
  
 สนใจจะเริ่มติดตั้งหรือดูตัวอย่างการใช้งานไหมครับ? 😊
+ได้เลยครับ ✅ เตรียมคู่มือเริ่มต้น Adsum IoT Coder ครบทุกขั้นตอน — ติดตั้ง → ตั้งค่า → รันตัวอย่างแรก 🛠️🤖
+ 
+ก่อนอื่นขอตรวจสอบข้อมูลล่าสุดจากแหล่งที่มาให้แน่นอนครับ:
+
+ขออ่านเอกสารทางการเพิ่มเติมเพื่อให้ขั้นตอนติดตั้งแม่นยำครับ:
+
+ตรวจสอบข้อมูลล่าสุดเรียบร้อยแล้วครับ ✅ นี่คือคู่มือเริ่มต้น Adsum IoT Coder ฉบับปฏิบัติได้จริง — ติดตั้ง → ตั้งค่า → รันตัวอย่างแรก 🛠️🤖
+ 
+ 
+ 
+🚀 เริ่มต้นใช้งาน Adsum IoT Coder — คู่มือฉบับสมบูรณ์
+ 
+✅ ตรวจสอบแล้วจากเอกสารทางการ (อัปเดต: ตุลาคม 2026)
+🔗 เอกสาร: https://docs.adsumnetworks.com/introduction
+🔗 GitHub: https://github.com/adsumnetworks/Adsum-IoT-Coder
+🔗 Marketplace:  AdsumNetwork.nrf-ai-debugger 
+ 
+ 
+ 
+📋 สิ่งที่ต้องเตรียมก่อนติดตั้ง
+ 
+1. เบื้องต้น
+ 
+- ✅ VS Code (หรือ Cursor / Windsurf / VSCodium — รองรับ Open VSX)
+- ✅ ระบบปฏิบัติการ: Windows / macOS / Linux
+- ✅ บอร์ดจริง (ถ้ามี): ESP32-S3 / ESP32-C6 หรือ nRF52840 DK
+- ⚠️ ไม่มีบอร์ดก็เริ่มได้ — มี Demo ในตัวรันโดยไม่ต้องฮาร์ดแวร์
+ 
+2. SDK ตามชิปที่ใช้ (สำคัญ!)
+ 
+ถ้าใช้ ต้องติดตั้งก่อน 
+ESP32 / S3 / C6 ESP-IDF + Extension  espressif.esp-idf-extension  
+nRF52/53/54L/91 nRF Connect Extension Pack ใน VS Code 
+ 
+💡 Adsum ไม่ได้ติดตั้ง SDK ให้ — ต้องมีอยู่แล้ว มันจะเรียกใช้ SDK ที่มีอยู่อัตโนมัติ
+ 
+ 
+ 
+1️⃣ ขั้นตอนติดตั้ง (5 นาที)
+ 
+วิธี A: ติดตั้งผ่าน VS Code Marketplace (แนะนำ)
+ 
+1. เปิด VS Code → ไปที่ Extensions (Ctrl+Shift+X)
+2. ค้นหา:  Adsum IoT Coder 
+3. ตรวจสอบ Publisher: Adsum Networks (ชื่อ extension:  AdsumNetwork.nrf-ai-debugger )
+4. กด Install → รอเสร็จ → รีสตาร์ท VS Code
+ 
+วิธี B: ติดตั้งผ่าน Command Line
+ 
+bash  
+code --install-extension AdsumNetwork.nrf-ai-debugger
+ 
+ 
+วิธี C: ใช้บน Cursor / VSCodium
+ 
+ติดตั้งจาก Open VSX Registry:
+ 
+- ค้นหา:  AdsumNetwork.nrf-ai-debugger 
+- หรือติดตั้งไฟล์  .vsix  ดาวน์โหลดจาก GitHub Releases
+ 
+ 
+ 
+2️⃣ ตั้งค่าโมเดล AI (เลือกได้)
+ 
+Adsum รองรับหลายโมเดล — ฟรีเริ่มได้ทันทีไม่ต้องมีคีย์:
+ 
+ตัวเลือก ต้องมีคีย์ไหม ความเหมาะสม 
+GLM Coding Plan (ฟรี) ❌ ไม่ต้อง เริ่มต้นใช้งาน 
+Claude ✅ ต้องมี คุณภาพสูง 
+DeepSeek (มี Thinking Dial) ✅ ต้องมี คุ้มค่า เร็ว 
+Compatible Endpoint ✅ ต้องมี เชื่อมโมเดลอื่นได้ 
+ 
+วิธีตั้งค่า:
+ 
+1. เปิด Command Palette (Ctrl+Shift+P)
+2. พิมพ์:  Adsum: Select Model 
+3. เลือกโมเดล → ถ้าต้องมีคีย์ ให้วาง API Key
+4. ✅ เปลี่ยนโมเดลได้ตลอดเวลาแบบสด (Switchable Live)
+ 
+ 
+ 
+3️⃣ รันตัวอย่างแรก — 3 แบบ
+ 
+🅰️ ไม่มีบอร์ด — รัน Demo ในตัว (เร็วที่สุด)
+ 
+plaintext  
+1. เปิด Command Palette → "Adsum: Run Built-in Demo"
+2. เลือก: "No board demo"
+3. ดู Agent ทำงาน: สร้างโครงงาน → คอมไพล์ → จำลองล็อก → แก้ไข
+4. ✅ เห็นผลภายใน 2 นาที — ไม่ต้องมีฮาร์ดแวร์
+ 
+ 
+🅱️ มี ESP32 — สร้างโปรเจกต์ Wi-Fi + MQTT
+ 
+1. เสียบบอร์ด ESP32-S3 / C6 เข้า USB
+2. เปิดโฟลเดอร์โปรเจกต์ว่างใน VS Code
+3. เปิดแชท Adsum → พิมพ์:
+plaintext  
+สร้างโปรเจกต์ ESP32-C6 เชื่อม Wi-Fi แล้วส่งข้อมูลเซ็นเซอร์อุณหภูมิผ่าน MQTT ทุก 5 วินาที
+บอร์ด: ESP32-C6-DevKitC-1
+ 
+4. ✅ Agent จะทำ: สร้างโครงงาน → Build → Flash → อ่าน Serial Log → แก้ถ้ามีบั๊ก
+ 
+🅲 มี nRF — สร้าง BLE Peripheral
+ 
+plaintext  
+สร้าง nRF52840 เป็น BLE Peripheral มี Service แสดงค่าแบตเตอรี่และอุณหภูมิ
+บอร์ด: nRF52840 DK
+ 
+ 
+ 
+ 
+4️⃣ โครงสร้างที่ Agent สร้างให้
+ 
+plaintext  
+my-iot-project/
+├── .adsum/                  🧠 Project Memory — จดจำบอร์ด, เป้าหมาย, บั๊กที่ยังไม่ปิด
+│   ├── board.json
+│   ├── goal.md
+│   └── open-bugs.md
+├── main/                    📁 โค้ดหลัก
+│   └── main.c
+├── CMakeLists.txt
+├── sdkconfig                (ESP-IDF) หรือ prj.conf (nRF/Zephyr)
+└── README.md
+ 
+ 
+💡 จุดเด่น:  .adsum/  ทำให้เปิดแชทใหม่ Agent ก็รู้บริบททันที ไม่ต้องบอกใหม่ทุกครั้ง
+ 
+ 
+ 
+5️⃣ ฟีเจอร์เด็ดที่ต้องลอง
+ 
+🔍 3-Layer Debug (แก้บั๊กที่ AI ทั่วไปหาไม่เจอ)
+ 
+ชั้น ดูอะไร ใช้เมื่อ 
+App Log Serial / RTT log จากแอป บั๊กทั่วไป 
+HCI Bus ติดตาม packet บนบัส Bluetooth BLE ตัดการเชื่อมต่อ 
+Over-the-Air Radio จับคลื่นจริงด้วย Sniffer ส่งได้ 36 ตัว แต่รับ 0 ตัว 
+ 
+ตัวอย่างจริง: "36 packets on the air, 0 received" — หาสาเหตุได้จากชั้นวิทยุที่ AI ทั่วไปมองไม่เห็น 🔥
+ 
+🛡️ One-Click EU CRA Readiness
+ 
+1. กดปุ่ม "CRA Check" คลิกเดียว
+2. ได้ผลลัพธ์:
+- ✅ SBOM (SPDX) — รายการซอฟต์แวร์ทุกชิ้น
+- ✅ Ranked CVE Scan — ช่องโหว่เรียงลำดับความร้ายแรง
+- ✅ Secure-by-Design Posture — ตรวจสอบการออกแบบ
+- ✅ Fix Loop — แนะนำวิธีแก้แต่ละจุด
+3. ✅ เหมาะกับผลิตภัณฑ์ที่จะขายในยุโรป (บังคับใช้แล้ว)
+ 
+📊 ผล Benchmark ที่ทดสอบซ้ำได้
+ 
+- 4× แก้บั๊กเฟิร์มแวร์ได้มากกว่าในการแฟลชครั้งแรก
+- 3.8× ใช้ token น้อยกว่า (งานบางงานถึง 13×)
+- ทดสอบบนฮาร์ดแวร์จริง — ใครก็รันซ้ำได้ที่  IoT-FirmwareDebugBench v0.1 
+ 
+ 
+ 
+6️⃣ เชื่อมเข้ากับระบบ ZyntroAI ของเรา (แนะนำ)
+ 
+plaintext  
+┌──────────────────────┐   MQTT/HTTP   ┌──────────────────────┐
+│  อุปกรณ์ IoT (ESP32) │◄─────────────►│  ZyntroAI Backend    │
+│  Adsum พัฒนาให้      │               │  FastAPI + Gemini    │
+│  ส่งข้อมูลเซ็นเซอร์   │               │  รับ-ประมวลผล-แจ้งเตือน│
+└──────────────────────┘               └──────────────────────┘
+ 
+ 
+สถานการณ์ที่เหมาะใช้ Adsum
+ 
+- ✅ พัฒนาเฟิร์มแวร์ ESP32/nRF ที่ต้องเชื่อมต่อกับ Backend ของเรา
+- ✅ ตรวจสอบความปลอดภัยก่อนผลิตจริง (CRA)
+- ✅ แก้บั๊กเรียลไทม์ที่ต้องอ่าน log จากบอร์ดจริง
+ 
+บันทึก Decision Log (ตามรูปแบบ Obsidian ของเรา)
+ 
+สร้างโน้ต:  .Obsidian2/07-workflows/Workflow - Adsum IoT Coder.md 
+ 
+- Why: พัฒนาเฟิร์มแวร์เร็วขึ้น แก้บั๊กเรียลไทม์ได้
+- How: ติดตั้ง Extension + ESP-IDF → ใช้ฟรี GLM Plan
+- Checklist: [ ] ติดตั้ง Extension [ ] ตั้งค่าโมเดล [ ] รัน Demo [ ] ทดสอบกับบอร์ดจริง
+- Implementation: ลิงก์ไป GitHub  adsumnetworks/Adsum-IoT-Coder 
+ 
+ 
+ 
+✅ Checklist เริ่มต้น
+ 
+ติดตั้ง VS Code Extension  AdsumNetwork.nrf-ai-debugger 
+ติดตั้ง SDK ตามชิป (ESP-IDF หรือ nRF Connect SDK)
+เลือกโมเดล AI (เริ่มจาก GLM ฟรีก่อน)
+รัน Built-in Demo (ไม่ต้องมีบอร์ด)
+ถ้ามีบอร์ด → ทดสอบสร้างโปรเจกต์จริง
+ลองฟีเจอร์ CRA Check (คลิกเดียว)
+บันทึกผลลัพธ์ลง Decision Log
+ 
+ 
+ 
+📌 ลิงก์สำคัญ
+ 
+- 🔗 เอกสารทางการ: https://docs.adsumnetworks.com/
+- 🔗 ติดตั้ง: https://marketplace.visualstudio.com/items?itemName=AdsumNetwork.nrf-ai-debugger
+- 🔗 ซอร์สโค้ด: https://github.com/adsumnetworks/Adsum-IoT-Coder
+- 🔗 Open VSX (Cursor/VSCodium): https://open-vsx.org/extension/AdsumNetwork/nrf-ai-debugger
+ 
+ 
+ 
+ติดตั้งเสร็จแล้วบอกผลได้เลยครับ! ถ้าติดขั้นตอนไหน (เช่น ติดตั้ง ESP-IDF, เชื่อมต่อบอร์ด, เลือกโมเดล) บอกผมได้ทันที — ผมช่วยแก้ให้ครับ 🛠️✨
