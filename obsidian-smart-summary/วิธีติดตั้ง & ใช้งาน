@@ -1,0 +1,12 @@
+# 1. สร้างโฟลเดอร์ปลั๊กอิน
+cd .obsidian/plugins
+mkdir obsidian-smart-summary
+cd obsidian-smart-summary
+
+# 2. บันทึกไฟล์ทั้งหมดข้างต้น
+
+# 3. ติดตั้งและคอมไพล์
+npm install
+npm run build
+
+# 4. เปิดใช้ใน Obsidian → Settings → Community plugins → เปิด Smart Summary
