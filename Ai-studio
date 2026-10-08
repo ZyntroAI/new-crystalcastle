@@ -1,51 +1,45 @@
 package main
 
 import (
-  "context"
-  "flag"
-  "fmt"
-  "log"
+	"context"
+	"flag"
+	"fmt"
+	"log"
+	"os"
+	"time"
 
-  "google.golang.org/genai"
+	"google.golang.org/genai"
 )
 
-var model = flag.String("model", "", "the model name, e.g. ")
-
-func run(ctx context.Context) {
-  client, err := genai.NewClient(ctx, &genai.ClientConfig{
-    Backend: genai.BackendGeminiAPI,
-    APIKey: os.Getenv("GEMINI_API_KEY"),
-  })
-  if err != nil {
-    log.Fatal(err)
-  }
-
-
-  var config *genai.GenerateContentConfig = &genai.GenerateContentConfig{
-  }
-
-  var contents = []*genai.Content{
-    &genai.Content{
-      Role: "user",
-      Parts: []*genai.Part{
-        &genai.Part{
-          Text: "INSERT_INPUT_HERE",
-        },
-      },
-    },
-  }
-
-  // Call the GenerateContent method.
-  result, err := client.Models.GenerateContent(ctx, *model, contents, config)
-  if err != nil {
-    log.Fatal(err)
-  }
-  fmt.Println(result.Text())
-}
-
 func main() {
-  ctx := context.Background()
-  flag.Parse()
-  run(ctx)
-}
+	model := flag.String("model", "", "ชื่อโมเดล")
+	timeout := flag.Duration("timeout", 30*time.Second, "หมดเวลา")
+	flag.Parse()
 
+	apiKey := os.Getenv("GEMINI_API_KEY")
+	if *model == "" || apiKey == "" {
+		log.Fatal("ต้องตั้งค่า --model และ GEMINI_API_KEY")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), *timeout)
+	defer cancel()
+
+	client, _ := genai.NewClient(ctx, &genai.ClientConfig{
+		Backend: genai.BackendGeminiAPI,
+		APIKey:  apiKey,
+	})
+
+	prompt := os.Getenv("PROMPT")
+	if prompt == "" {
+		prompt = "สวัสดี ช่วยแนะนำตัวหน่อย"
+	}
+
+	result, err := client.Models.GenerateContent(ctx, *model,
+		[]*genai.Content{{Role: "user", Parts: []*genai.Part{{Text: prompt}}}},
+		&genai.GenerateContentConfig{})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(result.Text())
+}
