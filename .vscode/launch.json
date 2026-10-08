@@ -1,0 +1,31 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "go",
+      "request": "launch",
+      "name": "🤖 Gemini (Go)",
+      "program": "${workspaceFolder}/main.go",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "GEMINI_API_KEY": "${env:GEMINI_API_KEY}"
+      },
+      "args": ["--model", "gemini-2.0-flash"]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "🔐 Auth (Node)",
+      "program": "${workspaceFolder}/auth.js",
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env"
+    },
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "🔍 Attach: แนบดีบักเกอร์",
+      "port": 9229,
+      "restart": true
+    }
+  ]
+}
