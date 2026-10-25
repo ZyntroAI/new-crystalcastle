@@ -11,7 +11,7 @@ authors = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-    "fastapi>=0.115.0,<0.116",
+    "fastapi>=0.115.0,<0.160",
     "uvicorn>=0.32.0,<0.33",
     "pydantic>=2.9.0,<3",
 ]
