@@ -1,0 +1,12 @@
+{
+  "name": "obsidian-smart-summary",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "tsc -w",
+    "build": "tsc -p ."
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "typescript": "^5"
+  }
+}

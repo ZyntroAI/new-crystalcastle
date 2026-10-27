@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obsidian Ribbon - Visual Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.8/index.css">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        
+        :root {
+            --ribbon-bg: #262626;
+            --ribbon-hover: #383838;
+            --ribbon-active: #7c3aed;
+            --sidebar-bg: #1e1e1e;
+            --text-primary: #dcddde;
+            --text-muted: #8e8e8e;
+            --border: #1a1a1a;
+        }
+        
+        body {
+            background: #1a1a1a;
+            color: var(--text-primary);
+        }
+        
+        /* Ribbon Bar */
+        .ribbon {
+            width: 44px;
+            background: var(--ribbon-bg);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 0;
+            gap: 2px;
+        }
+        
+        .ribbon-icon {
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            position: relative;
+            color: var(--text-muted);
+        }
+        
+        .ribbon-icon:hover {
+            background: var(--ribbon-hover);
+            color: var(--text-primary);
+        }
+        
+        .ribbon-icon.active {
+            color: var(--ribbon-active);
+        }
+        
+        .ribbon-icon.plugin-icon {
+            color: #10b981;
+        }
+        
+        .ribbon-icon.plugin-icon:hover {
+            background: rgba(16, 185, 129, 0.15);
+        }
+        
+        .ribbon-separator {
+            width: 24px;
+            height: 1px;
+            background: var(--border);
+            margin: 6px 0;
+        }
+        
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            left: 52px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #1a1a1a;
+            border: 1px solid #404040;
+            padding: 8px 12px;
+            border-radius: 6px;
+            white-space: nowrap;
+            font-size: 13px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        
+        .tooltip::before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            top: 50%;
+            transform: translateY(-50%) rotate(45deg);
+            width: 10px;
+            height: 10px;
+            background: #1a1a1a;
+            border-left: 1px solid #404040;
+            border-bottom: 1px solid #404040;
+        }
+        
+        .ribbon-icon:hover .tooltip {
+            opacity: 1;
+        }
+        
+        .tooltip-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+        
+        .tooltip-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        
+        .tooltip-badge {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+        
+        .badge-core { background: #3b82f6; color: white; }
+        .badge-plugin { background: #10b981; color: white; }
+        .badge-community { background: #8b5cf6; color: white; }
+        
+        /* Sidebar */
+        .sidebar {
+            background: var(--sidebar-bg);
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .info-card {
+            background: #2a2a2a;
+            border: 1px solid #404040;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        
+        .info-card h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-card p {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+        
+        .category-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin: 12px 0 6px 0;
+            text-align: center;
+        }
+        
+        /* Detail Panel */
+        .detail-panel {
+            background: #2a2a2a;
+            border: 1px solid #404040;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+        
+        .detail-panel.active {
+            border-color: var(--ribbon-active);
+            background: rgba(124, 58, 237, 0.05);
+        }
+        
+        .api-example {
+            background: #1a1a1a;
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #10b981;
+            margin-top: 8px;
+            overflow-x: auto;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+        
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="flex h-screen">
+        <!-- ============ OBSIDIAN RIBBON ============ -->
+        <div class="ribbon" id="ribbon">
+            
+            <!-- Category: CORE NAVIGATION -->
+            <div class="category-label">Core</div>
+            
+            <!-- 1. File Explorer -->
+            <div class="ribbon-icon" data-id="file-explorer" onclick="showDetail('file-explorer')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                </svg>
+                <div class="tooltip">
+                    <div class="tooltip-title">📁 File Explorer <span class="tooltip-badge badge-core">CORE</span></div>
+                    <div class="tooltip-desc">Browse vault files & folders</div>
+                </div>
+            </div>
+            
+            <!-- 2. Search -->
+            <div class="ribbon-icon" data-id="search" onclick="showDetail('search')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <div class="tooltip">
+                    <div class="tooltip-title">🔍 Search <span class="tooltip-badge badge-core">CORE</span></div>
+                    <div class="tooltip-desc">Search across all notes</div>
+                </div>
+            </div>
+            
+            <!-- 3. Graph View -->
+            <div class="ribbon-icon" data-id="graph" onclick="showDetail('graph')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="6" cy="6" r="3"/>
+                    <circle cx="18" cy="6" r="3"/>
+                    <circle cx="6" cy="18" r="3"/>
+                    <circle cx="18" cy="18" r="3"/>
+                    <line x1="8.5" y1="7.5" x2="15.5" y2="16.5"/>
+                    <line x1="15.5" y1="7.5" x2="8.5" y2="16.5"/>
+                </svg>
+                <div class="tooltip">
+                    <div class="tooltip-title">🕸️ Graph View <span class="tooltip-badge badge-core">CORE</span></div>
+                    <div class="tooltip-desc">Visualize note connections</div>
+                </div>
+            </div>
+            
+            <div class="ribbon-separator"></div>
+            
+            <!-- Category: LINKS & TAGS -->
+            <div class="category-label">Links</div>
+            
+            <!-- 4. Backlinks -->
+            <div class="ribbon-icon" data-id="backlinks" onclick="showDetail('backlinks')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 14l-4-4 4-4"/>
+                    <path d="M5 10h11a4 4 0 0 1 0 8h-1"/>
+                </svg>
+                <div class="tooltip">
+                    <div class="tooltip-title">🔗 Backlinks <span class="tooltip-badge badge-core">CORE</span></div>
+                    <div class="tooltip-desc">Notes linking to current</div>
+                </div>
+            </div>
+            
+            <!-- 5. Outgoing Links -->
+            <div class="ribbon-icon" data-id="outgoing" onclick="showDetail('outgoing')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 10l4 4-4 4"/>
+                    <path d="M19 14H8a4 4 0 0 1 0-8h1"/>
+                </svg>
+                <div class="tooltip">
+                    <div class="tooltip-title">📤 Outgoing Links <span class="tooltip-badge badge-core">CORE</span></div>
+                    <div class="tooltip-desc">Notes linked from current</div>
+                </div>
+            </div>
+            
+            <!-- 6. Tags -->
+            <div class="ribbon-icon" data-id="tags" onclick="showDetail('tags')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                    <line x1="7" y1="7" x2="7.01" y2="7"/>
+                </svg>
+                <div class="tooltip">
+                    <div class="tooltip-title">🏷️ Tags <span class="tooltip-badge badge-core">CORE</span></div>
+                    <div class="tooltip-desc">Browse all tags in vault</div>
+                </div>
+            </div>
+            
+            <div class="ribbon-separator"></div>
+            
+            <!-- Category: TOOLS -->
+            <div class="category-label">Tools</div>
+            
+            <!-- 7. Daily Notes -->
+            <div class="ribbon-icon" data-id="daily" onclick="showDetail('daily')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                <div class="tooltip">
+                    <div class="tooltip-title">📅 Daily Notes <span class="tooltip-badge badge-core">CORE</span></div>
+                    <div class="tooltip-desc">Open/create today's note</div>
+                </div>
+            </div>
+            
+            <!-- 8. Templates -->
+            <div class="ribbon-icon" data-id="templates" onclick="showDetail('templates')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="9" y1="13" x2="15" y2="13"/>
+                    <line x1="9" y1="17" x2="15" y2="17"/>
+                </svg>
+                <div class="tooltip">
+                    <div class="tooltip-title">📋 Templates <span class="tooltip-badge badge-core">CORE</span></div>
+                    <div class="tooltip-desc">Insert note templates</div>
+                </div>
+            </div>
+            
+            <!-- 9. Command Palette -->
+            <div class="ribbon-icon" data-id="command" onclick="showDetail('command')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"/>
+                </svg>
+                <div class="tooltip">
+                    <div class="tooltip-title">⌨️ Command Palette <span class="tooltip-badge badge-core">CORE</span></div>
+                    <div class="tooltip-desc">Ctrl/Cmd + P</div>
+                </div>
+            </div>
+            
+            <div class="ribbon-separator"></div>
+            
+            <!-- Category: PLUGIN ICONS -->
+            <div class="category-label">Plugins</div>
+            
+            <!-- 10. Data Converter (Custom Plugin) -->
+            <div class="ribbon-icon plugin-icon" data-id="data-converter" onclick="showDetail('data-converter')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                    <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                </svg>
+                <div class="tooltip">
+                    <div class="tooltip-title">🗄️ Data Converter <span class="tooltip-badge badge-plugin">PLUGIN</span></div>
+                    <div class="tooltip-desc">Import CSV/JSON → Markdown</div>
+                </div>
+            </div>
+            
+            <!-- 11. Editor Helper (Custom Plugin) -->
+            <div class="ribbon-icon plugin-icon" data-id="editor-helper" onclick="showDetail('editor-helper')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 20h9"/>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                </svg>
+                <div class="tooltip">
+                    <div class="tooltip-title">✍️ Editor Helper <span class="tooltip-badge badge-plugin">PLUGIN</span></div>
+                    <div class="tooltip-desc">Formatting & editing tools</div>
+                </div>
+            </div>
+            
+            <!-- 12. AI Assistant (Community Plugin) -->
+            <div class="ribbon-icon" data-id="ai-assistant" onclick="showDetail('ai-assistant')" style="color: #f59e0b;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/>
+                </svg>
+                <div class="tooltip">
+                    <div class="tooltip-title">✨ AI Assistant <span class="tooltip-badge badge-community">COMMUNITY</span></div>
+                    <div class="tooltip-desc">AI-powered writing help</div>
+                </div>
+            </div>
+            
+            <!-- 13. Kanban (Community Plugin) -->
+            <div class="ribbon-icon" data-id="kanban" onclick="showDetail('kanban')" style="color: #ec4899;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="5" height="18" rx="1"/>
+                    <rect x="10" y="3" width="5" height="12" rx="1"/>
+                    <rect x="17" y="3" width="5" height="15" rx="1"/>
+                </svg>
+                <div class="tooltip">
+                    <div class="tooltip-title">📊 Kanban <span class="tooltip-badge badge-community">COMMUNITY</span></div>
+                    <div class="tooltip-desc">Visual task management</div>
+                </div>
+            </div>
+            
+            <!-- Spacer -->
+            <div style="flex: 1;"></div>
+            
+            <!-- 14. Settings (Bottom) -->
+            <div class="ribbon-icon" data-id="settings" onclick="showDetail('settings')" style="margin-top: auto;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                <div class="tooltip">
+                    <div class="tooltip-title">⚙️ Settings <span class="tooltip-badge badge-core">CORE</span></div>
+                    <div class="tooltip-desc">Plugin & app settings</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ============ SIDEBAR / INFO PANEL ============ -->
+        <div class="sidebar">
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold mb-2">🎀 Obsidian Ribbon — Visual Guide</h1>
+                <p class="text-sm text-gray-400">Click any icon on the ribbon to see detailed information and API code examples</p>
+            </div>
+            
+            <!-- Legend -->
+            <div class="info-card">
+                <h3>🏷️ Icon Categories</h3>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: var(--text-muted);"></div>
+                    <span><strong>Core Icons</strong> — Built-in Obsidian features</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: #10b981;"></div>
+                    <span><strong>Plugin Icons</strong> — Added by your own plugins</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: #f59e0b;"></div>
+                    <span><strong>Community Icons</strong> — From community plugins</span>
+                </div>
+            </div>
+            
+            <!-- Detail Panel -->
+            <div id="detailPanel" class="detail-panel">
+                <h3 class="text-lg font-semibold mb-3">👈 Click an icon to see details</h3>
+                <p class="text-sm text-gray-400">Each ribbon icon can be added via the Obsidian API. Hover over icons to see their labels and descriptions.</p>
+            </div>
+            
+            <!-- Code Example -->
+            <div class="info-card">
+                <h3>💻 How to Add Ribbon Icons</h3>
+                <div class="api-example">
+<span style="color:#c084fc">this</span>.<span style="color:#60a5fa">addRibbonIcon</span>(<br>
+&nbsp;&nbsp;<span style="color:#fbbf24">'lucide-icon-name'</span>, <span style="color:#fbbf24">'Display Name'</span>,<br>
+&nbsp;&nbsp;(<span style="color:#f97316">evt</span>: MouseEvent) =&gt; {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#c084fc">new</span> <span style="color:#60a5fa">Notice</span>(<span style="color:#fbbf24">'Clicked!'</span>);<br>
+&nbsp;&nbsp;}<br>
+);
+                </div>
+                <p class="text-xs mt-2 text-gray-500">Icons are listed top-to-bottom in the order they're registered. Core icons appear first, then plugins.</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const iconDetails = {
+            'file-explorer': {
+                icon: '📁',
+                name: 'File Explorer',
+                badge: 'CORE',
+                badgeClass: 'badge-core',
+                description: 'The File Explorer shows all files and folders in your vault. It\'s the primary navigation tool for browsing your notes.',
+                features: [
+                    'Tree view of all files and folders',
+                    'Drag & drop to move files',
+                    'Right-click context menu',
+                    'Search/filter within files',
+                    'Sort by name, date, or custom order'
+                ],
+                api: `// Toggle file explorer
+this.app.workspace.toggleLeftSplit();
+
+// Access vault files
+const files = this.app.vault.getMarkdownFiles();
+const folders = this.app.vault.getAllLoadedFiles()
+    .filter(f => f instanceof TFolder);`
+            },
+            'search': {
+                icon: '🔍',
+                name: 'Search',
+                badge: 'CORE',
+                badgeClass: 'badge-core',
+                description: 'Global search across all notes in your vault. Supports regex, boolean operators, and property filters.',
+                features: [
+                    'Full-text search across all notes',
+                    'Regex support (/pattern/)',
+                    'Boolean operators (AND, OR, NOT)',
+                    'Filter by tags, paths, properties',
+                    'Save search queries'
+                ],
+                api: `// Programmatic search
+const results = await this.app.vault.search(
+    'query string'
+);
+
+// Open search with query
+this.app.commands.executeCommandById(
+    'global-search:open'
+);`
+            },
+            'graph': {
+                icon: '🕸️',
+                name: 'Graph View',
+                badge: 'CORE',
+                badgeClass: 'badge-core',
+                description: 'Visual representation of connections between your notes. See how your knowledge network grows.',
+                features: [
+                    'Interactive force-directed graph',
+                    'Filter by tags, folders, attachments',
+                    'Local graph (per note)',
+                    'Color groups by tag/folder',
+                    'Zoom and pan navigation'
+                ],
+                api: `// Open graph view
+this.app.commands.executeCommandById(
+    'graph:open'
+);
+
+// Open local graph for current note
+this.app.commands.executeCommandById(
+    'graph:open-local'
+);`
+            },
+            'backlinks': {
+                icon: '🔗',
+                name: 'Backlinks',
+                badge: 'CORE',
+                badgeClass: 'badge-core',
+                description: 'Shows all notes that link TO the currently open note. Essential for understanding context and connections.',
+                features: [
+                    'Linked mentions with context',
+                    'Unlinked mentions (potential links)',
+                    'Collapse/expand previews',
+                    'Filter by note type',
+                    'Quick navigation to source'
+                ],
+                api: `// Get backlinks for a file
+const cache = this.app.metadataCache;
+const resolvedLinks = cache.resolvedLinks;
+
+// Find notes linking to current file
+const backlinks = Object.entries(resolvedLinks)
+    .filter(([path, links]) => 
+        links[targetFile.path]
+    );`
+            },
+            'outgoing': {
+                icon: '📤',
+                name: 'Outgoing Links',
+                badge: 'CORE',
+                badgeClass: 'badge-core',
+                description: 'Shows all notes that the current note links TO. Helps track where your current note references other content.',
+                features: [
+                    'All outbound [[links]]',
+                    'External URLs',
+                    'Unresolved links (missing notes)',
+                    'Embedded files',
+                    'Block references'
+                ],
+                api: `// Get outgoing links from metadata
+const file = this.app.workspace.getActiveFile();
+const links = this.app.metadataCache
+    .getFileCache(file)?.links || [];
+
+links.forEach(link => {
+    console.log(link.link, link.original);
+});`
+            },
+            'tags': {
+                icon: '🏷️',
+                name: 'Tags',
+                badge: 'CORE',
+                badgeClass: 'badge-core',
+                description: 'Browse and manage all tags used across your vault. Tags help categorize and filter notes.',
+                features: [
+                    'Hierarchical tag tree (#a/b/c)',
+                    'Tag counts per note',
+                    'Search by tag',
+                    'Tag color customization',
+                    'Nested tag navigation'
+                ],
+                api: `// Get all tags in vault
+const tags = this.app.metadataCache.getTags();
+// Returns: { '#tag': count, ... }
+
+// Get tags from specific file
+const fileTags = this.app.metadataCache
+    .getFileCache(file)?.tags || [];`
+            },
+            'daily': {
+                icon: '📅',
+                name: 'Daily Notes',
+                badge: 'CORE',
+                badgeClass: 'badge-core',
+                description: 'Quickly open or create a note for today\'s date. Perfect for journaling and daily logging.',
+                features: [
+                    'Auto-create dated notes',
+                    'Custom date format',
+                    'Template integration',
+                    'Calendar view',
+                    'Configurable folder location'
+                ],
+                api: `// Open today's daily note
+const moment = window.moment;
+const today = moment().format('YYYY-MM-DD');
+const path = \`Daily Notes/\${today}.md\`;
+
+let file = this.app.vault.getAbstractFileByPath(path);
+if (!file) {
+    file = await this.app.vault.create(
+        path, 
+        templateContent
+    );
+}
+await this.app.workspace.openLinkText(path, '');`
+            },
+            'templates': {
+                icon: '📋',
+                name: 'Templates',
+                badge: 'CORE',
+                badgeClass: 'badge-core',
+                description: 'Insert pre-defined templates into your notes. Supports date/time variables and custom formatting.',
+                features: [
+                    'Insert template at cursor',
+                    'Date/time variables ({{date}}, {{time}})',
+                    'Custom date formats',
+                    'Template folder configuration',
+                    'Quick template switching'
+                ],
+                api: `// Read template file
+const templateFile = this.app.vault
+    .getAbstractFileByPath('Templates/daily.md');
+const content = await this.app.vault.read(
+    templateFile
+);
+
+// Replace variables
+const processed = content
+    .replace(/{{date}}/g, moment().format('YYYY-MM-DD'))
+    .replace(/{{time}}/g, moment().format('HH:mm'))
+    .replace(/{{title}}/g, activeFile.basename);`
+            },
+            'command': {
+                icon: '⌨️',
+                name: 'Command Palette',
+                badge: 'CORE',
+                badgeClass: 'badge-core',
+                description: 'Access every command in Obsidian via keyboard shortcut (Ctrl/Cmd + P). The fastest way to navigate.',
+                features: [
+                    'Fuzzy search all commands',
+                    'Keyboard-first workflow',
+                    'Custom hotkey assignment',
+                    'Plugin commands included',
+                    'Recently used commands'
+                ],
+                api: `// Register a custom command
+this.addCommand({
+    id: 'my-custom-command',
+    name: 'My Custom Command',
+    callback: () => {
+        new Notice('Command executed!');
+    },
+    // Optional: hotkey
+    hotkeys: [{ modifiers: ['Ctrl', 'Shift'], key: 'm' }]
+});
+
+// Execute command programmatically
+this.app.commands.executeCommandById(
+    'command-id'
+);`
+            },
+            'data-converter': {
+                icon: '🗄️',
+                name: 'Data Converter',
+                badge: 'PLUGIN',
+                badgeClass: 'badge-plugin',
+                description: 'Custom plugin icon for importing and converting data (CSV, JSON, etc.) into Markdown notes.',
+                features: [
+                    'CSV → Markdown conversion',
+                    'JSON → Note batch creation',
+                    'YAML frontmatter generation',
+                    'Folder organization',
+                    'Duplicate handling'
+                ],
+                api: `// Adding plugin ribbon icon
+this.addRibbonIcon(
+    'database',           // Lucide icon name
+    'Import Data',        // Tooltip label
+    (evt: MouseEvent) => {
+        this.openImportModal();
+    }
+);
+
+// Set tooltip dynamically
+ribbonIconEl.setAttribute(
+    'aria-label', 
+    'Import Data (Ctrl+Shift+I)'
+);`
+            },
+            'editor-helper': {
+                icon: '✍️',
+                name: 'Editor Helper',
+                badge: 'PLUGIN',
+                badgeClass: 'badge-plugin',
+                description: 'Custom plugin for enhanced editing tools — formatting shortcuts, snippets, and text transformations.',
+                features: [
+                    'Quick formatting toolbar',
+                    'Text snippets insertion',
+                    'Auto-formatting rules',
+                    'Text transformations',
+                    'Cursor position management'
+                ],
+                api: `// Access active editor
+const editor = this.app.workspace
+    .activeEditor?.editor;
+
+// Insert text with transaction (undoable)
+editor.transaction((tr) => {
+    tr.replaceSelection('**bold text**');
+});
+
+// Get current selection
+const selection = editor.getSelection();
+const cursor = editor.getCursor();`
+            },
+            'ai-assistant': {
+                icon: '✨',
+                name: 'AI Assistant',
+                badge: 'COMMUNITY',
+                badgeClass: 'badge-community',
+                description: 'Community plugin that integrates AI capabilities directly into your Obsidian workflow.',
+                features: [
+                    'AI-powered writing assistance',
+                    'Text generation & refinement',
+                    'Summarization',
+                    'Translation',
+                    'Context-aware suggestions'
+                ],
+                api: `// Community plugins use the same API
+// but are installed from the community directory
+
+// Example: Smart Composer plugin pattern
+this.addRibbonIcon('sparkles', 'AI Assistant', () => {
+    this.openAIChat();
+});
+
+// Uses requestUrl for API calls
+const response = await requestUrl({
+    url: 'https://api.openai.com/v1/chat/completions',
+    method: 'POST',
+    headers: {
+        'Authorization': \`Bearer \${apiKey}\`,
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ model: 'gpt-4', messages })
+});`
+            },
+            'kanban': {
+                icon: '📊',
+                name: 'Kanban',
+                badge: 'COMMUNITY',
+                badgeClass: 'badge-community',
+                description: 'Popular community plugin for visual task management using Kanban boards stored as Markdown.',
+                features: [
+                    'Drag & drop cards',
+                    'Markdown-based storage',
+                    'Custom fields & metadata',
+                    'Multiple board views',
+                    'Archive completed tasks'
+                ],
+                api: `// Kanban stores data as Markdown
+// Example board structure:
+// ---
+// kanban-plugin: basic
+// ---
+// 
+// ## To Do
+// - [ ] Task 1
+// - [ ] Task 2
+// 
+// ## In Progress
+// - [ ] Task 3
+// 
+// ## Done ✅
+// - [x] Task 4
+
+// Plugins can read/write this format
+// using standard vault operations`
+            },
+            'settings': {
+                icon: '⚙️',
+                name: 'Settings',
+                badge: 'CORE',
+                badgeClass: 'badge-core',
+                description: 'Access all application settings, plugin configurations, themes, and hotkey management.',
+                features: [
+                    'App preferences',
+                    'Plugin management',
+                    'Theme & appearance',
+                    'Hotkey configuration',
+                    'Account & sync settings'
+                ],
+                api: `// Register custom settings tab
+this.addSettingTab(new MySettingTab(this.app, this));
+
+// Settings Tab implementation
+class MySettingTab extends PluginSettingTab {
+    display(): void {
+        const { containerEl } = this;
+        containerEl.empty();
+        
+        new Setting(containerEl)
+            .setName('Setting name')
+            .setDesc('Description text')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.enabled)
+                .onChange(async (value) => {
+                    this.plugin.settings.enabled = value;
+                    await this.plugin.saveSettings();
+                })
+            );
+    }
+}`
+            }
+        };
+        
+        function showDetail(iconId) {
+            const detail = iconDetails[iconId];
+            if (!detail) return;
+            
+            // Update active state
+            document.querySelectorAll('.ribbon-icon').forEach(el => el.classList.remove('active'));
+            document.querySelector(`[data-id="${iconId}"]`)?.classList.add('active');
+            
+            const panel = document.getElementById('detailPanel');
+            panel.classList.add('active');
+            
+            const featuresHtml = detail.features.map(f => 
+                `<li class="text-xs text-gray-400 py-1">• ${f}</li>`
+            ).join('');
+            
+            panel.innerHTML = `
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="text-3xl">${detail.icon}</span>
+                    <div>
+                        <h3 class="text-xl font-bold">${detail.name}</h3>
+                        <span class="tooltip-badge ${detail.badgeClass}">${detail.badge}</span>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-300 mb-4">${detail.description}</p>
+                <div class="mb-4">
+                    <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Features</h4>
+                    <ul class="space-y-1">${featuresHtml}</ul>
+                </div>
+                <div>
+                    <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">💻 API Example</h4>
+                    <div class="api-example">${detail.api}</div>
+                </div>
+            `;
+        }
+        
+        // Show default detail
+        showDetail('file-explorer');
+    </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "semanticDiff.enabled": true,
+  "semanticDiff.diffMode": "semantic",
+  "semanticDiff.showMovedCode": true,
+  "semanticDiff.showRefactoringGroups": true,
+  "semanticDiff.loadAdditionalContextLines": 20,
+  "semanticDiff.hideComments": false
+}

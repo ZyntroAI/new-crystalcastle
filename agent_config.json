@@ -1,0 +1,32 @@
+{
+  "agent": {
+    "name": "ResearchAssistantBot",
+    "version": "2.4.0",
+    "default_model": "claude-5-sonnet",
+    "fallback_model": "gemini-3.1-pro",
+    "temperature": 0.2,
+    "max_tokens": 4096
+  },
+  "skills": [
+    {
+      "name": "web_search",
+      "enabled": true,
+      "max_results_per_query": 5,
+      "allowed_domains": ["scholar.google.com", "arxiv.org", "wikipedia.org"]
+    },
+    {
+      "name": "local_markdown_search",
+      "enabled": true,
+      "root_directory": "./workspace_docs"
+    },
+    {
+      "name": "python_sandbox",
+      "enabled": false,
+      "timeout_seconds": 10
+    }
+  ],
+  "rate_limiting": {
+    "max_requests_per_minute": 60,
+    "retry_attempts": 3
+  }
+}

@@ -1,0 +1,57 @@
+name: Dynamic Matrix CI
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  # Stage 1: Generate the matrix JSON dynamically
+  setup:
+    name: Generate Matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compute test targets
+        id: set-matrix
+        run: |
+          # Generate a JSON object with targets
+          JSON_STRING='{"target": ["service-a", "service-b", "service-c"]}'
+          echo "matrix=${JSON_STRING}" >> $GITHUB_OUTPUT
+
+  # Stage 2: Run the dynamic matrix jobs
+  matrix-runner:
+    name: Test (${{ matrix.target }})
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.setup.outputs.matrix) }}
+    steps:
+      - name: Run test target
+        run: echo "Testing ${{ matrix.target }}"
+
+  # Stage 3: Aggregator / Gatekeeper job (The Status Check)
+  ci-success:
+    name: All Dynamic Matrix Tests Passed
+    needs: [setup, matrix-runner]
+    runs-on: ubuntu-latest
+    if: always() # Ensures this runs even if setup or matrix jobs fail
+    steps:
+      - name: Check setup job status
+        run: |
+          if [ "${{ needs.setup.result }}" != "success" ]; then
+            echo "Error: Matrix setup stage failed or was cancelled."
+            exit 1
+          fi
+
+      - name: Check matrix runner status
+        run: |
+          if [ "${{ needs.matrix-runner.result }}" != "success" ]; then
+            echo "Error: One or more dynamic matrix jobs failed."
+            exit 1
+          fi
+          echo "Success: All dynamic matrix targets executed successfully."

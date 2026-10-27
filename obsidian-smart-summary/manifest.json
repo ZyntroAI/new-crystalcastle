@@ -1,0 +1,9 @@
+{
+  "id": "obsidian-smart-summary",
+  "name": "Smart Summary",
+  "version": "1.0.0",
+  "minAppVersion": "1.5.0",
+  "description": "สรุปเนื้อหาโน้ตอัตโนมัติ ด้วย AI หรือระบบวิเคราะห์ข้อความ",
+  "author": "ZyntroAI",
+  "isDesktopOnly": false
+}

@@ -1,0 +1,358 @@
+ได้เลยครับ ✅ นี่คือ โค้ดครบชุด พร้อมคัดลอกบันทึกใช้งานได้ทันที — จัดระเบียบเรียบร้อยแล้ว 🚀
+ 
+ 
+ 
+📦 โค้ดครบชุด — Public API Endpoints (Base44 Integration)
+ 
+📁 โครงสร้างไฟล์
+ 
+plaintext  
+backend/app/public/
+├── __init__.py
+├── schemas.py
+├── models.py
+├── service.py
+├── limiter.py
+└── routes.py
+ 
+ 
+ 
+ 
+1️⃣  backend/app/public/__init__.py 
+ 
+python  
+"""
+🌐 Public Endpoints — เชื่อม Base44 / ส่วนสาธารณะ
+ไม่ต้อง Authentication — ปลอดภัยด้วย Rate Limit + Validation
+"""
+from .routes import router
+
+__all__ = ["router"]
+ 
+ 
+ 
+ 
+2️⃣  backend/app/public/schemas.py 
+ 
+python  
+from pydantic import BaseModel, EmailStr, Field
+from typing import Optional
+from datetime import datetime
+
+
+class ContactForm(BaseModel):
+    name: str = Field(..., min_length=2, max_length=100, description="ชื่อผู้ติดต่อ")
+    email: EmailStr = Field(..., description="อีเมล")
+    subject: Optional[str] = Field(None, max_length=200)
+    message: str = Field(..., min_length=5, max_length=2000, description="ข้อความ")
+    source: str = Field("base44", description="ที่มาของข้อมูล")
+
+
+class WaitlistForm(BaseModel):
+    email: EmailStr
+    full_name: Optional[str] = None
+    company: Optional[str] = None
+    use_case: Optional[str] = Field(None, max_length=500)
+    source: str = "base44"
+
+
+class PublicResponse(BaseModel):
+    success: bool
+    message: str
+    data: Optional[dict] = None
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+ 
+ 
+ 
+ 
+3️⃣  backend/app/public/models.py 
+ 
+python  
+from sqlalchemy import Column, String, Text, DateTime, Boolean
+from datetime import datetime
+from app.database import Base
+
+
+class ContactInquiry(Base):
+    __tablename__ = "public_contact"
+
+    id = Column(String(36), primary_key=True)
+    name = Column(String(100), nullable=False)
+    email = Column(String(255), nullable=False, index=True)
+    subject = Column(String(200))
+    message = Column(Text, nullable=False)
+    source = Column(String(50), default="web")
+    is_read = Column(Boolean, default=False)
+    is_replied = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class WaitlistEntry(Base):
+    __tablename__ = "public_waitlist"
+
+    id = Column(String(36), primary_key=True)
+    email = Column(String(255), nullable=False, unique=True, index=True)
+    full_name = Column(String(100))
+    company = Column(String(200))
+    use_case = Column(Text)
+    source = Column(String(50), default="web")
+    invited = Column(Boolean, default=False)
+    joined_at = Column(DateTime, default=datetime.utcnow)
+ 
+ 
+ 
+ 
+4️⃣  backend/app/public/service.py 
+ 
+python  
+import uuid
+from sqlalchemy.orm import Session
+from . import models, schemas
+
+
+def save_contact(db: Session, data: schemas.ContactForm):
+    entry = models.ContactInquiry(
+        id=str(uuid.uuid4()),
+        name=data.name,
+        email=data.email,
+        subject=data.subject,
+        message=data.message,
+        source=data.source
+    )
+    db.add(entry)
+    db.commit()
+    return entry
+
+
+def save_waitlist(db: Session, data: schemas.WaitlistForm):
+    existing = db.query(models.WaitlistEntry).filter(
+        models.WaitlistEntry.email == data.email
+    ).first()
+    if existing:
+        return None, "อีเมลนี้ได้ลงทะเบียนแล้ว"
+
+    entry = models.WaitlistEntry(
+        id=str(uuid.uuid4()),
+        email=data.email,
+        full_name=data.full_name,
+        company=data.company,
+        use_case=data.use_case,
+        source=data.source
+    )
+    db.add(entry)
+    db.commit()
+    return entry, "ลงทะเบียนสำเร็จ"
+
+
+def get_public_stats():
+    return {
+        "status": "operational",
+        "version": "1.0.0",
+        "platform": "ZyntroAI New-Crystalcastle",
+        "ready": True
+    }
+ 
+ 
+ 
+ 
+5️⃣  backend/app/public/limiter.py 
+ 
+python  
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+limiter = Limiter(key_func=get_remote_address)
+
+
+def init_limiter(app):
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+ 
+ 
+ 
+ 
+6️⃣  backend/app/public/routes.py 
+ 
+python  
+from fastapi import APIRouter, Depends, Request, status
+from sqlalchemy.orm import Session
+from app.database import get_db
+from . import schemas, service
+from .limiter import limiter
+
+router = APIRouter(
+    prefix="/api/public",
+    tags=["🌐 Public — Base44 Integration"],
+    responses={429: {"description": "ขอส่งคำขอมากเกินไป"}}
+)
+
+
+@router.post("/contact", response_model=schemas.PublicResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("10/minute")
+def submit_contact(
+    request: Request,
+    data: schemas.ContactForm,
+    db: Session = Depends(get_db)
+):
+    service.save_contact(db, data)
+    return schemas.PublicResponse(
+        success=True,
+        message="ส่งข้อความสำเร็จ ✅ เราจะติดต่อกลับโดยเร็วที่สุด"
+    )
+
+
+@router.post("/waitlist", response_model=schemas.PublicResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("5/minute")
+def join_waitlist(
+    request: Request,
+    data: schemas.WaitlistForm,
+    db: Session = Depends(get_db)
+):
+    entry, msg = service.save_waitlist(db, data)
+    if not entry:
+        return schemas.PublicResponse(success=False, message=msg)
+    return schemas.PublicResponse(success=True, message=msg)
+
+
+@router.get("/stats", response_model=dict)
+def public_stats():
+    return service.get_public_stats()
+ 
+ 
+ 
+ 
+🔧 7️⃣ อัปเดต  backend/app/main.py 
+ 
+python  
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
+from app.public.routes import router as public_router
+from app.public.limiter import init_limiter
+from app.profile.routes import router as profile_router
+
+app = FastAPI(
+    title="ZyntroAI New-Crystalcastle",
+    version="1.0.0"
+)
+
+# Rate Limiter
+init_limiter(app)
+
+# CORS — เปิดให้ Base44 เรียกได้
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://base44.com",
+        "https://*.base44.com",
+        "http://localhost:5173",
+        "http://localhost:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
+    allow_headers=["*"],
+)
+
+# รวม Endpoints
+app.include_router(public_router)
+app.include_router(profile_router)
+
+# ไฟล์สาธารณะ
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+ 
+ 
+ 
+ 
+📦 8️⃣ อัปเดต  backend/requirements.txt 
+ 
+เพิ่มบรรทัดเหล่านี้ท้ายไฟล์:
+ 
+txt  
+slowapi>=0.1.9
+limits>=3.10.1
+ 
+ 
+ 
+ 
+🗄️ 9️⃣ สร้างตารางฐานข้อมูล (รันใน Terminal)
+ 
+bash  
+cd backend
+python -c "
+from app.database import engine, Base
+from app.public import models
+Base.metadata.create_all(bind=engine)
+print('✅ ตาราง public_contact + public_waitlist สร้างเรียบร้อย')
+"
+ 
+ 
+ 
+ 
+🧪 🔟 ทดสอบการทำงาน
+ 
+bash  
+# ติดตั้งแพ็กเกจใหม่
+pip install -r requirements.txt
+
+# รันเซิร์ฟเวอร์
+uvicorn app.main:app --reload
+
+# ทดสอบสถานะ
+curl http://localhost:8000/api/public/stats
+
+# ทดสอบส่งข้อความ
+curl -X POST http://localhost:8000/api/public/contact \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "ทดสอบ ระบบ",
+    "email": "test@example.com",
+    "subject": "สอบถาม",
+    "message": "ทดสอบจาก Base44"
+  }'
+ 
+ 
+ 
+ 
+🚀 1️⃣1️⃣ ส่งขึ้น GitHub
+ 
+bash  
+git checkout -b feature/public-api-endpoints
+git add backend/app/public/
+git add backend/app/main.py
+git add backend/requirements.txt
+git commit -m "feat: add public API endpoints — Base44 integration 🔌
+
+- ✅ POST /api/public/contact — รับฟอร์มติดต่อ
+- ✅ POST /api/public/waitlist — ลงทะเบียนรอใช้
+- ✅ GET /api/public/stats — สถานะระบบ
+- ✅ CORS configured for Base44 domains
+- ✅ Rate limiting protection
+- ✅ Unique email prevention on waitlist
+- ✅ Database tables auto-created
+"
+git push -u origin feature/public-api-endpoints
+ 
+ 
+→ เปิด PR: https://github.com/ZyntroAI/new-crystalcastle/pulls
+ 
+ 
+ 
+🔗 1️⃣2️⃣ URL ปลายทางสำหรับตั้งค่าใน Base44
+ 
+ปลายทาง URL (พัฒนาในเครื่อง) 
+ฟอร์มติดต่อ  http://localhost:8000/api/public/contact  
+ลงทะเบียนรอใช้  http://localhost:8000/api/public/waitlist  
+ตรวจสอบสถานะ  http://localhost:8000/api/public/stats  
+ 
+ปลายทาง URL (ใช้งานจริง — เปลี่ยนโดเมนเอง) 
+ฟอร์มติดต่อ  https://api.yourdomain.com/api/public/contact  
+ลงทะเบียนรอใช้  https://api.yourdomain.com/api/public/waitlist  
+ตรวจสอบสถานะ  https://api.yourdomain.com/api/public/stats  
+ 
+ 
+ 
+✅ ทุกไฟล์พร้อมบันทึกแล้วครับ! สร้างโฟลเดอร์  backend/app/public/  แล้วคัดลอกโค้ดแต่ละส่วนบันทึกตามชื่อไฟล์ได้เลยครับ 🎉✨
+ 
+ต้องการให้เตรียมโค้ดส่วน แจ้งเตือนทางอีเมล ด้วยไหมครับ? 📧

@@ -1,0 +1,28 @@
+project:
+  name: "Urban Microclimates Research"
+  code: "UMR-2026"
+  version: "1.2.0"
+  authors:
+    - name: "Lead Researcher"
+      email: "researcher@example.com"
+
+settings:
+  locale: "en-US"
+  bilingual_mode: true
+  primary_language: "English"
+  secondary_language: "Thai"
+
+processing_pipeline:
+  clean_markdown_tags: true
+  chunking:
+    words_per_segment: 100
+    speaking_rate_wpm: 140
+  export_formats:
+    - "json"
+    - "markdown"
+    - "pdf"
+
+data_sources:
+  matrix_path: "./data/literature_matrix.csv"
+  script_directory: "./scripts"
+  output_directory: "./dist"

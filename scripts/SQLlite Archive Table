@@ -1,0 +1,12 @@
+-- Move stale to archive table
+INSERT INTO releases_archive
+SELECT *, datetime('now') AS archived_at
+FROM releases
+WHERE published_at < date('now', '-1 year');
+
+-- Remove from active table
+DELETE FROM releases
+WHERE published_at < date('now', '-1 year');
+
+-- Vacuum to reclaim space
+VACUUM;

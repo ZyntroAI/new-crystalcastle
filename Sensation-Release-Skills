@@ -255,4 +255,149 @@ bash skills/sensation-release/rate-limit-monitor/script.sh
 
 ต้องการให้ร่าง script สำหรับ skill ไหนเป็นพิเศษ หรือต้องการปรับโครงสร้างให้ตรงกับ workflow ของ ZyntroAI อย่างไรบ้างครับ
 
+ได้ครับ จากชุด 8 skills เดิม ช่องว่างที่ยังขาดคือ security, version/changelog, risk diff, rollback verification, observability, และ orchestration layer ขอเสนอเพิ่มดังนี้ (🔥 = คุ้มค่าที่สุด ทำก่อน)
+ 
+ 
+ 
+กลุ่ม A: Skill ใหม่ (เติมช่องว่างใน release lifecycle)
+ 
+🔥 Skill 9:  sensation-release-security-gate 
+ 
+จุดประสงค์ บล็อก release ถ้ามีช่องโหว่หรือรั่วซึมที่ยังไม่แก้
+Checks
+ 
+1. GitHub Dependabot / code scanning alerts (CRITICAL/HIGH ที่ open)
+2. Secret scan บน release branch (gitleaks/trufflehog)
+3. Container image CVE (Trivy/Grype) ถ้ามี image artifact
+4. License compliance + SBOM generation
+5. Outdated action with known CVE ใน workflow
+Output — Status:  PASS  /  WARN  /  BLOCK , รายการ CVE พร้อม severity, fix version, และ  blocking: true/false 
+ 
+🔥 Skill 10:  sensation-release-version-changelog-validate 
+ 
+จุดประสงค์ ยืนยันว่า version bump ถูกต้องและมีเอกสารประกอบ
+Checks
+ 
+1. เวอร์ชันใน  pyproject.toml  /  package.json  /  VERSION  /  Cargo.toml  ตรงกันทุกไฟล์
+2. Semver bump (patch/minor/major) สอดคล้องกับ conventional commits ตั้งแต่ tag ล่าสุด
+3. มี entry ใน  CHANGELOG.md  สำหรับเวอร์ชันนี้ และไม่ซ้ำกับเวอร์ชันเก่า
+4. Tag ที่จะสร้างไม่ซ้ำ และเป็นไปตาม naming convention ( vX.Y.Z )
+5. Deprecation notices ที่ประกาศไว้ครบกำหนดถูกลบออกจริง
+Output — Expected vs actual version, mismatch list, recommended bump
+ 
+🔥 Skill 11:  sensation-release-diff-risk-summary 
+ 
+จุดประสงค์ สรุป "อะไรเปลี่ยนไปจริงๆ" ตั้งแต่ release ก่อนหน้า พร้อมจัดระดับความเสี่ยง
+Checks
+ 
+1. Commits, PRs, authors, files/lines changed since last tag
+2. Risk scoring: แตะไฟล์ hot path (auth, payment, DB migration, config) → ความเสี่ยงสูง
+3. Breaking-change detection: diff OpenAPI schema / TypeScript public types / protobuf
+4. ไฟล์ที่แก้โดยไม่มี test คู่ข้าง
+5. Large diff warning (> N lines) → แนะนำ split
+Output — Risk level  LOW/MEDIUM/HIGH , hot-file list, breaking changes, reviewer recommendation
+ 
+Skill 12:  sensation-release-rollback-readiness 
+ 
+จุดประสงค์ ไม่ใช่แค่ "มีแผน rollback" แต่ตรวจว่าจริงๆ rollback ได้
+Checks
+ 
+1. Previous version artifact/image ยัง pullable และไม่ถูกลบ
+2. DB migration ในรอบนี้ reversible (มี down migration)
+3. Feature-flag kill-switch มีและปิดได้
+4. Rollback ETA ประเมินได้, hotfix branch path ชัดเจน
+5. Data backfill ไม่ทำให้ rollback ทำลายข้อมูล
+Output — Rollable:  YES/PARTIAL/NO , blockers, rollback runbook link
+ 
+Skill 13:  sensation-release-observability-gate 
+ 
+จุดประสงค์ ตรวจว่าหลัง release เราจะเห็นปัญหาได้ทันที
+Checks
+ 
+1. Error budget คงเหลือ > threshold (ไม่ release ตอน burn-rate สูง)
+2. ไม่มี active incident กำลังดำเนินอยู่
+3. On-call มีคน assigned, alert channel ทดสอบได้
+4. Dashboard/metric สำหรับฟีเจอร์นี้มีอยู่
+5. Log retention เพียงพอสำหรับ debug
+Output — Observe-ready:  YES/NO , missing telemetry list
+ 
+Skill 14:  sensation-release-migration-safety 
+ 
+จุดประสงค์ บล็อก migration ที่จะทำให้ production lock/down
+Checks
+ 
+1. Destructive ops:  DROP COLUMN/TABLE ,  NOT NULL  โดยไม่มี default,  RENAME 
+2. Backfill ไม่มี batching/timeout
+3. Index creation ไม่ใช่  CONCURRENTLY 
+4. Migration มี down script และทดสอบ dry-run ผ่าน
+Output — Safe:  YES/REVIEW/BLOCK , statement list with risk
+ 
+Skill 15:  sensation-release-provenance-manifest 
+ 
+จุดประสงค์ สร้างหลักฐานปล่อยเวอร์ชัน (audit trail) ที่ verify ได้
+Output — ไฟล์  release-manifest.json  (commit SHA, tag, approvers, artifact digests, SBOM, build provenance/SLSA) signed และแนบเป็น release asset — ใช้ตอบ audit/Compliance ได้เลย
+ 
+Skill 16:  sensation-release-communication-window 
+ 
+จุดประสงค์ เช็คเวลาและการสื่อสารก่อนกด release
+Checks
+ 
+1. ไม่อยู่ใน freeze period / วันหยุด / peak hours
+2. On-call & stakeholder รู้แล้ว
+3. Auto-generate release notes draft จาก PRs (skill 11)
+4. Slack/email/status-page template พร้อมส่ง
+Output — Window:  GO/NO-GO , comms draft, suggested time
+ 
+ 
+ 
+กลุ่ม B: Cross-cutting features (ทำครั้งเดียว ได้ประโยชน์ทุก skill)
+ 
+ฟีเจอร์ คำอธิบาย 
+🔥 Meta-gate orchestrator Skill ใหม่  sensation-release-gate  รัน skill 1–6 + 9–14 ขนานกัน แล้วรวมเป็น scorecard เดียว พร้อม exit code  0=PASS / 1=WARN / 2=BLOCK  ให้ CI ใช้บล็อกได้เลย 
+🔥 Config-as-code ไฟล์  .sensation-release.yml  ต่อ repo: thresholds, ignored checks, required artifacts, policy (เช่น "CRITICAL alert = block") 
+🔥 Output modes  --format json|markdown|html|slack  + HTML dashboard สรุปทุก check พร้อมสี; post เป็น PR comment ได้เมื่อ  --apply  
+Parallel + cache รันหลาย repo/check ขนานกัน, cache GitHub response ใน  ~/.cache/sensation/ , exponential backoff ตาม  Retry-After  
+Token pool รองรับหลาย token / GitHub App เพื่อเลี่ยง rate limit, auto-rotate เมื่อใกล้หมด 
+Historical trend เก็บผลทุกรอบเป็น JSONL → คำนวณ release lead time, failure rate, MTTR ป้อนให้ post-mortem (skill 8) อัตโนมัติ 
+Dry-run default ทุก write operation (tag, release, comment) ต้องผ่าน  --apply  + confirmation — สอดคล้อง safety rules เดิม 
+Platform support GitHub Enterprise (base URL), GitHub App auth, monorepo path filters (release แยก per package) 
+ 
+ 
+ 
+กลุ่ม C: Enhancements ให้ skill เดิมแข็งแรงขึ้น
+ 
+- workflow-verify: เพิ่ม check pin action เป็น SHA (ไม่ใช่  @main / @v  ลอย), permissions least-privilege,  timeout-minutes ,  concurrency  group, OIDC trust
+- artifact-check: เพิ่ม SBOM, provenance, signed tag verification
+- readiness: เพิ่ม stability ของ CI บน default branch (N runs ล่าสุด pass rate), open critical bugs, GHAS enablement
+- rate-limit-monitor: รองรับ secondary rate limit +  retry-after 
+- execution-plan: เพิ่ม human approval gates และ rollback drill checklist
+- post-mortem: auto-construct timeline จาก workflow run timestamps + PR merge times
+ 
+Safety rules เพิ่มเติม
+ 
+- ทุก write ต้องมี  --apply  และเขียน audit log
+- ไม่เคย overwrite/ลบ release asset โดยไม่มี backup
+- แยก  WARNING  (ปล่อยได้แต่บันทึก) กับ  BLOCKER  (ต้องแก้ก่อน) ชัดเจนทุก skill
+ 
+ 
+ 
+โครงสร้างไฟล์หลังเพิ่ม
+ 
+text  
+skills/sensation-release/
+├── SKILL.md
+├── gate/                    # meta-orchestrator (ใหม่)
+├── readiness/  branch-audit/  pr-gate/  workflow-verify/
+├── artifact-check/  rate-limit-monitor/
+├── security-gate/           # ใหม่ 🔥
+├── version-changelog/       # ใหม่ 🔥
+├── diff-risk-summary/       # ใหม่ 🔥
+├── rollback-readiness/  observability-gate/
+├── migration-safety/  provenance-manifest/  communication-window/
+├── execution-plan/  post-mortem/
+└── lib/                     # shared: github client, cache, output formatter (ใหม่)
+ 
+ 
+ถ้าต้องการผมจะเริ่มร่าง script + SKILL.md เต็มรูปแบบ ให้กับ 3 ตัวแรกก่อน (security-gate, version-changelog, diff-risk-summary) พร้อม meta-gate orchestrator ได้เลยครับ — หรือจะเลือก skill อื่นเป็นลำดับแรกก็บอกได้ครับ
+
 
