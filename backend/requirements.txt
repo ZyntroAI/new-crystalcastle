@@ -6,5 +6,5 @@ pydantic-settings==2.3.3
 apscheduler==3.11.3
 python-dotenv==1.2.4
 aiosqlite==0.20.0
-slowapi>=0.1.9
+slowapi>=0.1.10
 limits>=3.14.1
