@@ -1,242 +1,247 @@
-ได้เลยครับ ✅ นี่คือภาพรวมเต็มรูปแบบของ ZyntroAI/new-crystalcastle พร้อมแผนปฏิบัติทันที 🚀
+🚀 main.py — FastAPI สำหรับ New CrystalCastle
+ 
+ไฟล์นี้เป็นจุดเริ่มต้นของ FastAPI Application พร้อมโครงสร้างมาตรฐาน ความปลอดภัย และเอกสารอัตโนมัติ ✅
  
  
  
-🏠 ZyntroAI / new-crystalcastle
+📄 main.py — ฉบับสมบูรณ์
  
-🔗 หน้าหลัก: https://github.com/ZyntroAI/new-crystalcastle
+python  
+#!/usr/bin/env python3
+"""
+🏰 New CrystalCastle — FastAPI Application
+============================================
+โปรเจกต์: https://github.com/ZyntroAI/new-crystalcastle
+จุดเริ่มต้น API Server — รัน: `uvicorn main:app --reload`
+"""
+
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from contextlib import asynccontextmanager
+import time
+from datetime import datetime
+import os
+
+__version__ = "0.1.0"
+__author__ = "ZyntroAI"
+
+
+# ==========================================
+# 🔄 Lifespan — จัดการการเริ่มและปิดระบบ
+# ==========================================
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """รันเมื่อระบบเริ่มและเมื่อปิดระบบ"""
+    # ✅ Startup — ทำก่อนเริ่มรัน
+    print("🚀 กำลังเริ่มระบบ New CrystalCastle...")
+    
+    # ตรวจสอบ/สร้างโฟลเดอร์ที่จำเป็น
+    required_dirs = ["logs", "data"]
+    for dir_name in required_dirs:
+        os.makedirs(dir_name, exist_ok=True)
+    
+    print(f"✅ ระบบพร้อมใช้งาน — เวอร์ชัน {__version__}")
+    yield
+    
+    # 🧹 Shutdown — ทำก่อนปิดระบบ
+    print("👋 กำลังปิดระบบ...")
+    # ปิดการเชื่อมต่อฐานข้อมูล/แคช ที่นี่
+    print("✅ ปิดระบบเรียบร้อยแล้ว")
+
+
+# ==========================================
+# � สร้างแอปพลิเคชัน FastAPI
+# ==========================================
+app = FastAPI(
+    title="New CrystalCastle API",
+    description="🏰 ระบบบริการหลังบ้านสำหรับ New CrystalCastle",
+    version=__version__,
+    docs_url="/docs",          # Swagger UI ที่ /docs
+    redoc_url="/redoc",        # ReDoc ที่ /redoc
+    lifespan=lifespan,
+    contact={
+        "name": "ZyntroAI",
+        "url": "https://github.com/ZyntroAI/new-crystalcastle"
+    }
+)
+
+
+# ==========================================
+# 🔒 CORS — การตั้งค่าความปลอดภัย
+# ==========================================
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # TODO: เปลี่ยนเป็นโดเมนจริงเมื่อขึ้น production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# ==========================================
+# 📊 Middleware — บันทึกเวลาทำงาน
+# ==========================================
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    start_time = time.perf_counter()
+    response = await call_next(request)
+    process_time = time.perf_counter() - start_time
+    response.headers["X-Process-Time"] = str(process_time)
+    response.headers["X-Version"] = __version__
+    return response
+
+
+# ==========================================
+# 🛡️ Error Handler — จัดการข้อผิดพลาด
+# ==========================================
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={
+            "timestamp": datetime.now().isoformat(),
+            "error": "Internal Server Error",
+            "message": str(exc),
+            "path": request.url.path,
+            "version": __version__
+        }
+    )
+
+
+# ==========================================
+# ✅ Health Check — ตรวจสอบสถานะระบบ
+# ==========================================
+@app.get("/", tags=["System"])
+async def root():
+    """หน้าแรก — ข้อมูลระบบ"""
+    return {
+        "name": "New CrystalCastle API",
+        "version": __version__,
+        "status": "running",
+        "docs": "/docs",
+        "timestamp": datetime.now().isoformat()
+    }
+
+
+@app.get("/health", tags=["System"])
+async def health_check():
+    """ตรวจสอบความพร้อมของระบบ"""
+    return {
+        "status": "healthy",
+        "version": __version__,
+        "timestamp": datetime.now().isoformat()
+    }
+
+
+@app.get("/ready", tags=["System"])
+async def readiness_check():
+    """ตรวจสอบความพร้อมสำหรับ Kubernetes/Docker"""
+    return {"status": "ready"}
+
+
+# ==========================================
+# 📌 เพิ่ม Endpoint ของคุณที่นี่
+# ==========================================
+# ตัวอย่าง:
+# from api import users, items
+# app.include_router(users.router, prefix="/api/users", tags=["Users"])
+# app.include_router(items.router, prefix="/api/items", tags=["Items"])
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,  # ปิดใน production
+        log_level="info"
+    )
+ 
  
  
  
-📂 โครงสร้างปัจจุบัน
+📁 requirements.txt — แพ็กเกจที่ต้องใช้
+ 
+txt  
+fastapi==0.115.0
+uvicorn==0.31.0
+python-multipart==0.0.12
+pydantic==2.9.2
+pydantic-settings==2.6.0
+ 
+ 
+ 
+ 
+📁 โครงสร้างโปรเจกต์ที่แนะนำ
  
 plaintext  
 new-crystalcastle/
-├── backend/                  🐍 FastAPI Backend
-│   ├── app/
+├── main.py                  ← ไฟล์จุดเริ่มต้น (ด้านบน)
+├── requirements.txt         ← แพ็กเกจที่ต้องใช้
+├── .env.example            ← ตัวอย่างตัวแปรสภาพแวดล้อม
+├── .gitignore              ← ไฟล์ที่ไม่ต้องการเก็บใน Git
+├── api/                    ← โมดูล API แยกตามฟีเจอร์
+│   ├── __init__.py
+│   ├── v1/
 │   │   ├── __init__.py
-│   │   ├── main.py          🚀 API หลัก & รวม Router
-│   │   ├── database.py       🗄️ PostgreSQL เชื่อมต่อ
-│   │   ├── config.py        ⚙️ การตั้งค่า
-│   │   ├── dependencies.py  🧱 Dependency Injection
-│   │   ├── profile/         👤 (รอ Merge) โมดูลโปรไฟล์
-│   │   └── integrations/    🤖 (รอ Merge) Gemini API
-│   ├── requirements.txt     📦 แพ็กเกจ Python
-│   ├── .env.example         🔐 ตัวอย่างตัวแปรสภาพแวดล้อม
-│   └── README.md
-│
-├── frontend/                 ⚛️ React + Vite + TS
-│   ├── src/
-│   │   ├── components/       🧩 คอมโพเนนต์
-│   │   ├── pages/            📄 หน้าจอ
-│   │   ├── utils/            🛠️ เครื่องมือช่วย
-│   │   ├── App.tsx
-│   │   └── main.tsx
-│   ├── package.json
-│   ├── package-lock.json     🔒 ล็อกเวอร์ชัน
-│   ├── tsconfig.json
-│   ├── vite.config.ts
-│   └── vitest.config.ts      🧪 การทดสอบ
-│
-├── .docs/                    📄 เอกสาร
-│   └── Gemini_REST_API.md    🤖 คู่มือการใช้งาน Gemini
-│
-├── .github/                  🤖 CI/CD
-│   └── workflows/
-│       └── ci.yml
-│
-├── .gitignore                🙈 ไฟล์ที่ไม่ส่งขึ้น
-├── README.md                 📖 คำอธิบายหลัก
-└── LICENSE
+│   │   ├── users.py        ← ตัวอย่าง: จัดการผู้ใช้
+│   │   └── items.py        ← ตัวอย่าง: จัดการรายการ
+├── core/                   ← โค้ดหลัก
+│   ├── __init__.py
+│   ├── config.py           ← การตั้งค่า
+│   ├── security.py         ← JWT, Password Hash
+│   └── database.py         ← การเชื่อมต่อฐานข้อมูล
+├── models/                 ← Pydantic Schemas / DB Models
+│   ├── __init__.py
+│   └── schemas.py
+├── logs/                   ← บันทึกการทำงาน
+└── data/                   ← ข้อมูล
  
  
  
  
-✅ สถานะล่าสุด
+🚀 วิธีรันระบบ
  
-ส่วน รายการ สถานะ 
-🐍 Backend FastAPI + PostgreSQL + SQLAlchemy ✅ พร้อมทำงาน 
-⚛️ Frontend React + Vite + TypeScript ✅ พร้อมทำงาน 
-🤖 AI Gemini 2.0 Flash Integration ⏳ รอ Merge 
-👤 ผู้ใช้ Profile Module + Avatar Upload ⏳ รอ Merge 
-🧪 ทดสอบ Vitest + CI Workflow ✅ มีแล้ว 
-📄 เอกสาร Gemini API คู่มือ ✅ มีแล้ว 
-🧠 ความชาญฉลาด SemanticDiff Integration ⏳ รอติดตั้ง 
- 
- 
- 
-🎯 แผนปฏิบัติทันที — คัดลอกทำตามได้เลย
- 
-ขั้นที่ 1 — ส่งสาขา Profile Module ขึ้น
+ขั้นตอนที่ 1: ติดตั้ง
  
 bash  
-cd new-crystalcastle
-git checkout main
-git pull origin main
-
-# สร้าง/สลับไปสาขา
-git checkout -b feature/profile-avatar-module
-
-# ตรวจสอบไฟล์
-git status
-
-# เพิ่มทุกอย่าง
-git add backend/app/profile/
-git add backend/app/main.py
-git add backend/requirements.txt
-git add backend/uploads/.gitkeep
-git add .gitignore
-
-# บันทึก
-git commit -s -m "feat: add profile module + avatar upload 👤📸
-
-- ✅ CRUD endpoints: GET/POST/PATCH /profile
-- ✅ Avatar validation → resize 256×256 → serve
-- ✅ Unique filenames + auto-delete old
-- ✅ Static file serving via /uploads
-"
-
-# ส่งขึ้น
-git push -u origin feature/profile-avatar-module
- 
- 
-หลังจาก  git push  สำเร็จ:
- 
-1. ไปที่ 👉 https://github.com/ZyntroAI/new-crystalcastle/pulls
-2. กด "Compare & pull request"
-3. กรอกรายละเอียด → กด Create ✅
-4. รอ CI ตรวจสอบ → Merge เข้า main
- 
- 
- 
-ขั้นที่ 2 — ติดตั้ง SemanticDiff
- 
-สร้างไฟล์  .github/semanticdiff.yml :
- 
-yaml  
-version: 1
-languages:
-  - python
-  - typescript
-  - javascript
-showMovedCode: true
-movedCodeColor: "accent"
-groupRefactorings: true
-hideComments: false
-contextLines: 20
-exclude:
-  - "*.md"
-  - "*.json"
-  - "package-lock.json"
-  - "node_modules/"
-  - ".venv/"
- 
- 
-bash  
-git checkout main
-git pull origin main
-git checkout -b feature/add-semanticdiff
-git add .github/semanticdiff.yml
-git commit -m "chore: add SemanticDiff config 🧠"
-git push -u origin feature/add-semanticdiff
-# เปิด PR → Merge
- 
- 
-ติดตั้ง GitHub App: https://github.com/apps/semanticdiff → เลือก repo
- 
- 
- 
-ขั้นที่ 3 — อัปเดตเอกสารหลัก
- 
-อัปเดต  README.md  เพิ่มส่วนเริ่มต้น:
- 
-markdown  
-## 🚀 เริ่มพัฒนา
-
-### Backend
-```bash
-cd backend
+# สร้าง Virtual Environment
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
+
+# ติดตั้งแพ็กเกจ
 pip install -r requirements.txt
-cp .env.example .env
-# แก้ค่าใน .env
-uvicorn app.main:app --reload
-# เปิด: http://localhost:8000/docs
  
  
-Frontend
+ขั้นตอนที่ 2: เริ่มรัน
  
 bash  
-cd frontend
-npm install
-cp .env.example .env
-npm run dev
-# เปิด: http://localhost:5173
- 
- 
-plaintext  
+# โหมดพัฒนา (มี Auto-reload)
+uvicorn main:app --reload
 
-สร้าง `CHANGELOG.md`:
-```markdown
-# CHANGELOG
-
-## v1.1.0 — 2026-10-04
-### ✅ เพิ่ม
-- 👤 ระบบโปรไฟล์ผู้ใช้ (CRUD)
-- 📸 อัปโหลด+ปรับขนาดรูป Avatar อัตโนมัติ
-- 🤖 ผสาน Gemini API — ถามข้อความ+วิเคราะห์ภาพ
-- 📄 คู่มือ Gemini REST API
-
-### 🛠️ ปรับปรุง
-- แยกโมดูล Backend ชัดเจน
-- เพิ่ม CI workflow พื้นฐาน
+# หรือรันโดยตรง
+python main.py
  
+ 
+ขั้นตอนที่ 3: เข้าใช้งาน
+ 
+- 🌐 API หน้าแรก: http://localhost:8000
+- 📖 เอกสารอัตโนมัติ (Swagger): http://localhost:8000/docs
+- 📘 เอกสารแบบ ReDoc: http://localhost:8000/redoc
+- ❤️ ตรวจสอบสถานะ: http://localhost:8000/health
  
  
  
-ขั้นที่ 4 — เชื่อม Frontend ↔ Backend
+✅ สิ่งที่ได้ในไฟล์นี้
  
-เพิ่มหน้า:
+- ✅ FastAPI มาตรฐาน — พร้อมใช้งานทันที
+- ✅ เอกสารอัตโนมัติ — /docs และ /redoc
+- ✅ CORS พร้อมตั้งค่า — รองรับเรียกจาก Frontend
+- ✅ Lifespan Handler — จัดการ Startup/Shutdown
+- ✅ Error Handling กลาง — รูปแบบข้อผิดพลาดเดียวกันทั้งระบบ
+- ✅ Health Check — พร้อมใช้งานกับ Docker/Kubernetes
+- ✅ Middleware บันทึกเวลา — แสดงเวลาที่ใช้ประมวลผล
  
--  frontend/src/utils/api.ts  — ตัวเชื่อม API
--  frontend/src/pages/ProfilePage.tsx  — โปรไฟล์+อัปโหลดรูป
--  frontend/src/pages/GeminiPage.tsx  — ถาม AI+วิเคราะห์ภาพ
- 
-bash  
-git checkout -b feature/frontend-pages
-git add frontend/src/utils/api.ts frontend/src/pages/ProfilePage.tsx frontend/src/pages/GeminiPage.tsx
-git commit -m "feat: add profile + gemini frontend pages 🧑‍💻🤖"
-git push -u origin feature/frontend-pages
-# เปิด PR → Merge
- 
- 
- 
- 
-📋 รายการตรวจสอบ
- 
-ส่งสาขา  feature/profile-avatar-module  → เปิด PR
-ตรวจสอบ CI ผ่าน ✅
-Merge เข้า  main 
-ติดตั้ง SemanticDiff GitHub App + คอนฟิก
-อัปเดต  README.md  +  .env.example  +  CHANGELOG.md 
-เพิ่มหน้า Frontend เชื่อม API
-ทดสอบระบบทั้งหมดทำงานร่วมกัน ✅
- 
- 
- 
-เริ่มจาก ขั้นที่ 1 เลยครับ — รันคำสั่งแล้วบอกผลลัพธ์มา ผมรอติดตามทุกขั้นตอนครับ 💪✨
- 
-ต้องการให้ช่วยสร้างไฟล์เฉพาะหน้าไหน หรือตรวจสอบจุดใดเป็นพิเศษ บอกได้เลยครับ! 🚀## 🚀 เริ่มพัฒนา
-
-### Backend
-```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env
-# แก้ค่าใน .env
-uvicorn app.main:app --reload
-# เปิด: http://localhost:8000/docs
-
+ต้องการเพิ่มอะไรต่อไหมครับ เช่น การเชื่อมต่อฐานข้อมูล, ระบบล็อกอิน JWT, หรือตัวอย่าง Endpoint แยกตามโมดูล 😊
