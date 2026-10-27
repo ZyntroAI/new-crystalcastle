@@ -1,0 +1,19 @@
+# VS Code files for those working on multiple tools
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+*.env
+
+# Obsidian workspace config (แยกตามเครื่อง)
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/plugins/obsidian-git/data.json
+
+# OS files
+.DS_Store
+Thumbs.db
+*.log
