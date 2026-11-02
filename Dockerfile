@@ -1,37 +1,47 @@
 # ==========================================
-# 🐳 Dockerfile — Multi-stage Build
+# 🐳 Dockerfile — New CrystalCastle API
 # ==========================================
-FROM python:3.12-slim AS base
+# Stage 1: Builder — ติดตั้งแพ็กเกจ
+FROM python:3.11-slim AS builder
+
+# ติดตั้งระบบพื้นฐาน
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# ตั้งค่า Working Directory
+WORKDIR /app
+
+# ติดตั้ง Python dependencies
+COPY requirements.txt .
+RUN pip install --user --no-cache-dir -r requirements.txt
+
+# ==========================================
+# Stage 2: Runtime — ภาพสุดท้าย ขนาดเล็ก
+# ==========================================
+FROM python:3.11-slim AS runtime
+
+# ตั้งค่า Environment
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/root/.local/bin:$PATH" \
+    HOST=0.0.0.0 \
+    PORT=8000
 
 WORKDIR /app
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
+# คัดลอกแพ็กเกจจาก Builder
+COPY --from=builder /root/.local /root/.local
 
-# ติดตั้งขั้นต่ำ
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc libpq-dev python3-dev \
-    && rm -rf /var/lib/apt/lists/*
+# คัดลอกโค้ดแอปพลิเคชัน
+COPY . .
 
-# ==========================================
-# Builder — ติดตั้งแพ็กเกจ
-# ==========================================
-FROM base AS builder
+# เปิดพอร์ต
+EXPOSE ${PORT}
 
-COPY requirements.txt .
-RUN pip install --user -r requirements.txt
+# สร้างผู้ใช้ที่ไม่ใช่รูท เพื่อความปลอดภัย
+RUN useradd -m appuser && chown -R appuser:appuser /app
+USER appuser
 
-# ==========================================
-# Production — ภาพเล็กที่สุด
-# ==========================================
-FROM base AS production
-
-COPY --from=builder /root/.local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
-COPY --from=builder /root/.local/bin /usr/local/bin
-
-COPY ./backend /app
-
-EXPOSE 8000
-
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+# คำสั่งเริ่มระบบ
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
