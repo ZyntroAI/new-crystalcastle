@@ -1,78 +1,80 @@
 version: "3.8"
 
+name: crystalcastle-api
+
 services:
-  # 🚀 FastAPI Backend — API หลัก
+  # ==========================================
+  # 🚀 FastAPI Application
+  # ==========================================
   api:
     build:
       context: .
-      dockerfile: Dockerfile
-      target: production
+      target: runtime
     container_name: crystalcastle-api
     ports:
       - "8000:8000"
-    env_file:
-      - .env
     environment:
-      PYTHONPATH: /app
-      PYTHONDONTWRITEBYTECODE: 1
-      PYTHONUNBUFFERED: 1
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - PORT=8000
     volumes:
-      - ./backend:/app:ro
-      - ./uploads:/app/uploads:rw
-      - ./Vault:/app/Vault:ro
+      - ./logs:/app/logs
+      - ./data:/app/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health').raise_for_status()"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
-    depends_on:
-      - db
+      start_period: 5s
     networks:
       - crystalcastle-network
 
-  # 🗄️ PostgreSQL — ฐานข้อมูล
+  # ==========================================
+  # 🗄️  PostgreSQL (ทางเลือก)
+  # ==========================================
   db:
-    image: postgres:16-alpine
+    image: postgres:15-alpine
     container_name: crystalcastle-db
     environment:
-      POSTGRES_USER: ${DB_USER:-crystalcastle}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
-      POSTGRES_DB: ${DB_NAME:-crystalcastle}
+      - POSTGRES_USER=crystalcastle
+      - POSTGRES_PASSWORD=change_me_in_production
+      - POSTGRES_DB=crystalcastle
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-crystalcastle} -d ${DB_NAME:-crystalcastle}"]
+      test: ["CMD-SHELL", "pg_isready -U crystalcastle"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
       - crystalcastle-network
+    profiles: ["with-db"]
 
-  # 🎨 Frontend — Next.js (ตัวเลือก)
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: crystalcastle-frontend
+  # ==========================================
+  # 🧹 pgAdmin — จัดการฐานข้อมูล (ทางเลือก)
+  # ==========================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: crystalcastle-pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      - PGADMIN_DEFAULT_PASSWORD=change_me_in_production
     ports:
-      - "3000:3000"
-    env_file:
-      - .env
+      - "5050:80"
     depends_on:
-      - api
+      - db
     restart: unless-stopped
     networks:
       - crystalcastle-network
-    profiles:
-      - full  # รันเฉพาะเมื่อระบุ --profile full
+    profiles: ["with-db"]
 
 networks:
   crystalcastle-network:
     driver: bridge
 
 volumes:
-  postgres_data:
-    driver: local
+  postgres-data:
